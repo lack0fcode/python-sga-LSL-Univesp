@@ -3,3 +3,4 @@ djangorestframework
 gunicorn
 gTTS
 whitenoise
+dj-database-url
