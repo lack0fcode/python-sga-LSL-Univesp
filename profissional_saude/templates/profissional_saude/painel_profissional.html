@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load core_tags %}
+
+{% block title %}Painel do Profissional de Saúde{% endblock %}  <!-- Define o título da página -->
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm rounded-4 p-4 mb-4">
+        <h1 class="h3 mb-3">Painel do Profissional de Saúde</h1>
+        <p class="text-muted">Lista de pacientes para atendimento:</p>
+
+        {% if pacientes %}
+            <div class="list-group">
+                {% for paciente in pacientes %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm rounded-3 my-2">
+                        <div>
+                            <span class="fw-bold">{{ paciente.senha }}</span> - {{ paciente.nome_completo }}
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-success btn-sm" onclick="chamar({{ paciente.id }})">Chamar</button>
+                            <button class="btn btn-warning btn-sm" onclick="reanunciar({{ paciente.id }})">Reanunciar</button>
+                            <button class="btn btn-primary btn-sm" onclick="confirmar({{ paciente.id }})">Confirmar</button>
+
+                            <div class="dropdown">
+                                <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButton_{{ paciente.id }}" data-bs-toggle="dropdown" aria-expanded="false"
+                                        onmouseover="this.focus()">
+                                    Encaminhar
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton_{{ paciente.id }}">
+                                    <li class="dropdown-header">Encaminhar para:</li>
+                                    {% for profissional in profissionais %}
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="encaminhar({{ paciente.id }}, {{ profissional.id }})">
+                                                {{ profissional.first_name }} {{ profissional.last_name }}
+                                            </a>
+                                        </li>
+                                    {% empty %}
+                                        <li class="dropdown-item disabled">Nenhum profissional disponível</li>
+                                    {% endfor %}
+                                </ul>
+                        </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Nenhum paciente agendado para você.</p>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm rounded-4 p-4 mt-4">
+        <h2 class="h4 mb-4">Histórico de Chamadas</h2>
+        {% if historico_chamadas %}
+            <ul class="list-group">
+                {% for chamada in historico_chamadas %}
+                    <li class="list-group-item">
+                        <strong>{{ chamada.paciente.senha }}</strong> - {{ chamada.paciente.nome_completo }}<br>
+                        Ação: {{ chamada.get_acao_display }} | {{ chamada.data_hora|date:"d/m/Y H:i" }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Nenhuma chamada registrada.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function chamar(pacienteId) {
+    fetch(`/profissional_saude/acao/${pacienteId}/chamar/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Senha chamada com sucesso');
+            atualizarTela(); // Recarrega a página
+        } else {
+            alert('Erro ao chamar a senha: ' + data.mensagem);
+        }
+    });
+}
+
+function reanunciar(pacienteId) {
+    fetch(`/profissional_saude/acao/${pacienteId}/reanunciar/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Senha reanunciada com sucesso');
+            atualizarTela(); // Recarrega a página
+        } else {
+            alert('Erro ao reanunciar a senha: ' + data.mensagem);
+        }
+    });
+}
+
+function confirmar(pacienteId) {
+    fetch(`/profissional_saude/acao/${pacienteId}/confirmar/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'}
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Atendimento confirmado com sucesso');
+            atualizarTela();
+        } else {
+            alert('Erro ao confirmar o atendimento: ' + data.mensagem);
+        }
+    });
+}
+
+function encaminhar(pacienteId, profissionalId) {
+    fetch(`/profissional_saude/acao/${pacienteId}/encaminhar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `profissional_encaminhar_id=${profissionalId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.mensagem);
+            atualizarTela();
+        } else {
+            alert('Erro ao encaminhar: ' + data.mensagem);
+        }
+    });
+}
+
+function atualizarTelaTv(senha,nome,guiche) {
+    console.log("Atualizando tela da tv...",senha,nome,guiche);
+}
+
+function atualizarTela() {
+    // Recarrega apenas o conteúdo do painel, não a página inteira.
+    // Isso evita o "flickering" da página ao recarregar.
+    location.reload();
+}
+
+// Define o intervalo para atualizar a cada 5 segundos (5000 milissegundos)
+setInterval(atualizarTela, 5000);
+</script>
+{% endblock %}

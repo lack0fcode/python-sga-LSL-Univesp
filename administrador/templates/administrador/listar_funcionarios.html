@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <h1>Listar Funcionários</h1>
+        <p>Lista de todos os funcionários cadastrados:</p>
+
+        {% if funcionarios %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>CPF</th>
+                        <th>Nome</th>
+                        <th>Função</th>
+                        <th>Ações</th>  <!-- Adicione esta coluna -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for funcionario in funcionarios %}
+                        <tr>
+                            <td>{{ funcionario.cpf }}</td>
+                            <td>{{ funcionario.first_name }} {{ funcionario.last_name }}</td>
+                            <td>{{ funcionario.funcao }}</td>
+                            <td>  <!-- Adicione os botões aqui -->
+                                <a href="{% url 'administrador:editar_funcionario' funcionario.pk %}" class="btn btn-primary">Editar</a>
+                                <a href="{% url 'administrador:excluir_funcionario' funcionario.pk %}" class="btn btn-danger">Excluir</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum funcionário cadastrado.</p>
+        {% endif %}
+    </div>
+{% endblock %}

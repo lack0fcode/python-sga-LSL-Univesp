@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Senha Gerada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #area-impressao {
+            border: 2px dashed #333;
+            padding: 20px;
+            width: 300px;
+            margin: auto;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body onload="window.print()">
+
+    <div id="area-impressao">
+        <h2>Senha Gerada</h2>
+        <p><strong>Senha:</strong> {{ paciente.senha }}</p>
+        <p><strong>Nome:</strong> {{ paciente.nome_completo }}</p>
+        <p><strong>Tipo:</strong> {{ paciente.get_tipo_senha_display }}</p>
+        <p><strong>Data:</strong> {{ paciente.horario_geracao_senha|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <button onclick="window.print()">Imprimir Novamente</button>
+    <br>
+    <a href="{% url 'recepcionista:cadastrar_paciente' %}"><button>Voltar</button></a>
+
+</body>
+</html>

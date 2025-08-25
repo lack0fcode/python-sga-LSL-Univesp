@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load core_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm rounded-4 p-4 mb-4">
+        <h1 class="h3 mb-3">Painel do Guichê</h1>
+        <p class="text-muted">Selecione os tipos de senha que deseja atender:</p>
+
+        <form method="post" class="needs-validation" id="filtro-form">
+            {% csrf_token %}
+            <div class="row g-4 align-items-start" id="filtros">
+                <!-- Campos tipo de senha + proporções -->
+                <div class="col-md-12">
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+                        {% for field in form %}
+                            {% if "tipo_senha" in field.name %}
+                                {% with tipo_senha=field.name|slice:"11:" %}
+                                    {% with proporcao=form|get_proporcao_field:field.name %}
+                                        <div class="col">
+                                            <div class="border border-primary bg-light rounded shadow-sm p-2 h-100 d-flex justify-content-between align-items-center">
+                                                <div class="form-check m-0 d-flex align-items-center">
+                                                    {{ field|add_class:"form-check-input tipo-checkbox me-2" }}
+                                                    <label class="form-check-label fw-semibold mb-0" for="{{ field.id_for_label }}">
+                                                        {{ field.label }}
+                                                    </label>
+                                                </div>
+                                                <div style="min-width: 50px;">
+                                                    {{ proporcao|add_class:"form-control form-control-sm text-end proporcao-input border border-primary" }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endwith %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4" id="filtro-btn-container">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4" id="btn-filtrar">
+                    <i class="bi bi-filter-circle"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card shadow-sm rounded-4 p-4">
+        <h2 class="h4 mb-4">Senhas Geradas Hoje</h2>
+        {% if senhas %}
+            <div class="list-group">
+                {% for senha in senhas %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm rounded-3 my-2">
+                        <div>
+                            <span class="fw-bold">{{ senha.senha }}</span> - {{ senha.nome_completo }}
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-success btn-sm" onclick="chamar({{ senha.id }})">Chamar</button>
+                            <button class="btn btn-warning btn-sm" onclick="reanunciar({{ senha.id }})">Reanunciar</button>
+                            <button class="btn btn-primary btn-sm" onclick="confirmar({{ senha.id }})">Confirmar</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">Nenhuma senha gerada hoje.</p>
+        {% endif %}
+    </div>
+
+    <div class="card shadow-sm rounded-4 p-4 mt-4">
+        <h2 class="h4 mb-4">Histórico de Chamadas</h2>
+        {% if historico_chamadas %}
+            <ul class="list-group">
+                {% for chamada in historico_chamadas %}
+                    <li class="list-group-item">{{ chamada }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Nenhuma chamada registrada.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const proporcaoInputs = document.querySelectorAll('.proporcao-input');
+
+        proporcaoInputs.forEach(function (input) {
+            // Ativa o checkbox se o valor estiver preenchido ao carregar
+            if (input.value.trim() !== "") {
+                const parent = input.closest('.form-check');
+                const checkbox = parent.querySelector('.tipo-checkbox');
+                if (checkbox) checkbox.checked = true;
+            }
+
+            // Ativa o checkbox dinamicamente ao alterar valor
+            input.addEventListener('input', function () {
+                const parent = input.closest('.form-check');
+                if (parent) {
+                    const checkbox = parent.querySelector('.tipo-checkbox');
+                    if (checkbox) {
+                        checkbox.checked = input.value.trim() !== "";
+                    }
+                }
+            });
+        });
+    });
+</script>
+<script>
+function chamar(pacienteId) {
+    fetch(`/guiche/chamar/${pacienteId}/`, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}})
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            console.log('Senha chamada com sucesso');
+            location.reload(); // Recarrega a página
+        } else {
+            alert('Erro ao chamar a senha.');
+        }
+    });
+}
+
+function reanunciar(pacienteId) {
+    fetch(`/guiche/reanunciar/${pacienteId}/`, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}}).then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            console.log('Senha reanunciada com sucesso');
+            location.reload(); // Recarrega a página
+        } else {
+            alert('Erro ao chamar a senha.');
+        }
+    });
+}
+
+function confirmar(pacienteId) {
+    fetch(`/guiche/confirmar/${pacienteId}/`, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}}).then(response => {
+        if (response.ok) {
+          console.log('Senha Confirmada com sucesso');
+          location.reload();
+        } else {
+            alert('Erro ao confirmar o atendimento.');
+        }
+    });
+}
+
+function atualizarTelaTv(senha,nome,guiche) {
+            console.log("Atualizando tela da tv...",senha,nome,guiche);
+        }
+</script>
+{% endblock %}

@@ -1,0 +1,331 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Chamadas</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            z-index: 1000;
+            height: 70px;
+        }
+
+        .top-bar .logo {
+            height: 50px;
+        }
+
+        .top-bar .horario {
+            font-size: 1.5em;
+            color: #555;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 20px;
+            margin-top: 80px;
+        }
+
+        .left-panel, .right-panel {
+            width: 48%;
+        }
+
+        .senha-chamada {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .senha-chamada h3 {
+            font-size: 2rem; /* Reduz o tamanho da fonte inicial */
+            color: #dc3545;
+            animation: blinkBackground 1s steps(5, start) infinite;
+            padding: 10px; /* Reduz o preenchimento */
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+            margin-bottom: 15px; /* Reduz a margem inferior */
+            display: inline-block;
+            max-height: 70%; /* Define uma altura máxima */
+            overflow: hidden; /* Esconde o conteúdo que ultrapassa a altura */
+            line-height: 1.2; /* Ajusta o espaçamento entre linhas */
+        }
+
+        @keyframes blinkBackground {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(220,53,69,0.5); }
+            100% { background-color: transparent; }
+        }
+
+        .historico-senhas {
+            margin-top: 20px;
+            height: 500px;
+            overflow-y: scroll;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .historico-senhas h4 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .historico-senhas ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .historico-senhas li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .historico-senhas li:last-child {
+            border-bottom: none;
+        }
+
+        .historico-senhas li.destaque {
+            font-weight: bold;
+            color: #dc3545;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #000;
+            padding: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        footer img {
+            height: 40px;
+        }
+
+        /* Estilos para a mensagem de boas-vindas */
+        .mensagem-boas-vindas {
+            color: #007bff; /* Cor do texto */
+            font-size: 1.2em;
+            white-space: nowrap; /* Evita que o texto que ultrapassa o container */
+            overflow: hidden; /* Esconde o texto que ultrapassa o container */
+            position: absolute; /* Posiciona o texto absolutamente */
+            top: 50%; /* Centraliza verticalmente */
+            left: 50%; /* Centraliza horizontalmente */
+            transform: translateX(-50%) translateY(-50%); /* Ajusta o posicionamento */
+        }
+    </style>
+</head>
+<body>
+     <!-- Top Bar com Logo e Horário -->
+    <div class="top-bar">
+        <img src="{% static 'img/logo.png' %}" alt="Logo Sistema" class="logo">
+        <marquee class="mensagem-boas-vindas" behavior="scroll" direction="left">
+            Bem-vindos ao Instituto Lauro de Souza Lima!
+        </marquee>
+        <span class="horario" id="horario"></span>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content container-fluid">
+
+        <!-- Painel Esquerdo: Senha Chamada e Histórico -->
+        <div class="left-panel">
+            <div class="senha-chamada mt-4">
+                {% if senha_chamada %}
+                    <!-- Exibe o nome e a sala no destaque -->
+                    <h3 class="text-danger" id="senha-chamada-texto" data-nome="{{ nome_completo }}" data-sala="{{ sala_consulta }}">
+                        {{ nome_completo }} - Sala: {{ sala_consulta }}
+                    </h3>
+                    <!-- Remove o segundo h3 -->
+                    <p>Profissional: {{ profissional_nome }}</p>
+                {% else %}
+                    <h5 class="text-muted" id="senha-chamada-texto" data-senha="">
+                        Nenhuma senha chamada no momento.
+                    </h5>
+                {% endif %}
+            </div>
+
+            <div class="historico-senhas">
+                <h4>Histórico de Chamadas</h4>
+                <ul>
+                    {% for chamada in historico_senhas %}
+                        <li>
+                            {{ chamada.paciente.senha }} - {{ chamada.paciente.nome_completo }} - Profissional: {{ chamada.profissional_saude.first_name }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Painel Direito: Vídeo -->
+        <div class="right-panel">
+            <video id="meuVideo" width="100%" height="auto" controls loop muted volume="0.3" autoplay>
+                <source src="{% static 'video/video-lauro-1.mp4' %}" type="video/mp4">
+                Seu navegador não suporta o formato de vídeo.
+            </video>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer>
+        <img src="{% static 'img/logo-rodape-governo-do-estado-sp.png' %}" alt="Governo SP">
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            console.log("Iniciando script...");
+
+            var ultimaChamadaId = "{{ ultima_chamada.id }}"; // Armazena o ID da última chamada
+            var synth = window.speechSynthesis;
+            var audioAtivo = true;
+
+            function atualizarTela() {
+                console.log("Atualizando tela...");
+                $.ajax({
+                    url: "{% url 'profissional_saude:tv2_api' %}",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        console.log("Dados recebidos da API:", data);
+
+                        if (data.nome_completo && data.sala_consulta && data.profissional_nome && data.id !== ultimaChamadaId) {
+                            // Atualiza a tela
+                            var nomeSala = data.nome_completo + " - Sala: " + data.sala_consulta;
+                            $('#senha-chamada-texto').text(nomeSala);
+                            $('#senha-chamada-texto').data('nome', data.nome_completo); // Atualiza o data-nome
+                            $('#senha-chamada-texto').data('sala', data.sala_consulta); // Atualiza o data-sala
+
+                            $('.senha-chamada p:nth-child(1)').text("Profissional: " + data.profissional_nome);
+
+                            falarSenhaTresVezes(data.nome_completo, data.sala_consulta, data.profissional_nome);
+
+                            ultimaChamadaId = data.id; // Atualiza o ID da última chamada
+                        } else {
+                            console.log("Nenhuma atualização necessária ou dados incompletos.");
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("Erro ao atualizar a tela: " + textStatus);
+                    }
+                });
+            }
+
+            // Função para chamar o paciente
+
+            function falarSoletracao(nomeCompleto, salaConsulta, profissionalNome) {
+                console.log("Função falarSoletracao chamada!");
+
+                if (!synth) {
+                    console.error("speechSynthesis não está disponível!");
+                    return;
+                }
+
+                if (!nomeCompleto || !salaConsulta || !profissionalNome) {
+                    console.log("Nome, Sala ou Profissional não definidos. Não há nada para falar.");
+                    return;
+                }
+
+                var utterThis = new SpeechSynthesisUtterance();
+                utterThis.text = "Paciente " + nomeCompleto + ", dirija-se à sala " + salaConsulta + " para consulta com o Doutor " + profissionalNome + ".";  // Formata a frase
+                console.log("String de fala:", utterThis.text);
+
+                utterThis.lang = 'pt-BR';
+
+                var femaleVoice = getFemaleVoice();
+                if (femaleVoice) {
+                    utterThis.voice = femaleVoice;
+                    console.log("Voz selecionada:", femaleVoice.name);
+                } else {
+                    console.log("Nenhuma voz feminina encontrada.");
+                }
+
+                var video = document.getElementById("meuVideo");
+
+                utterThis.onstart = function(event) {
+                    video.volume = 0.025;
+                }
+
+                utterThis.onend = function(event) {
+                    video.volume = 0.1;
+                }
+
+                utterThis.onerror = function(event) {
+                    console.error('Erro ao falar:', event.error);
+                }
+
+                synth.speak(utterThis);
+                console.log("Nome falado: " + nomeCompleto);
+            }
+
+            function getFemaleVoice() {
+                var voices = synth.getVoices();
+                console.log("Vozes disponíveis:", voices);
+
+                for (var i = 0; i < voices.length; i++) {
+                    if (voices[i].lang === 'pt-BR' && voices[i].name.toLowerCase().includes('female')) {
+                        console.log("Voz pt-BR feminina encontrada:", voices[i].name);
+                        return voices[i];
+                    }
+                }
+                for (var i = 0; i < voices.length; i++) {
+                    if (voices[i].lang === 'pt-BR') {
+                        console.log("Voz pt-BR encontrada:", voices[i].name);
+                        return voices[i];
+                    }
+                }
+                console.log("Nenhuma voz pt-BR encontrada.");
+                return null;
+            }
+
+            function falarSenhaTresVezes(nomeCompleto, salaConsulta, profissionalNome) { //Removi a senha
+                for (var i = 0; i < 3; i++) {
+                    falarSoletracao(nomeCompleto, salaConsulta, profissionalNome);
+                }
+            }
+
+            function displayTime() {
+                var now = new Date();
+                var hours = String(now.getHours()).padStart(2, '0');
+                var minutes = String(now.getMinutes()).padStart(2, '0');
+                var seconds = String(now.getSeconds()).padStart(2, '0');
+                var timeString = hours + ':' + minutes + ':' + seconds;
+                document.getElementById("horario").innerText = timeString;
+            }
+
+            // Atualiza o horário a cada segundo
+            setInterval(displayTime, 1000);
+
+            // Inicializa a atualização da tela
+            setInterval(atualizarTela, 5000);
+        });
+    </script>
+
+</body>
+</html>

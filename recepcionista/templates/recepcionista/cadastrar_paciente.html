@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load tz %}
+
+{% block content %}
+    <div class="container">
+        <h1>Cadastrar Paciente</h1>
+        <p>Preencha o formulário abaixo para cadastrar um novo paciente:</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div>
+                {{ form.nome_completo.label_tag }} {{ form.nome_completo }}
+            </div>
+            <div>
+                {{ form.cartao_sus.label_tag }} {{ form.cartao_sus }}
+            </div>
+            <div>
+                {{ form.horario_agendamento.label_tag }} {{ form.horario_agendamento }}
+            </div>
+            <div>
+                {{ form.profissional_saude.label_tag }} {{ form.profissional_saude }}
+            </div>
+            <div>
+                {{ form.tipo_senha.label_tag }} {{ form.tipo_senha }}
+            </div>
+            <div>
+                {{ form.observacoes.label_tag }} {{ form.observacoes }}
+            </div>
+            <div>
+            <button type="submit">Cadastrar</button>
+            </div>
+        </form>
+    </div>
+{% endblock %}
