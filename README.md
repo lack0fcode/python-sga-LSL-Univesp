@@ -59,7 +59,7 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 4. Configure o banco de dados PostgreSQL local
+### 4. Configure o banco de dados PostgreSQL local (SE NECESSÁRIO)
 
 1. Instale o PostgreSQL localmente (caso ainda não tenha).
 2. Crie um banco de dados e um usuário para a aplicação:
@@ -76,7 +76,7 @@ GRANT ALL PRIVILEGES ON DATABASE sga_db TO sga_user;
 \q
 ```
 
-3. No arquivo `sga/settings.py`, configure as variáveis do banco:
+3. No arquivo `sga/settings.py`, configure as variáveis do banco: (SE NECESSÁRIO)
 
 ```python
 DATABASES = {
@@ -91,13 +91,13 @@ DATABASES = {
 }
 ```
 
-### 5. Crie as tabelas do banco de dados
+### 5. Crie as tabelas do banco de dados (SE NECESSÁRIO)
 
 ```bash
 python manage.py migrate
 ```
 
-### 6. Crie um superusuário para acessar o admin
+### 6. Crie um superusuário para acessar o admin (SE NECESSÁRIO)
 
 ```bash
 python manage.py createsuperuser
