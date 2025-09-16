@@ -13,121 +13,531 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ("auth", "0012_alter_user_first_name_max_length"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CustomUser',
+            name="CustomUser",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('password', models.CharField(max_length=128, verbose_name='password')),
-                ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
-                ('is_superuser', models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.', verbose_name='superuser status')),
-                ('username', models.CharField(error_messages={'unique': 'A user with that username already exists.'}, help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, unique=True, validators=[django.contrib.auth.validators.UnicodeUsernameValidator()], verbose_name='username')),
-                ('first_name', models.CharField(blank=True, max_length=150, verbose_name='first name')),
-                ('last_name', models.CharField(blank=True, max_length=150, verbose_name='last name')),
-                ('email', models.EmailField(blank=True, max_length=254, verbose_name='email address')),
-                ('is_staff', models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')),
-                ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
-                ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
-                ('funcao', models.CharField(choices=[('administrador', 'Administrador'), ('recepcionista', 'Recepcionista'), ('guiche', 'Guichê'), ('profissional_saude', 'Profissional de Saúde')], default='recepcionista', max_length=20, verbose_name='Função')),
-                ('cpf', models.CharField(max_length=14, unique=True, verbose_name='CPF')),
-                ('data_admissao', models.DateField(blank=True, null=True, verbose_name='Data de Admissão')),
-                ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
-                ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("password", models.CharField(max_length=128, verbose_name="password")),
+                (
+                    "last_login",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="last login"
+                    ),
+                ),
+                (
+                    "is_superuser",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Designates that this user has all permissions without explicitly assigning them.",
+                        verbose_name="superuser status",
+                    ),
+                ),
+                (
+                    "username",
+                    models.CharField(
+                        error_messages={
+                            "unique": "A user with that username already exists."
+                        },
+                        help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+                        max_length=150,
+                        unique=True,
+                        validators=[
+                            django.contrib.auth.validators.UnicodeUsernameValidator()
+                        ],
+                        verbose_name="username",
+                    ),
+                ),
+                (
+                    "first_name",
+                    models.CharField(
+                        blank=True, max_length=150, verbose_name="first name"
+                    ),
+                ),
+                (
+                    "last_name",
+                    models.CharField(
+                        blank=True, max_length=150, verbose_name="last name"
+                    ),
+                ),
+                (
+                    "email",
+                    models.EmailField(
+                        blank=True, max_length=254, verbose_name="email address"
+                    ),
+                ),
+                (
+                    "is_staff",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Designates whether the user can log into this admin site.",
+                        verbose_name="staff status",
+                    ),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Designates whether this user should be treated as active. Unselect this instead of deleting accounts.",
+                        verbose_name="active",
+                    ),
+                ),
+                (
+                    "date_joined",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now, verbose_name="date joined"
+                    ),
+                ),
+                (
+                    "funcao",
+                    models.CharField(
+                        choices=[
+                            ("administrador", "Administrador"),
+                            ("recepcionista", "Recepcionista"),
+                            ("guiche", "Guichê"),
+                            ("profissional_saude", "Profissional de Saúde"),
+                        ],
+                        default="recepcionista",
+                        max_length=20,
+                        verbose_name="Função",
+                    ),
+                ),
+                (
+                    "cpf",
+                    models.CharField(max_length=14, unique=True, verbose_name="CPF"),
+                ),
+                (
+                    "data_admissao",
+                    models.DateField(
+                        blank=True, null=True, verbose_name="Data de Admissão"
+                    ),
+                ),
+                (
+                    "groups",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="The groups this user belongs to. A user will get all permissions granted to each of their groups.",
+                        related_name="user_set",
+                        related_query_name="user",
+                        to="auth.group",
+                        verbose_name="groups",
+                    ),
+                ),
+                (
+                    "user_permissions",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="Specific permissions for this user.",
+                        related_name="user_set",
+                        related_query_name="user",
+                        to="auth.permission",
+                        verbose_name="user permissions",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'user',
-                'verbose_name_plural': 'users',
-                'abstract': False,
+                "verbose_name": "user",
+                "verbose_name_plural": "users",
+                "abstract": False,
             },
             managers=[
-                ('objects', django.contrib.auth.models.UserManager()),
+                ("objects", django.contrib.auth.models.UserManager()),
             ],
         ),
         migrations.CreateModel(
-            name='Paciente',
+            name="Paciente",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome_completo', models.CharField(blank=True, max_length=255, null=True, verbose_name='Nome Completo')),
-                ('tipo_senha', models.CharField(blank=True, choices=[('E', 'Exames'), ('C', 'Curativos'), ('P', 'Psicologia'), ('G', 'Geral'), ('D', 'Dentista'), ('A', 'Primeiro Atendimento'), ('NH', 'Hansenologia'), ('H', 'Hansenologia Retorno'), ('U', 'Ultrassom')], max_length=2, null=True, verbose_name='Tipo de Senha')),
-                ('senha', models.CharField(blank=True, max_length=6, null=True, verbose_name='Senha')),
-                ('cartao_sus', models.CharField(blank=True, max_length=20, null=True, verbose_name='Cartão do SUS')),
-                ('horario_geracao_senha', models.DateTimeField(auto_now_add=True, null=True, verbose_name='Horário da Geração da Senha')),
-                ('horario_agendamento', models.DateTimeField(blank=True, null=True, verbose_name='Horário do Agendamento')),
-                ('observacoes', models.CharField(blank=True, max_length=255, null=True, verbose_name='Observações')),
-                ('atendido', models.BooleanField(default=False, verbose_name='Atendido')),
-                ('profissional_saude', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='Funcionário')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nome_completo",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="Nome Completo",
+                    ),
+                ),
+                (
+                    "tipo_senha",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("E", "Exames"),
+                            ("C", "Curativos"),
+                            ("P", "Psicologia"),
+                            ("G", "Geral"),
+                            ("D", "Dentista"),
+                            ("A", "Primeiro Atendimento"),
+                            ("NH", "Hansenologia"),
+                            ("H", "Hansenologia Retorno"),
+                            ("U", "Ultrassom"),
+                        ],
+                        max_length=2,
+                        null=True,
+                        verbose_name="Tipo de Senha",
+                    ),
+                ),
+                (
+                    "senha",
+                    models.CharField(
+                        blank=True, max_length=6, null=True, verbose_name="Senha"
+                    ),
+                ),
+                (
+                    "cartao_sus",
+                    models.CharField(
+                        blank=True,
+                        max_length=20,
+                        null=True,
+                        verbose_name="Cartão do SUS",
+                    ),
+                ),
+                (
+                    "horario_geracao_senha",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        null=True,
+                        verbose_name="Horário da Geração da Senha",
+                    ),
+                ),
+                (
+                    "horario_agendamento",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Horário do Agendamento"
+                    ),
+                ),
+                (
+                    "observacoes",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="Observações",
+                    ),
+                ),
+                (
+                    "atendido",
+                    models.BooleanField(default=False, verbose_name="Atendido"),
+                ),
+                (
+                    "profissional_saude",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Funcionário",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Guiche',
+            name="Guiche",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('numero', models.IntegerField(unique=True, verbose_name='Número do Guichê')),
-                ('em_atendimento', models.BooleanField(default=False, verbose_name='Em Atendimento')),
-                ('funcionario', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='guiches', to=settings.AUTH_USER_MODEL, verbose_name='Funcionário')),
-                ('user', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='guiche', to=settings.AUTH_USER_MODEL, verbose_name='Usuário')),
-                ('senha_atendida', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.paciente', verbose_name='Senha Atendida')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "numero",
+                    models.IntegerField(unique=True, verbose_name="Número do Guichê"),
+                ),
+                (
+                    "em_atendimento",
+                    models.BooleanField(default=False, verbose_name="Em Atendimento"),
+                ),
+                (
+                    "funcionario",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="guiches",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Funcionário",
+                    ),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="guiche",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Usuário",
+                    ),
+                ),
+                (
+                    "senha_atendida",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="core.paciente",
+                        verbose_name="Senha Atendida",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Chamada',
+            name="Chamada",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('acao', models.CharField(choices=[('chamada', 'Chamada'), ('reanuncio', 'Reanúncio'), ('confirmado', 'Confirmado')], max_length=15)),
-                ('data_hora', models.DateTimeField(auto_now_add=True)),
-                ('guiche', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.guiche', verbose_name='Guichê')),
-                ('paciente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.paciente', verbose_name='Paciente')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "acao",
+                    models.CharField(
+                        choices=[
+                            ("chamada", "Chamada"),
+                            ("reanuncio", "Reanúncio"),
+                            ("confirmado", "Confirmado"),
+                        ],
+                        max_length=15,
+                    ),
+                ),
+                ("data_hora", models.DateTimeField(auto_now_add=True)),
+                (
+                    "guiche",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.guiche",
+                        verbose_name="Guichê",
+                    ),
+                ),
+                (
+                    "paciente",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.paciente",
+                        verbose_name="Paciente",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-data_hora'],
+                "ordering": ["-data_hora"],
             },
         ),
         migrations.CreateModel(
-            name='Atendimento',
+            name="Atendimento",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data_hora', models.DateTimeField(auto_now_add=True, verbose_name='Data e Hora')),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Funcionário')),
-                ('paciente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.paciente', verbose_name='Paciente')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "data_hora",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Data e Hora"),
+                ),
+                (
+                    "funcionario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Funcionário",
+                    ),
+                ),
+                (
+                    "paciente",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.paciente",
+                        verbose_name="Paciente",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='ProfissionalDeSaude',
+            name="ProfissionalDeSaude",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('sala', models.IntegerField(unique=True, verbose_name='Sala do Profissional')),
-                ('em_consulta', models.BooleanField(default=False, verbose_name='Em Consulta')),
-                ('funcionario', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='profissional_saude', to=settings.AUTH_USER_MODEL, verbose_name='Funcionário')),
-                ('senha_atendida', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.paciente', verbose_name='Senha Atendida')),
-                ('user', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='profissiomal_saude', to=settings.AUTH_USER_MODEL, verbose_name='Usuário')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "sala",
+                    models.IntegerField(
+                        unique=True, verbose_name="Sala do Profissional"
+                    ),
+                ),
+                (
+                    "em_consulta",
+                    models.BooleanField(default=False, verbose_name="Em Consulta"),
+                ),
+                (
+                    "funcionario",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="profissional_saude",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Funcionário",
+                    ),
+                ),
+                (
+                    "senha_atendida",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="core.paciente",
+                        verbose_name="Senha Atendida",
+                    ),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="profissiomal_saude",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Usuário",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Consulta',
+            name="Consulta",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('acao', models.CharField(choices=[('chamada', 'Chamada'), ('reanuncio', 'Reanúncio'), ('confirmado', 'Confirmado'), ('encaminha', 'Encaminha')], max_length=15)),
-                ('data_hora', models.DateTimeField(auto_now_add=True)),
-                ('paciente', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.paciente', verbose_name='Paciente')),
-                ('profissional_saude', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.profissionaldesaude', verbose_name='ProfissionalDeSaude')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "acao",
+                    models.CharField(
+                        choices=[
+                            ("chamada", "Chamada"),
+                            ("reanuncio", "Reanúncio"),
+                            ("confirmado", "Confirmado"),
+                            ("encaminha", "Encaminha"),
+                        ],
+                        max_length=15,
+                    ),
+                ),
+                ("data_hora", models.DateTimeField(auto_now_add=True)),
+                (
+                    "paciente",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.paciente",
+                        verbose_name="Paciente",
+                    ),
+                ),
+                (
+                    "profissional_saude",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="core.profissionaldesaude",
+                        verbose_name="ProfissionalDeSaude",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-data_hora'],
+                "ordering": ["-data_hora"],
             },
         ),
         migrations.CreateModel(
-            name='RegistroDeAcesso',
+            name="RegistroDeAcesso",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('data_hora', models.DateTimeField(default=django.utils.timezone.now, verbose_name='Data e Hora')),
-                ('tipo_de_acesso', models.CharField(choices=[('login', 'Login'), ('logout', 'Logout')], max_length=10, verbose_name='Tipo de Acesso')),
-                ('endereco_ip', models.GenericIPAddressField(blank=True, null=True, verbose_name='Endereço IP')),
-                ('user_agent', models.TextField(blank=True, null=True, verbose_name='User Agent')),
-                ('view_name', models.CharField(blank=True, max_length=255, null=True, verbose_name='Nome da View')),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Usuário')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "data_hora",
+                    models.DateTimeField(
+                        default=django.utils.timezone.now, verbose_name="Data e Hora"
+                    ),
+                ),
+                (
+                    "tipo_de_acesso",
+                    models.CharField(
+                        choices=[("login", "Login"), ("logout", "Logout")],
+                        max_length=10,
+                        verbose_name="Tipo de Acesso",
+                    ),
+                ),
+                (
+                    "endereco_ip",
+                    models.GenericIPAddressField(
+                        blank=True, null=True, verbose_name="Endereço IP"
+                    ),
+                ),
+                (
+                    "user_agent",
+                    models.TextField(blank=True, null=True, verbose_name="User Agent"),
+                ),
+                (
+                    "view_name",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="Nome da View",
+                    ),
+                ),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Usuário",
+                    ),
+                ),
             ],
         ),
     ]

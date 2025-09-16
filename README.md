@@ -59,51 +59,7 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 4. Configure o banco de dados PostgreSQL local (SE NECESSÁRIO)
-
-1. Instale o PostgreSQL localmente (caso ainda não tenha).
-2. Crie um banco de dados e um usuário para a aplicação:
-
-```bash
-sudo -u postgres psql
-# No prompt do psql:
-CREATE DATABASE sga_db;
-CREATE USER sga_user WITH PASSWORD 'sua_senha_segura';
-ALTER ROLE sga_user SET client_encoding TO 'utf8';
-ALTER ROLE sga_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE sga_user SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE sga_db TO sga_user;
-\q
-```
-
-3. No arquivo `sga/settings.py`, configure as variáveis do banco: (SE NECESSÁRIO)
-
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'sga_db',
-        'USER': 'sga_user',
-        'PASSWORD': 'sua_senha_segura',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-```
-
-### 5. Crie as tabelas do banco de dados (SE NECESSÁRIO)
-
-```bash
-python manage.py migrate
-```
-
-### 6. Crie um superusuário para acessar o admin (SE NECESSÁRIO)
-
-```bash
-python manage.py createsuperuser
-```
-
-### 7. Rode o servidor localmente
+### 4. Rode o servidor localmente
 
 ```bash
 python manage.py runserver
