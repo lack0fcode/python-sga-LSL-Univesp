@@ -147,17 +147,14 @@
         <!-- Painel Esquerdo: Senha Chamada e Histórico -->
         <div class="left-panel">
             <div class="senha-chamada mt-4">
-                {% if ultima_chamada %}
-                    <!-- Exibe o nome e o guichê no destaque -->
-                    <h3 class="text-danger" id="nome-chamado-texto">
+                <h3 class="text-danger" id="nome-chamado-texto">
+                    {% if ultima_chamada %}
                         {{ ultima_chamada.paciente.nome_completo }} - Guichê {{ ultima_chamada.guiche.numero }}
-                    </h3>
-                    <p>Por favor, dirija-se ao guichê.</p>
-                {% else %}
-                    <h5 class="text-muted" id="senha-chamada-texto" data-senha="">
+                    {% else %}
                         Nenhuma senha chamada no momento.
-                    </h5>
-                {% endif %}
+                    {% endif %}
+                </h3>
+                <p>Por favor, dirija-se ao guichê.</p>
             </div>
 
             <div class="historico-senhas">

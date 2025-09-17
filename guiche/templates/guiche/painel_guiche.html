@@ -4,7 +4,16 @@
 {% block content %}
 <div class="container py-4">
     <div class="card shadow-sm rounded-4 p-4 mb-4">
-        <h1 class="h3 mb-3">Painel do Guichê</h1>
+        <h1 class="h3 mb-3"> Painel do Guichê
+        {% if request.session.guiche_id %}
+            <small class="text-muted">— Guichê selecionado: {{ request.session.guiche_id }}</small>
+        {% endif %}
+        </h1>
+
+        <a href="{% url 'guiche:selecionar_guiche' %}" class="btn btn-outline-secondary btn-sm mb-3">
+        Selecionar/Trocar Guichê
+        </a>
+
         <p class="text-muted">Selecione os tipos de senha que deseja atender:</p>
 
         <form method="post" class="needs-validation" id="filtro-form">
