@@ -1,13 +1,16 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('core.urls')),
-    path('administrador/', include('administrador.urls')),
-    path('recepcionista/', include('recepcionista.urls')),
-    path('guiche/', include('guiche.urls')),
-    path('profissional_saude/', include('profissional_saude.urls', namespace='profissional_saude')),
+    path("admin/", admin.site.urls),
+    path("", include("core.urls")),
+    path("administrador/", include("administrador.urls")),
+    path("recepcionista/", include("recepcionista.urls")),
+    path("guiche/", include("guiche.urls")),
+    path(
+        "profissional_saude/",
+        include("profissional_saude.urls", namespace="profissional_saude"),
+    ),
 ]
 
 admin.site.site_header = "SGA - Admin"

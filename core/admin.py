@@ -1,16 +1,26 @@
 # core/admin.py
 from django.contrib import admin
-from .models import CustomUser, Paciente, Atendimento, RegistroDeAcesso, Guiche
 from django.utils import timezone
 from django.utils.html import format_html
 
+from .models import Atendimento, CustomUser, Guiche, Paciente, RegistroDeAcesso
+
+
 class RegistroDeAcessoAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'tipo_de_acesso', 'endereco_ip', 'user_agent', 'data_hora_local')
+    list_display = (
+        "usuario",
+        "tipo_de_acesso",
+        "endereco_ip",
+        "user_agent",
+        "data_hora_local",
+    )
 
     def data_hora_local(self, obj):
-        return timezone.localtime(obj.data_hora).strftime('%d/%m/%Y %H:%M:%S')
-    data_hora_local.admin_order_field = 'data_hora'
-    data_hora_local.short_description = 'Data e Hora (São Paulo)'
+        return timezone.localtime(obj.data_hora).strftime("%d/%m/%Y %H:%M:%S")
+
+    data_hora_local.admin_order_field = "data_hora"
+    data_hora_local.short_description = "Data e Hora (São Paulo)"
+
 
 admin.site.register(CustomUser)
 admin.site.register(Paciente)

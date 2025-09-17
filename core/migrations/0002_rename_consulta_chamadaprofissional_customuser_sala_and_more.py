@@ -8,25 +8,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameModel(
-            old_name='Consulta',
-            new_name='ChamadaProfissional',
+            old_name="Consulta",
+            new_name="ChamadaProfissional",
         ),
         migrations.AddField(
-            model_name='customuser',
-            name='sala',
-            field=models.IntegerField(blank=True, null=True, verbose_name='Sala do Profissional'),
+            model_name="customuser",
+            name="sala",
+            field=models.IntegerField(
+                blank=True, null=True, verbose_name="Sala do Profissional"
+            ),
         ),
         migrations.AlterField(
-            model_name='chamadaprofissional',
-            name='profissional_saude',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='ProfissionalDeSaude'),
+            model_name="chamadaprofissional",
+            name="profissional_saude",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="ProfissionalDeSaude",
+            ),
         ),
         migrations.DeleteModel(
-            name='ProfissionalDeSaude',
+            name="ProfissionalDeSaude",
         ),
     ]
