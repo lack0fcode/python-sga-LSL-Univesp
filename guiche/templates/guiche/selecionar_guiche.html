@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <div class="card shadow-sm rounded-4 p-4">
+    <h1 class="h4 mb-3">Selecione seu Guichê</h1>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        {{ form.guiche.label_tag }}<br>
+        {{ form.guiche }}
+      </div>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+      <a href="{% url 'guiche:painel_guiche' %}" class="btn btn-link">Voltar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
