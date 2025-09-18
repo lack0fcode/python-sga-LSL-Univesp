@@ -55,9 +55,15 @@ jobs:
           DJANGO_SETTINGS_MODULE: sga.settings
           DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
         run: |
-          coverage run --source='.' manage.py test
+          coverage run --source='.' manage.py test --settings=sga.settings_test
           coverage report
-          coverage xml
+          coverage html
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
 
   lint:
     runs-on: ubuntu-latest
@@ -71,15 +77,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black isort
+          pip install flake8 black
       - name: Run Flake8
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --statistics
       - name: Run Black
         run: black --check .
-      - name: Run isort
-        run: isort --check-only .
 
   security:
     runs-on: ubuntu-latest

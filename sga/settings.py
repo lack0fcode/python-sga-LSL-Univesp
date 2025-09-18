@@ -137,7 +137,7 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_MAX_FILE_SIZE = 104857600
+WHITENOISE_MAX_FILE_SIZE = 209715200
 
 AUTH_USER_MODEL = "core.CustomUser"
 
