@@ -1,3 +1,4 @@
+# guiche/views.py
 import datetime
 import os
 import tempfile
@@ -17,6 +18,7 @@ from gtts import gTTS
 
 from core.decorators import guiche_required
 from core.models import Chamada, Guiche, Paciente
+from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
 from .forms import GuicheForm
 
@@ -138,8 +140,8 @@ def chamar_senha(request, paciente_id):
     paciente = get_object_or_404(Paciente, id=paciente_id)
     guiche = get_guiche_do_usuario(request.user, request=request)
 
-    # Chama realizar_acao_senha e armazena o resultado
-    response = realizar_acao_senha(
+    # 1. Cria o registro da chamada (já está feito)
+    response_chamada = realizar_acao_senha(
         request,
         paciente.senha,
         guiche.numero,
@@ -148,8 +150,21 @@ def chamar_senha(request, paciente_id):
         "chamada",
     )
 
-    # Retorna o JsonResponse
-    return response
+    # 2. Tenta enviar mensagem via WhatsApp
+    numero_celular_paciente = paciente.telefone_e164()  # Obtém o número formatado
+    if numero_celular_paciente:
+        mensagem = (
+            f"Olá {paciente.nome_completo.split()[0]}! "
+            f"Seu atendimento foi iniciado. Por favor, dirija-se ao Guichê {guiche.numero}."
+        )
+        enviar_whatsapp(numero_celular_paciente, mensagem)
+    else:
+        print(
+            f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
+        )
+
+    # 3. Retorna o JsonResponse original
+    return response_chamada
 
 
 @require_POST
@@ -196,14 +211,31 @@ def confirmar_atendimento(request, paciente_id):
     return JsonResponse({"status": "ok"})
 
 
-def realizar_acao_senha(request, senha, guiche, nome, paciente_id, acao):
-    guiche_obj = Guiche.objects.get(numero=guiche)
+def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
+    guiche_obj = Guiche.objects.get(numero=guiche_numero)
     paciente = Paciente.objects.get(id=paciente_id)
 
     Chamada.objects.create(paciente=paciente, guiche=guiche_obj, acao=acao)
-    # Recuperar dados para passar para a tv
-    data = {"senha": senha, "nome_completo": nome, "guiche": guiche}
-    return JsonResponse({"status": "ok", "data": data})
+
+    # Preparar dados para a TV
+    data_for_tv = {"senha": senha, "nome_completo": nome, "guiche": guiche_numero}
+
+    # --- LÓGICA DE ENVIO DE SMS ---
+    if acao in ["chamada", "reanuncio"] and paciente.telefone_celular:
+        numero_e164 = paciente.telefone_e164()
+        if numero_e164:
+            mensagem = (
+                f"Seu atendimento foi iniciado. Por favor, dirija-se ao Guichê {guiche_numero}. "
+                f"Chamado: {senha} - {nome}."
+            )
+            enviar_whatsapp(numero_e164, mensagem)
+        else:
+            print(
+                f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado."
+            )
+    # --- FIM DA LÓGICA DE ENVIO DE SMS ---
+
+    return JsonResponse({"status": "ok", "data": data_for_tv})
 
 
 @never_cache

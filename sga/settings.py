@@ -16,6 +16,12 @@ from pathlib import Path
 import dj_database_url
 from decouple import config
 
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -168,3 +174,10 @@ LOGGING = {
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Twilio Settings
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")  # <<-- Use o NOME DA VARIAVEL
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")  # <<-- Use o NOME DA VARIAVEL
+TWILIO_WHATSAPP_NUMBER = os.environ.get(
+    "TWILIO_WHATSAPP_NUMBER"
+)  # <<-- Use o NOME DA VARIAVEL
