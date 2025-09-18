@@ -95,29 +95,30 @@ class Paciente(models.Model):
         help_text="Ex.: (99) 9 9999-9999",
         validators=[
             RegexValidator(
-                regex=r'^\D*?(\d{2})\D*?(9\d{4})\D*?(\d{4})\D*$',
-                message="Informe um celular válido(DDD + 9 dígitos, ex.: (99) 9 9999-9999)."
+                regex=r"^\D*?(\d{2})\D*?(9\d{4})\D*?(\d{4})\D*$",
+                message="Informe um celular válido(DDD + 9 dígitos, ex.: (99) 9 9999-9999).",
             )
         ],
     )
 
     def telefone_e164(self) -> str | None:
-        
-        #Retorna o telefone em formato E.164 (+55DDDNXXXXXXXX) ou None se não houver.
-        #Aceita formatos variados e converte para +55.
-        
+
+        # Retorna o telefone em formato E.164 (+55DDDNXXXXXXXX) ou None se não houver.
+        # Aceita formatos variados e converte para +55.
+
         if not self.telefone_celular:
             return None
         import re
-        digits = re.sub(r'\D+', '', self.telefone_celular)  
+
+        digits = re.sub(r"\D+", "", self.telefone_celular)
         # Esperado: 2 (DDD) + 9 (celular iniciando em 9) = 11 dígitos
-        if len(digits) == 11 and digits[2] == '9':
+        if len(digits) == 11 and digits[2] == "9":
             return f"+55{digits}"
         # Caso venha já com 13 (+55) -> remove prefixos e tenta padronizar
-        if len(digits) == 13 and digits.startswith('55') and digits[4] == '9':
+        if len(digits) == 13 and digits.startswith("55") and digits[4] == "9":
             return f"+{digits}"
         return None  # inválido
-    
+
     observacoes = models.CharField(
         max_length=255, blank=True, null=True, verbose_name="Observações"
     )

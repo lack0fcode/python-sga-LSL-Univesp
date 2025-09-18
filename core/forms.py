@@ -42,11 +42,14 @@ class CadastrarPacienteForm(forms.ModelForm):
     def clean_telefone_celular(self):
         val = self.cleaned_data.get("telefone_celular", "") or ""
         import re
+
         digits = re.sub(r"\D+", "", val)[:11]  # só dígitos, no máx 11
         # opcional: exigir 11 dígitos começando com 9 no 3º
         if digits and not (len(digits) == 11 and digits[2] == "9"):
-            raise forms.ValidationError("Informe um celular válido com DDD e 9 dígitos.")
-        return digits  
+            raise forms.ValidationError(
+                "Informe um celular válido com DDD e 9 dígitos."
+            )
+        return digits
 
     class Meta:
         model = Paciente
