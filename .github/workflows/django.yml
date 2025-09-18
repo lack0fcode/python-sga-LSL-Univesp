@@ -77,12 +77,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black
+          pip install flake8 black isort
       - name: Run Flake8
         run: |
-          flake8 . --exclude=venv,.venv --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --statistics
       - name: Run Black
-        run: black --check . --line-length 79
+        run: black --check .
+      - name: Run isort
+        run: isort --check-only .
 
   security:
     runs-on: ubuntu-latest

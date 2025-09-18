@@ -6,16 +6,10 @@ app_name = "guiche"
 
 urlpatterns = [
     path("painel_guiche/", views.painel_guiche, name="painel_guiche"),
-    path(
-        "selecionar_guiche/",
-        views.selecionar_guiche,
-        name="selecionar_guiche",
-    ),
+    path("selecionar_guiche/", views.selecionar_guiche, name="selecionar_guiche"),
     path("chamar/<int:paciente_id>/", views.chamar_senha, name="chamar_senha"),
     path(
-        "reanunciar/<int:paciente_id>/",
-        views.reanunciar_senha,
-        name="reanunciar_senha",
+        "reanunciar/<int:paciente_id>/", views.reanunciar_senha, name="reanunciar_senha"
     ),
     path(
         "confirmar/<int:paciente_id>/",

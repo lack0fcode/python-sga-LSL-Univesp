@@ -1,4 +1,5 @@
 import datetime
+import random
 
 from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import pre_save
@@ -6,6 +7,8 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from core.models import RegistroDeAcesso
+
+from .models import CustomUser
 
 
 @receiver(pre_save, sender="core.Paciente")
@@ -16,8 +19,7 @@ def gerar_senha_paciente(sender, instance, **kwargs):
         hoje = datetime.date.today()
         contador = (
             Paciente.objects.filter(
-                horario_geracao_senha__date=hoje,
-                tipo_senha=instance.tipo_senha,
+                horario_geracao_senha__date=hoje, tipo_senha=instance.tipo_senha
             ).count()
             + 1
         )

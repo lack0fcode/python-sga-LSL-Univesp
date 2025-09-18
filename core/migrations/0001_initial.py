@@ -29,10 +29,7 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                (
-                    "password",
-                    models.CharField(max_length=128, verbose_name="password"),
-                ),
+                ("password", models.CharField(max_length=128, verbose_name="password")),
                 (
                     "last_login",
                     models.DateTimeField(
@@ -77,9 +74,7 @@ class Migration(migrations.Migration):
                 (
                     "email",
                     models.EmailField(
-                        blank=True,
-                        max_length=254,
-                        verbose_name="email address",
+                        blank=True, max_length=254, verbose_name="email address"
                     ),
                 ),
                 (
@@ -101,8 +96,7 @@ class Migration(migrations.Migration):
                 (
                     "date_joined",
                     models.DateTimeField(
-                        default=django.utils.timezone.now,
-                        verbose_name="date joined",
+                        default=django.utils.timezone.now, verbose_name="date joined"
                     ),
                 ),
                 (
@@ -121,9 +115,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "cpf",
-                    models.CharField(
-                        max_length=14, unique=True, verbose_name="CPF"
-                    ),
+                    models.CharField(max_length=14, unique=True, verbose_name="CPF"),
                 ),
                 (
                     "data_admissao",
@@ -207,10 +199,7 @@ class Migration(migrations.Migration):
                 (
                     "senha",
                     models.CharField(
-                        blank=True,
-                        max_length=6,
-                        null=True,
-                        verbose_name="Senha",
+                        blank=True, max_length=6, null=True, verbose_name="Senha"
                     ),
                 ),
                 (
@@ -233,9 +222,7 @@ class Migration(migrations.Migration):
                 (
                     "horario_agendamento",
                     models.DateTimeField(
-                        blank=True,
-                        null=True,
-                        verbose_name="Horário do Agendamento",
+                        blank=True, null=True, verbose_name="Horário do Agendamento"
                     ),
                 ),
                 (
@@ -249,9 +236,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "atendido",
-                    models.BooleanField(
-                        default=False, verbose_name="Atendido"
-                    ),
+                    models.BooleanField(default=False, verbose_name="Atendido"),
                 ),
                 (
                     "profissional_saude",
@@ -279,15 +264,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "numero",
-                    models.IntegerField(
-                        unique=True, verbose_name="Número do Guichê"
-                    ),
+                    models.IntegerField(unique=True, verbose_name="Número do Guichê"),
                 ),
                 (
                     "em_atendimento",
-                    models.BooleanField(
-                        default=False, verbose_name="Em Atendimento"
-                    ),
+                    models.BooleanField(default=False, verbose_name="Em Atendimento"),
                 ),
                 (
                     "funcionario",
@@ -382,9 +363,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "data_hora",
-                    models.DateTimeField(
-                        auto_now_add=True, verbose_name="Data e Hora"
-                    ),
+                    models.DateTimeField(auto_now_add=True, verbose_name="Data e Hora"),
                 ),
                 (
                     "funcionario",
@@ -424,9 +403,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "em_consulta",
-                    models.BooleanField(
-                        default=False, verbose_name="Em Consulta"
-                    ),
+                    models.BooleanField(default=False, verbose_name="Em Consulta"),
                 ),
                 (
                     "funcionario",
@@ -523,8 +500,7 @@ class Migration(migrations.Migration):
                 (
                     "data_hora",
                     models.DateTimeField(
-                        default=django.utils.timezone.now,
-                        verbose_name="Data e Hora",
+                        default=django.utils.timezone.now, verbose_name="Data e Hora"
                     ),
                 ),
                 (
@@ -543,9 +519,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "user_agent",
-                    models.TextField(
-                        blank=True, null=True, verbose_name="User Agent"
-                    ),
+                    models.TextField(blank=True, null=True, verbose_name="User Agent"),
                 ),
                 (
                     "view_name",

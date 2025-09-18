@@ -11,11 +11,7 @@ urlpatterns = [
         views.cadastrar_funcionario,
         name="cadastrar_funcionario",
     ),
-    path(
-        "listar_funcionarios/",
-        views.listar_funcionarios,
-        name="listar_funcionarios",
-    ),
+    path("listar_funcionarios/", views.listar_funcionarios, name="listar_funcionarios"),
     path(
         "editar_funcionario/<int:pk>/",
         views.editar_funcionario,
