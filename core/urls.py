@@ -8,8 +8,8 @@ urlpatterns = [
     # path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'), #Remova essa linha
     path(
         "login/",
-        views.LoginView.as_view(template_name="login.html"),
+        views.login_view,
         name="login",
-    ),  # Adicione essa linha
+    ),
     path("logout/", views.logout_view, name="logout"),
 ]
