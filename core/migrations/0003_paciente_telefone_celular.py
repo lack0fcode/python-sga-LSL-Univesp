@@ -7,13 +7,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0002_rename_consulta_chamadaprofissional_customuser_sala_and_more'),
+        ("core", "0002_rename_consulta_chamadaprofissional_customuser_sala_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='paciente',
-            name='telefone_celular',
-            field=models.CharField(blank=True, help_text='Ex.: (99) 9 9999-9999', max_length=20, null=True, validators=[django.core.validators.RegexValidator(message='Informe um celular válido(DDD + 9 dígitos, ex.: (99) 9 9999-9999).', regex='^\\D*?(\\d{2})\\D*?(9\\d{4})\\D*?(\\d{4})\\D*$')], verbose_name='Telefone celular (com DDD)'),
+            model_name="paciente",
+            name="telefone_celular",
+            field=models.CharField(
+                blank=True,
+                help_text="Ex.: (99) 9 9999-9999",
+                max_length=20,
+                null=True,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        message="Informe um celular válido(DDD + 9 dígitos, ex.: (99) 9 9999-9999).",
+                        regex="^\\D*?(\\d{2})\\D*?(9\\d{4})\\D*?(\\d{4})\\D*$",
+                    )
+                ],
+                verbose_name="Telefone celular (com DDD)",
+            ),
         ),
     ]
