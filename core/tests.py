@@ -3,8 +3,15 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import CadastrarFuncionarioForm, CadastrarPacienteForm, LoginForm
-from .models import (Atendimento, Chamada, ChamadaProfissional, CustomUser,
-                     Guiche, Paciente, RegistroDeAcesso)
+from .models import (
+    Atendimento,
+    Chamada,
+    ChamadaProfissional,
+    CustomUser,
+    Guiche,
+    Paciente,
+    RegistroDeAcesso,
+)
 
 
 class CustomUserModelTest(TestCase):
