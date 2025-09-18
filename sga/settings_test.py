@@ -23,7 +23,7 @@ else:
         }
     }
 
-print("USANDO BANCO:", DATABASES['default']['ENGINE'])
+print("USANDO BANCO:", DATABASES["default"]["ENGINE"])
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
