@@ -25,7 +25,13 @@ def cadastrar_paciente(request):
             )
             return redirect(reverse("recepcionista:cadastrar_paciente"))
         else:
-            messages.error(request, "Erro ao cadastrar o paciente. Verifique os dados.")
+            messages.error(
+                request, "Erro ao cadastrar o paciente. Verifique os dados."
+            )
     else:
-        form = CadastrarPacienteForm(profissionais_de_saude=profissionais_de_saude)
-    return render(request, "recepcionista/cadastrar_paciente.html", {"form": form})
+        form = CadastrarPacienteForm(
+            profissionais_de_saude=profissionais_de_saude
+        )
+    return render(
+        request, "recepcionista/cadastrar_paciente.html", {"form": form}
+    )

@@ -13,7 +13,10 @@ def get_proporcao_field(form, field_name):
         if value is None or value == "":
             # Define o atributo 'value' para "1"
             return field.as_widget(
-                attrs={"class": field.widget.attrs.get("class", ""), "value": "1"}
+                attrs={
+                    "class": field.widget.attrs.get("class", ""),
+                    "value": "1",
+                }
             )
         else:
             return field
@@ -26,4 +29,6 @@ def get_proporcao_field(form, field_name):
 
 @register.filter(name="add_class")
 def add_class(field, css):
-    return field.as_widget(attrs={"class": css})  # Não precisa mudar essa linha
+    return field.as_widget(
+        attrs={"class": css}
+    )  # Não precisa mudar essa linha

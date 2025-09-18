@@ -13,18 +13,21 @@ def cadastrar_funcionario(request):
     if request.method == "POST":
         form = CadastrarFuncionarioForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            form.save()
             messages.success(request, "Funcionário cadastrado com sucesso!")
             return redirect(
                 reverse("administrador:listar_funcionarios")
             )  # Redireciona para a lista de funcionários
         else:
             messages.error(
-                request, "Erro ao cadastrar o funcionário. Verifique os dados."
+                request,
+                "Erro ao cadastrar o funcionário. Verifique os dados.",
             )
     else:
         form = CadastrarFuncionarioForm()
-    return render(request, "administrador/cadastrar_funcionario.html", {"form": form})
+    return render(
+        request, "administrador/cadastrar_funcionario.html", {"form": form}
+    )
 
 
 @admin_required
@@ -48,11 +51,14 @@ def editar_funcionario(request, pk):
             return redirect(reverse("administrador:listar_funcionarios"))
         else:
             messages.error(
-                request, "Erro ao atualizar o funcionário. Verifique os dados."
+                request,
+                "Erro ao atualizar o funcionário. Verifique os dados.",
             )
     else:
         form = CadastrarFuncionarioForm(instance=funcionario)
-    return render(request, "administrador/cadastrar_funcionario.html", {"form": form})
+    return render(
+        request, "administrador/cadastrar_funcionario.html", {"form": form}
+    )
 
 
 @admin_required

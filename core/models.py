@@ -1,10 +1,6 @@
-import datetime
-
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 
 
 class CustomUser(AbstractUser):
@@ -36,7 +32,11 @@ class CustomUser(AbstractUser):
     )  # coloquei agora
 
     USERNAME_FIELD = "cpf"  # Use o CPF como o campo de nome de usuário
-    REQUIRED_FIELDS = ["first_name", "last_name", "username"]  # Campos obrigatórios,
+    REQUIRED_FIELDS = [
+        "first_name",
+        "last_name",
+        "username",
+    ]  # Campos obrigatórios,
 
     objects = UserManager()
 
@@ -66,7 +66,9 @@ class Paciente(models.Model):
         blank=True,
         null=True,
     )
-    senha = models.CharField(max_length=6, verbose_name="Senha", null=True, blank=True)
+    senha = models.CharField(
+        max_length=6, verbose_name="Senha", null=True, blank=True
+    )
     cartao_sus = models.CharField(
         max_length=20, verbose_name="Cartão do SUS", blank=True, null=True
     )
@@ -102,7 +104,9 @@ class Atendimento(models.Model):
     funcionario = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, verbose_name="Funcionário"
     )  # Quem realizou o atendimento
-    data_hora = models.DateTimeField(auto_now_add=True, verbose_name="Data e Hora")
+    data_hora = models.DateTimeField(
+        auto_now_add=True, verbose_name="Data e Hora"
+    )
     # Outros campos do atendimento (observações, etc.)
 
     def __str__(self):
@@ -113,7 +117,9 @@ class RegistroDeAcesso(models.Model):
     usuario = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, verbose_name="Usuário"
     )
-    data_hora = models.DateTimeField(default=timezone.now, verbose_name="Data e Hora")
+    data_hora = models.DateTimeField(
+        default=timezone.now, verbose_name="Data e Hora"
+    )
     tipo_de_acesso = models.CharField(
         max_length=10,
         choices=(("login", "Login"), ("logout", "Logout")),
@@ -122,7 +128,9 @@ class RegistroDeAcesso(models.Model):
     endereco_ip = models.GenericIPAddressField(
         null=True, blank=True, verbose_name="Endereço IP"
     )
-    user_agent = models.TextField(blank=True, null=True, verbose_name="User Agent")
+    user_agent = models.TextField(
+        blank=True, null=True, verbose_name="User Agent"
+    )
     view_name = models.CharField(
         max_length=255, verbose_name="Nome da View", null=True, blank=True
     )  # Nome da view acessada
@@ -148,7 +156,9 @@ class Guiche(models.Model):
         blank=True,
         verbose_name="Senha Atendida",
     )
-    em_atendimento = models.BooleanField(default=False, verbose_name="Em Atendimento")
+    em_atendimento = models.BooleanField(
+        default=False, verbose_name="Em Atendimento"
+    )
     user = models.OneToOneField(
         CustomUser,
         on_delete=models.SET_NULL,
@@ -171,7 +181,9 @@ class Chamada(models.Model):
     paciente = models.ForeignKey(
         Paciente, on_delete=models.CASCADE, verbose_name="Paciente"
     )
-    guiche = models.ForeignKey(Guiche, on_delete=models.CASCADE, verbose_name="Guichê")
+    guiche = models.ForeignKey(
+        Guiche, on_delete=models.CASCADE, verbose_name="Guichê"
+    )
     acao = models.CharField(max_length=15, choices=ACOES)
     data_hora = models.DateTimeField(auto_now_add=True)
 
@@ -204,7 +216,9 @@ class ChamadaProfissional(models.Model):
         Paciente, on_delete=models.CASCADE, verbose_name="Paciente"
     )
     profissional_saude = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, verbose_name="ProfissionalDeSaude"
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name="ProfissionalDeSaude",
     )
     acao = models.CharField(max_length=15, choices=ACOES)
     data_hora = models.DateTimeField(auto_now_add=True)

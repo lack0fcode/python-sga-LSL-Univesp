@@ -141,7 +141,9 @@ WHITENOISE_MAX_FILE_SIZE = 104857600
 
 AUTH_USER_MODEL = "core.CustomUser"
 
-LOGIN_REDIRECT_URL = "pagina_inicial"  # Redireciona para a página inicial após o login
+LOGIN_REDIRECT_URL = (
+    "pagina_inicial"  # Redireciona para a página inicial após o login
+)
 LOGOUT_REDIRECT_URL = (
     "pagina_inicial"  # Redireciona para a página inicial após o logout
 )
