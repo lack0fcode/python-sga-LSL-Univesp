@@ -39,6 +39,15 @@ class CadastrarPacienteForm(forms.ModelForm):
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 
+    def clean_telefone_celular(self):
+        val = self.cleaned_data.get("telefone_celular", "") or ""
+        import re
+        digits = re.sub(r"\D+", "", val)[:11]  # só dígitos, no máx 11
+        # opcional: exigir 11 dígitos começando com 9 no 3º
+        if digits and not (len(digits) == 11 and digits[2] == "9"):
+            raise forms.ValidationError("Informe um celular válido com DDD e 9 dígitos.")
+        return digits  
+
     class Meta:
         model = Paciente
         fields = [
@@ -48,10 +57,25 @@ class CadastrarPacienteForm(forms.ModelForm):
             "profissional_saude",
             "observacoes",
             "tipo_senha",  # <-- adicionado aqui também
+            "telefone_celular",
         ]
+
+        help_texts = {
+            "telefone_celular": None,  # remove help_text só no form para não poluir
+        }
+
         widgets = {
             "horario_agendamento": forms.DateTimeInput(
                 attrs={"type": "datetime-local"}
+            ),
+            "telefone_celular": forms.TextInput(
+                attrs={
+                    "type": "text",
+                    "placeholder": "(99) 9 9999-9999",
+                    "inputmode": "numeric",
+                    "autocomplete": "tel",
+                    "title": "Informe um celular válido, ex.: (99) 9 9999-9999",
+                }
             ),
         }
 
