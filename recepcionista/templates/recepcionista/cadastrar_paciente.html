@@ -24,6 +24,13 @@
                 {{ form.tipo_senha.label_tag }} {{ form.tipo_senha }}
             </div>
             <div>
+                {{ form.telefone_celular.label_tag }} {{ form.telefone_celular }}
+                {% if form.telefone_celular.help_text %}
+                    <small class="text-muted">{{ form.telefone_celular.help_text }}</small>
+                {% endif %}
+                {{ form.telefone_celular.errors }}
+            </div>
+            <div>
                 {{ form.observacoes.label_tag }} {{ form.observacoes }}
             </div>
             <div>
@@ -31,4 +38,49 @@
             </div>
         </form>
     </div>
+
+
+    <script>
+    (function () {
+        function maskBRPhone(value) {
+            const v = value.replace(/\D/g, '').slice(0, 11); // 11 dígitos
+            const ddd = v.slice(0, 2);
+            const n1  = v.slice(2, 3);      // 9
+            const n2  = v.slice(3, 7);      // 4 dígitos
+            const n3  = v.slice(7, 11);     // 4 dígitos
+            if (v.length === 0) return '';
+            if (v.length <= 2) return `(${ddd}`;
+            if (v.length <= 3) return `(${ddd}) ${n1}`;
+            if (v.length <= 7) return `(${ddd}) ${n1}${n2 ? ' ' + n2 : ''}`;
+            return `(${ddd}) ${n1}${n2 ? ' ' + n2 : ''}-${n3}`;
+        }
+
+        function bindMask(el) {
+            if (!el) return;
+            const handler = () => {
+                const before = el.value || '';
+                const masked = maskBRPhone(before);
+                 if (before !== masked) el.value = masked;
+        };
+            // formata valor inicial (ex: quando o form volta com erro)
+            el.value = maskBRPhone(el.value || '');
+            el.addEventListener('input', handler);
+            el.addEventListener('blur', handler);
+            // se houver autocomplete/auto-fill atrasado:
+            setTimeout(handler, 200);
+        }
+
+        function initMask() {
+            let el = document.getElementById('id_telefone_celular');
+            if (!el) el = document.querySelector('input[name$="telefone_celular"]');
+            bindMask(el);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initMask);
+        } else {
+            initMask();
+        }
+    })();
+    </script>
 {% endblock %}
