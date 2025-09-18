@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -16,9 +16,9 @@ def painel_profissional(request):
     pacientes = Paciente.objects.filter(
         profissional_saude=request.user, atendido=True
     ).order_by("horario_agendamento")
-    profissionais = CustomUser.objects.filter(
-        funcao="profissional_saude"
-    ).exclude(id=request.user.id)
+    profissionais = CustomUser.objects.filter(funcao="profissional_saude").exclude(
+        id=request.user.id
+    )
 
     historico_chamadas = ChamadaProfissional.objects.filter(
         profissional_saude=request.user, acao__in=["chamada", "reanuncio"]
@@ -31,9 +31,7 @@ def painel_profissional(request):
         "profissionais": profissionais,
         "historico_chamadas": historico_chamadas,
     }
-    return render(
-        request, "profissional_saude/painel_profissional.html", context
-    )
+    return render(request, "profissional_saude/painel_profissional.html", context)
 
 
 @require_POST
@@ -49,48 +47,32 @@ def realizar_acao_profissional(request, paciente_id, acao):
 
     if acao == "chamar":
         ChamadaProfissional.objects.create(
-            paciente=paciente,
-            profissional_saude=profissional_saude,
-            acao="chamada",
+            paciente=paciente, profissional_saude=profissional_saude, acao="chamada"
         )
         return JsonResponse(
             {"status": "success", "mensagem": "Senha chamada com sucesso."}
         )
     elif acao == "reanunciar":
         ChamadaProfissional.objects.create(
-            paciente=paciente,
-            profissional_saude=profissional_saude,
-            acao="reanuncio",
+            paciente=paciente, profissional_saude=profissional_saude, acao="reanuncio"
         )
         return JsonResponse(
-            {
-                "status": "success",
-                "mensagem": "Senha reanunciada com sucesso.",
-            }
+            {"status": "success", "mensagem": "Senha reanunciada com sucesso."}
         )
     elif acao == "confirmar":
-        paciente.atendido = (
-            False  # Marcar como não atendido para sair da lista
-        )
+        paciente.atendido = False  # Marcar como não atendido para sair da lista
         paciente.save()
         return JsonResponse(
-            {
-                "status": "success",
-                "mensagem": "Atendimento confirmado com sucesso.",
-            }
+            {"status": "success", "mensagem": "Atendimento confirmado com sucesso."}
         )
     elif acao == "encaminhar":
-        profissional_encaminhar_id = request.POST.get(
-            "profissional_encaminhar_id"
-        )
+        profissional_encaminhar_id = request.POST.get("profissional_encaminhar_id")
         if profissional_encaminhar_id:
             profissional_encaminhar = get_object_or_404(
                 CustomUser, id=profissional_encaminhar_id
             )
             paciente.profissional_saude = profissional_encaminhar
-            paciente.atendido = (
-                True  # Para aparecer na lista do outro profissional
-            )
+            paciente.atendido = True  # Para aparecer na lista do outro profissional
             paciente.save()
             return JsonResponse(
                 {
@@ -131,9 +113,7 @@ def tv2_view(request):
 
         # Pega as 5 chamadas mais recentes, excluindo a última chamada
         historico_chamadas = (
-            ChamadaProfissional.objects.filter(
-                acao__in=["chamada", "reanuncio"]
-            )
+            ChamadaProfissional.objects.filter(acao__in=["chamada", "reanuncio"])
             .exclude(id=ultima_chamada.id)
             .order_by("-data_hora")[:5]
         )

@@ -3,15 +3,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import CadastrarFuncionarioForm, CadastrarPacienteForm, LoginForm
-from .models import (
-    Atendimento,
-    Chamada,
-    ChamadaProfissional,
-    CustomUser,
-    Guiche,
-    Paciente,
-    RegistroDeAcesso,
-)
+from .models import (Atendimento, Chamada, ChamadaProfissional, CustomUser,
+                     Guiche, Paciente, RegistroDeAcesso)
 
 
 class CustomUserModelTest(TestCase):
@@ -131,9 +124,7 @@ class ChamadaProfissionalModelTest(TestCase):
         )
         self.paciente = Paciente.objects.create(nome_completo="Paciente C")
         self.chamada_prof = ChamadaProfissional.objects.create(
-            paciente=self.paciente,
-            profissional_saude=self.user,
-            acao="chamada",
+            paciente=self.paciente, profissional_saude=self.user, acao="chamada"
         )
 
     def test_str(self):

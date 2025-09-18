@@ -1,4 +1,6 @@
 import datetime
+import os
+import tempfile
 from collections import defaultdict, deque
 from itertools import cycle
 
@@ -6,10 +8,12 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from gtts import gTTS
 
 from core.decorators import guiche_required
 from core.models import Chamada, Guiche, Paciente
@@ -35,9 +39,7 @@ def painel_guiche(request):
                         # Obtém a proporção do formulário, se fornecida, senão usa 1
                         proporcao = form.cleaned_data.get(proporcao_field_name)
                         try:
-                            qtd = (
-                                int(proporcao) if proporcao is not None else 1
-                            )
+                            qtd = int(proporcao) if proporcao is not None else 1
                         except (ValueError, TypeError):
                             qtd = 1  # Garante que qtd seja um inteiro, mesmo se a conversão falhar
                         proporcoes[tipo] = qtd
@@ -47,9 +49,9 @@ def painel_guiche(request):
                         if f"proporcao_{tipo_lower}" in request.session.get(
                             "filtros_guiche", {}
                         ).get("proporcoes", {}):
-                            del request.session["filtros_guiche"][
-                                "proporcoes"
-                            ][f"proporcao_{tipo_lower}"]
+                            del request.session["filtros_guiche"]["proporcoes"][
+                                f"proporcao_{tipo_lower}"
+                            ]
 
             # Armazenar seleções na sessão
             request.session["filtros_guiche"] = {
@@ -213,9 +215,7 @@ def tv1_view(request):
         ).latest("data_hora")
         senha_chamada = ultima_chamada.paciente
         nome_completo = ultima_chamada.paciente.nome_completo
-        numero_guiche = (
-            ultima_chamada.guiche.numero
-        )  # Obtém o número do guichê
+        numero_guiche = ultima_chamada.guiche.numero  # Obtém o número do guichê
         historico_chamadas = Chamada.objects.order_by("-data_hora")[:5]
     except Chamada.DoesNotExist:
         senha_chamada = None

@@ -67,23 +67,14 @@ class CadastrarFuncionarioForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = (
-            "cpf",
-            "username",
-            "first_name",
-            "last_name",
-            "email",
-            "funcao",
-        )
+        fields = ("cpf", "username", "first_name", "last_name", "email", "funcao")
         help_texts = {
             "username": None,
         }
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.username = self.cleaned_data[
-            "cpf"
-        ]  # Define o username como o CPF
+        user.username = self.cleaned_data["cpf"]  # Define o username como o CPF
         if commit:
             user.save()
         return user
@@ -113,9 +104,7 @@ class LoginForm(forms.Form):
                 if user.is_active:
                     cleaned_data["user"] = user
                 else:
-                    raise ValidationError(
-                        "Esta conta está inativa."
-                    )  # Usuário inativo
+                    raise ValidationError("Esta conta está inativa.")  # Usuário inativo
             else:
                 raise ValidationError(
                     "CPF ou senha incorretos."
