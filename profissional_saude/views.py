@@ -10,7 +10,6 @@ from core.models import ChamadaProfissional, CustomUser, Paciente
 from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
 
-
 @login_required
 def painel_profissional(request):
     """
@@ -63,7 +62,9 @@ def realizar_acao_profissional(request, paciente_id, acao):
             )
             enviar_whatsapp(numero_celular_paciente, mensagem)
         else:
-            print(f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente.")
+            print(
+                f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
+            )
 
         return JsonResponse(
             {"status": "success", "mensagem": "Senha chamada com sucesso."}
@@ -120,7 +121,6 @@ def realizar_acao_profissional(request, paciente_id, acao):
         return JsonResponse(
             {"status": "error", "mensagem": "Ação inválida."}, status=400
         )
-
 
 
 @never_cache

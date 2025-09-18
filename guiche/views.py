@@ -23,7 +23,6 @@ from core.utils import enviar_whatsapp  # Importe a função de utilidade
 from .forms import GuicheForm
 
 
-
 @guiche_required
 @login_required
 def painel_guiche(request):
@@ -152,7 +151,7 @@ def chamar_senha(request, paciente_id):
     )
 
     # 2. Tenta enviar mensagem via WhatsApp
-    numero_celular_paciente = paciente.telefone_e164() # Obtém o número formatado
+    numero_celular_paciente = paciente.telefone_e164()  # Obtém o número formatado
     if numero_celular_paciente:
         mensagem = (
             f"Olá {paciente.nome_completo.split()[0]}! "
@@ -160,11 +159,12 @@ def chamar_senha(request, paciente_id):
         )
         enviar_whatsapp(numero_celular_paciente, mensagem)
     else:
-        print(f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente.")
+        print(
+            f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
+        )
 
     # 3. Retorna o JsonResponse original
     return response_chamada
-
 
 
 @require_POST
@@ -230,11 +230,12 @@ def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
             )
             enviar_whatsapp(numero_e164, mensagem)
         else:
-            print(f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado.")
+            print(
+                f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado."
+            )
     # --- FIM DA LÓGICA DE ENVIO DE SMS ---
 
     return JsonResponse({"status": "ok", "data": data_for_tv})
-
 
 
 @never_cache

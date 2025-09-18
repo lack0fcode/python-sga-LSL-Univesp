@@ -176,6 +176,8 @@ LOGGING = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Twilio Settings
-TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID') # <<-- Use o NOME DA VARIAVEL
-TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN') # <<-- Use o NOME DA VARIAVEL
-TWILIO_WHATSAPP_NUMBER = os.environ.get('TWILIO_WHATSAPP_NUMBER') # <<-- Use o NOME DA VARIAVEL
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")  # <<-- Use o NOME DA VARIAVEL
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")  # <<-- Use o NOME DA VARIAVEL
+TWILIO_WHATSAPP_NUMBER = os.environ.get(
+    "TWILIO_WHATSAPP_NUMBER"
+)  # <<-- Use o NOME DA VARIAVEL
