@@ -160,7 +160,6 @@ class CadastrarPacienteFormTest(TestCase):
         form = CadastrarPacienteForm(data)
         self.assertTrue(form.is_valid())
 
-
     def test_invalid_telefone_celular(self):
         data = {
             "nome_completo": "Paciente D",
@@ -239,7 +238,6 @@ class LoginFormTest(TestCase):
         data = {"cpf": "99900011122", "password": "wrongpass"}
         form = LoginForm(data)
         self.assertFalse(form.is_valid())
-
 
 
 # Views
