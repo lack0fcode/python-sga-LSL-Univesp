@@ -161,6 +161,21 @@ class CadastrarPacienteFormTest(TestCase):
         self.assertTrue(form.is_valid())
 
 
+    def test_invalid_telefone_celular(self):
+        data = {
+            "nome_completo": "Paciente D",
+            "cartao_sus": "1234567890",
+            "horario_agendamento": timezone.now(),
+            "profissional_saude": self.user.id,
+            "observacoes": "Obs",
+            "tipo_senha": "G",
+            "telefone_celular": "12345",  # inválido
+        }
+        form = CadastrarPacienteForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("telefone_celular", form.errors)
+
+
 class CadastrarFuncionarioFormTest(TestCase):
     def test_valid_form(self):
         data = {
@@ -175,6 +190,36 @@ class CadastrarFuncionarioFormTest(TestCase):
         }
         form = CadastrarFuncionarioForm(data)
         self.assertTrue(form.is_valid())
+
+    def test_invalid_cpf(self):
+        data = {
+            "cpf": "123",  # CPF inválido
+            "username": "123",
+            "first_name": "Func",
+            "last_name": "Test",
+            "email": "func@test.com",
+            "funcao": "administrador",
+            "password1": "testpass123",
+            "password2": "testpass123",
+        }
+        form = CadastrarFuncionarioForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("cpf", form.errors)
+
+    def test_password_mismatch(self):
+        data = {
+            "cpf": "88899900011",
+            "username": "88899900011",
+            "first_name": "Func",
+            "last_name": "Test",
+            "email": "func@test.com",
+            "funcao": "administrador",
+            "password1": "testpass123",
+            "password2": "diferente",
+        }
+        form = CadastrarFuncionarioForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("password2", form.errors)
 
 
 class LoginFormTest(TestCase):
@@ -194,6 +239,7 @@ class LoginFormTest(TestCase):
         data = {"cpf": "99900011122", "password": "wrongpass"}
         form = LoginForm(data)
         self.assertFalse(form.is_valid())
+
 
 
 # Views
@@ -237,3 +283,44 @@ class CoreViewsTest(TestCase):
     def test_pagina_inicial_requires_login(self):
         response = self.client.get(reverse("pagina_inicial"))
         self.assertEqual(response.status_code, 302)  # Redirect to login
+
+
+# Teste de integração: fluxo completo de cadastro, login, acesso e logout
+class IntegracaoFluxoCompletoTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.funcionario = CustomUser.objects.create_user(
+            cpf="12312312399",
+            username="12312312399",
+            password="funcpass",
+            first_name="Func",
+            last_name="Test",
+            funcao="administrador",
+        )
+
+    def test_fluxo_completo(self):
+        # Cadastro de paciente via model (simulando formulário)
+        paciente = Paciente.objects.create(
+            nome_completo="Paciente Integração",
+            cartao_sus="99988877766",
+            horario_agendamento=timezone.now(),
+            profissional_saude=self.funcionario,
+            tipo_senha="G",
+        )
+        self.assertIsNotNone(paciente.id)
+
+        # Login
+        login = self.client.login(cpf="12312312399", password="funcpass")
+        self.assertTrue(login)
+
+        # Acesso à página inicial (protegida)
+        response = self.client.get(reverse("pagina_inicial"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["user"].is_authenticated)
+
+        # Logout
+        response = self.client.get(reverse("logout"), follow=True)
+        self.assertEqual(response.status_code, 200)
+        # Após logout, usuário não está autenticado
+        response2 = self.client.get(reverse("pagina_inicial"))
+        self.assertEqual(response2.status_code, 302)
