@@ -2,6 +2,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
+
+import re
 from django.core.exceptions import ValidationError
 
 from .models import CustomUser, Paciente  # Importação única
@@ -84,8 +86,21 @@ class CadastrarPacienteForm(forms.ModelForm):
 
 
 class CadastrarFuncionarioForm(UserCreationForm):
+    import re
+
+    def validate_cpf(value):
+        # Aceita apenas 11 dígitos numéricos
+        digits = re.sub(r"\D", "", value)
+        if len(digits) != 11:
+            raise ValidationError("Informe um CPF válido com 11 dígitos.")
+        # Opcional: pode adicionar validação de dígito verificador aqui
+        return value
+
     cpf = forms.CharField(
-        label="CPF", max_length=14, help_text="Obrigatório. 14 caracteres."
+        label="CPF",
+        max_length=14,
+        help_text="Obrigatório. 11 dígitos.",
+        validators=[validate_cpf],
     )
     funcao = forms.ChoiceField(
         choices=CustomUser.FUNCAO_CHOICES,
