@@ -82,7 +82,9 @@ class RecepcionistaViewsTest(TestCase):
         xss_data["nome_completo"] = '<script>alert("XSS")</script>'
         resp = self.client.post(url, xss_data, follow=True)
         self.assertEqual(resp.status_code, 200)
-        paciente = Paciente.objects.filter(nome_completo='<script>alert("XSS")</script>')
+        paciente = Paciente.objects.filter(
+            nome_completo='<script>alert("XSS")</script>'
+        )
         self.assertTrue(paciente.exists())
         # Nota: A proteção XSS deve ser feita no template
 
@@ -137,7 +139,9 @@ class RecepcionistaViewsTest(TestCase):
             resp = self.client.post(url, data)
             self.assertEqual(resp.status_code, 200)
             # Paciente não deve ser criado devido ao telefone inválido
-            paciente = Paciente.objects.filter(nome_completo=f"Paciente Inválido {telefone}")
+            paciente = Paciente.objects.filter(
+                nome_completo=f"Paciente Inválido {telefone}"
+            )
             self.assertFalse(paciente.exists())
 
     def test_cartao_sus_validation(self):
@@ -315,7 +319,9 @@ class RecepcionistaViewsTest(TestCase):
             self.assertTrue(paciente.exists())
 
         # Verificar que todos foram criados
-        self.assertEqual(Paciente.objects.filter(nome_completo__startswith="Paciente ").count(), 3)
+        self.assertEqual(
+            Paciente.objects.filter(nome_completo__startswith="Paciente ").count(), 3
+        )
 
     def test_large_input_handling(self):
         """Testa tratamento de inputs grandes."""
@@ -372,4 +378,6 @@ class RecepcionistaViewsTest(TestCase):
         resp = self.client.post(url, invalid_data)
         self.assertEqual(resp.status_code, 200)
         # Verificar que erros são mostrados
-        self.assertContains(resp, "Erro ao cadastrar o paciente")  # Mensagem de erro genérica
+        self.assertContains(
+            resp, "Erro ao cadastrar o paciente"
+        )  # Mensagem de erro genérica

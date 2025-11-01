@@ -292,9 +292,18 @@ class AdministradorViewsTest(TestCase):
             "O'Connor",
         ]
 
-        valid_cpfs = ["99828848325", "91917883587", "13957166179", "04490859457", "50863958605", "77787970200"]
+        valid_cpfs = [
+            "99828848325",
+            "91917883587",
+            "13957166179",
+            "04490859457",
+            "50863958605",
+            "77787970200",
+        ]
         for i, name in enumerate(special_names):
-            first_name, last_name = name.split(" ", 1) if " " in name else (name, "Teste")
+            first_name, last_name = (
+                name.split(" ", 1) if " " in name else (name, "Teste")
+            )
             cpf = valid_cpfs[i]
             data = {
                 "cpf": cpf,
@@ -358,7 +367,9 @@ class AdministradorViewsTest(TestCase):
     def test_permission_bypass_attempts(self):
         """Testa tentativas de bypass de permissões."""
         # Tentar cadastrar admin como recepcionista
-        self.client.login(cpf="22233344455", password="funcpass")  # Logado como recepcionista
+        self.client.login(
+            cpf="22233344455", password="funcpass"
+        )  # Logado como recepcionista
         url = reverse("administrador:cadastrar_funcionario")
         data = {
             "cpf": "22233344455",

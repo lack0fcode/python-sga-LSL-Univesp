@@ -63,7 +63,12 @@ class CustomUserModelTest(TestCase):
 
     def test_funcao_choices_valid(self):
         """Testa valores válidos para função."""
-        for funcao in ["administrador", "recepcionista", "guiche", "profissional_saude"]:
+        for funcao in [
+            "administrador",
+            "recepcionista",
+            "guiche",
+            "profissional_saude",
+        ]:
             data = self.user_data.copy()
             data["cpf"] = f"1111111111{funcao[0]}"  # CPF único
             data["username"] = data["cpf"]
@@ -258,11 +263,11 @@ class PacienteModelTest(TestCase):
         """Testa método telefone_e164 com formatos inválidos."""
         invalid_cases = [
             "(11) 9999-9999",  # Sem 9 no início
-            "1199999999",     # 10 dígitos
-            "119999999999",   # 12 dígitos
-            "551199999999",   # 12 dígitos com 55
-            "abc123",         # Não numérico
-            "",               # Vazio
+            "1199999999",  # 10 dígitos
+            "119999999999",  # 12 dígitos
+            "551199999999",  # 12 dígitos com 55
+            "abc123",  # Não numérico
+            "",  # Vazio
         ]
         for telefone_input in invalid_cases:
             data = self.paciente_data.copy()
@@ -625,6 +630,7 @@ class ChamadaModelTest(TestCase):
     def test_ordering_meta(self):
         """Testa ordering -data_hora."""
         from time import sleep
+
         chamada1 = Chamada.objects.create(
             paciente=self.paciente,
             guiche=self.guiche,
@@ -734,6 +740,7 @@ class ChamadaProfissionalModelTest(TestCase):
         )
         # Pequeno delay para garantir ordem temporal
         import time
+
         time.sleep(0.001)
         chamada2 = ChamadaProfissional.objects.create(
             paciente=self.paciente,
@@ -755,9 +762,7 @@ class ChamadaProfissionalModelTest(TestCase):
 
         # Sem profissional
         with self.assertRaises(Exception):
-            ChamadaProfissional.objects.create(
-                paciente=self.paciente, acao="chamada"
-            )
+            ChamadaProfissional.objects.create(paciente=self.paciente, acao="chamada")
 
 
 # Forms
@@ -848,7 +853,9 @@ class CadastrarPacienteFormTest(TestCase):
             data = self.valid_data.copy()
             data["telefone_celular"] = telefone
             form = CadastrarPacienteForm(data=data)
-            self.assertFalse(form.is_valid(), f"Telefone {telefone} deveria ser inválido")
+            self.assertFalse(
+                form.is_valid(), f"Telefone {telefone} deveria ser inválido"
+            )
             self.assertIn("telefone_celular", form.errors)
 
     def test_telefone_celular_edge_cases(self):
@@ -902,7 +909,9 @@ class CadastrarPacienteFormTest(TestCase):
 
     def test_required_fields(self):
         """Testa campos obrigatórios."""
-        required_fields = ["tipo_senha"]  # Apenas tipo_senha é obrigatório no formulário
+        required_fields = [
+            "tipo_senha"
+        ]  # Apenas tipo_senha é obrigatório no formulário
         for field in required_fields:
             data = self.valid_data.copy()
             data[field] = ""
@@ -912,7 +921,12 @@ class CadastrarPacienteFormTest(TestCase):
 
     def test_optional_fields(self):
         """Testa campos opcionais."""
-        optional_fields = ["cartao_sus", "profissional_saude", "observacoes", "telefone_celular"]
+        optional_fields = [
+            "cartao_sus",
+            "profissional_saude",
+            "observacoes",
+            "telefone_celular",
+        ]
         data = self.valid_data.copy()
         for field in optional_fields:
             data[field] = ""
@@ -962,7 +976,12 @@ class CadastrarPacienteFormTest(TestCase):
         """Testa formulário com parâmetro profissionais_de_saude."""
         # Form sem parâmetro deve ter queryset padrão
         form_default = CadastrarPacienteForm()
-        self.assertTrue(all(user.funcao == "profissional_saude" for user in form_default.fields["profissional_saude"].queryset))
+        self.assertTrue(
+            all(
+                user.funcao == "profissional_saude"
+                for user in form_default.fields["profissional_saude"].queryset
+            )
+        )
 
         # Form com parâmetro personalizado
         profissionais_custom = CustomUser.objects.filter(funcao="administrador")
@@ -1062,7 +1081,12 @@ class CadastrarFuncionarioFormTest(TestCase):
 
     def test_funcao_choices_valid(self):
         """Testa choices válidos para função."""
-        funcoes_validas = ["administrador", "recepcionista", "guiche", "profissional_saude"]
+        funcoes_validas = [
+            "administrador",
+            "recepcionista",
+            "guiche",
+            "profissional_saude",
+        ]
         for funcao in funcoes_validas:
             data = self.valid_data.copy()
             data["funcao"] = funcao
@@ -1236,7 +1260,9 @@ class LoginFormTest(TestCase):
         data = self.valid_data.copy()
         data["cpf"] = "  99900011122  "
         form = LoginForm(data=data)
-        self.assertTrue(form.is_valid())  # Django CharField remove espaços automaticamente
+        self.assertTrue(
+            form.is_valid()
+        )  # Django CharField remove espaços automaticamente
 
     def test_case_sensitivity_cpf(self):
         """Testa sensibilidade a maiúsculas/minúsculas no CPF."""
@@ -1380,7 +1406,9 @@ class CoreViewsTest(TestCase):
             {"cpf": "44455566677", "password": "profpass"},
             follow=True,
         )
-        self.assertRedirects(response, reverse("profissional_saude:painel_profissional"))
+        self.assertRedirects(
+            response, reverse("profissional_saude:painel_profissional")
+        )
 
     def test_logout_view(self):
         self.client.login(cpf="00011122233", password="testpass")

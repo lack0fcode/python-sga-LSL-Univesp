@@ -30,14 +30,14 @@ def login_view(request):
                 )
                 login(request, user)
                 # Redirecionamento baseado na função do usuário
-                if user.funcao == 'administrador':
-                    return redirect('admin:index')
-                elif user.funcao == 'recepcionista':
-                    return redirect('recepcionista:cadastrar_paciente')
-                elif user.funcao == 'guiche':
-                    return redirect('guiche:selecionar_guiche')
-                elif user.funcao == 'profissional_saude':
-                    return redirect('profissional_saude:painel_profissional')
+                if user.funcao == "administrador":
+                    return redirect("admin:index")
+                elif user.funcao == "recepcionista":
+                    return redirect("recepcionista:cadastrar_paciente")
+                elif user.funcao == "guiche":
+                    return redirect("guiche:selecionar_guiche")
+                elif user.funcao == "profissional_saude":
+                    return redirect("profissional_saude:painel_profissional")
                 else:
                     return redirect("pagina_inicial")
             else:

@@ -31,10 +31,7 @@ class GuicheViewsTest(TestCase):
         )
 
         # Criar guichê
-        self.guiche = Guiche.objects.create(
-            numero=1,
-            funcionario=self.guiche_user
-        )
+        self.guiche = Guiche.objects.create(numero=1, funcionario=self.guiche_user)
 
         # Criar pacientes para teste
         self.paciente1 = Paciente.objects.create(
@@ -44,7 +41,7 @@ class GuicheViewsTest(TestCase):
             cartao_sus="1234567890",
             horario_agendamento=timezone.now(),
             atendido=False,
-            telefone_celular="(11) 91234-5678"
+            telefone_celular="(11) 91234-5678",
         )
 
         self.paciente2 = Paciente.objects.create(
@@ -53,7 +50,7 @@ class GuicheViewsTest(TestCase):
             senha="E001",
             cartao_sus="0987654321",
             horario_agendamento=timezone.now(),
-            atendido=False
+            atendido=False,
         )
 
     def test_permissao_guiche_required(self):
@@ -87,10 +84,10 @@ class GuicheViewsTest(TestCase):
         response = self.client.get(reverse("guiche:painel_guiche"))
         self.assertEqual(response.status_code, 200)
         # Verificar se os pacientes aparecem na resposta (pode estar em senhas ou em outro contexto)
-        content = response.content.decode('utf-8')
+        content = response.content.decode("utf-8")
         self.assertTrue(
             "Paciente Geral" in content or "G001" in content,
-            "Paciente Geral ou senha G001 deveria aparecer na resposta"
+            "Paciente Geral ou senha G001 deveria aparecer na resposta",
         )
 
     def test_painel_guiche_post_com_filtros(self):
@@ -99,20 +96,20 @@ class GuicheViewsTest(TestCase):
 
         # Dados do formulário: selecionar apenas tipo G com proporção 1
         data = {
-            'tipo_senha_g': 'on',
-            'proporcao_g': '1',
-            'tipo_senha_e': '',  # Não selecionado
-            'proporcao_e': '1',
+            "tipo_senha_g": "on",
+            "proporcao_g": "1",
+            "tipo_senha_e": "",  # Não selecionado
+            "proporcao_e": "1",
         }
 
         response = self.client.post(reverse("guiche:painel_guiche"), data, follow=True)
         self.assertEqual(response.status_code, 200)
 
         # Verificar se os filtros foram salvos na sessão
-        self.assertIn('filtros_guiche', self.client.session)
-        filtros = self.client.session['filtros_guiche']
-        self.assertIn('G', filtros['tipos_selecionados'])
-        self.assertNotIn('E', filtros['tipos_selecionados'])
+        self.assertIn("filtros_guiche", self.client.session)
+        filtros = self.client.session["filtros_guiche"]
+        self.assertIn("G", filtros["tipos_selecionados"])
+        self.assertNotIn("E", filtros["tipos_selecionados"])
 
     def test_painel_guiche_get_com_filtros_sessao(self):
         """Testa GET do painel guiche com filtros salvos na sessão"""
@@ -120,9 +117,9 @@ class GuicheViewsTest(TestCase):
 
         # Simular filtros na sessão
         session = self.client.session
-        session['filtros_guiche'] = {
-            'tipos_selecionados': ['G'],
-            'proporcoes': {'G': 1}
+        session["filtros_guiche"] = {
+            "tipos_selecionados": ["G"],
+            "proporcoes": {"G": 1},
         }
         session.save()
 
@@ -137,10 +134,10 @@ class GuicheViewsTest(TestCase):
         response = self.client.get(reverse("guiche:painel_guiche"))
         self.assertEqual(response.status_code, 200)
         # Deve mostrar apenas pacientes do tipo G
-        content = response.content.decode('utf-8')
+        content = response.content.decode("utf-8")
         self.assertTrue(
             "Paciente Geral" in content or "G001" in content,
-            "Paciente Geral ou senha G001 deveria aparecer na resposta"
+            "Paciente Geral ou senha G001 deveria aparecer na resposta",
         )
         # Não deve mostrar pacientes do tipo E
         self.assertNotIn("Paciente Exames", content)
@@ -158,49 +155,53 @@ class GuicheViewsTest(TestCase):
         """Testa POST da view de seleção de guichê"""
         self.client.login(cpf="11122233344", password="guichepass")
 
-        data = {'guiche': self.guiche.id}
-        response = self.client.post(reverse("guiche:selecionar_guiche"), data, follow=True)
+        data = {"guiche": self.guiche.id}
+        response = self.client.post(
+            reverse("guiche:selecionar_guiche"), data, follow=True
+        )
         self.assertEqual(response.status_code, 200)
 
         # Verificar se o guichê foi salvo na sessão
-        self.assertEqual(self.client.session.get('guiche_id'), self.guiche.id)
+        self.assertEqual(self.client.session.get("guiche_id"), self.guiche.id)
 
-    @patch('guiche.views.enviar_whatsapp')
+    @patch("guiche.views.enviar_whatsapp")
     def test_chamar_senha(self, mock_enviar_whatsapp):
         """Testa chamada de senha com envio de WhatsApp"""
         self.client.login(cpf="11122233344", password="guichepass")
 
         # Simular guichê na sessão
         session = self.client.session
-        session['guiche_id'] = self.guiche.id
+        session["guiche_id"] = self.guiche.id
         session.save()
 
-        response = self.client.post(reverse("guiche:chamar_senha", args=[self.paciente1.id]))
+        response = self.client.post(
+            reverse("guiche:chamar_senha", args=[self.paciente1.id])
+        )
         self.assertEqual(response.status_code, 200)
 
         # Verificar se a chamada foi registrada
         chamada = Chamada.objects.filter(
-            paciente=self.paciente1,
-            guiche=self.guiche,
-            acao="chamada"
+            paciente=self.paciente1, guiche=self.guiche, acao="chamada"
         ).exists()
         self.assertTrue(chamada)
 
         # Verificar se WhatsApp foi chamado (pode ser chamado 2 vezes devido à implementação)
         self.assertGreaterEqual(mock_enviar_whatsapp.call_count, 1)
 
-    @patch('guiche.views.enviar_whatsapp')
+    @patch("guiche.views.enviar_whatsapp")
     def test_chamar_senha_sem_telefone(self, mock_enviar_whatsapp):
         """Testa chamada de senha sem telefone (não deve enviar WhatsApp)"""
         self.client.login(cpf="11122233344", password="guichepass")
 
         # Simular guichê na sessão
         session = self.client.session
-        session['guiche_id'] = self.guiche.id
+        session["guiche_id"] = self.guiche.id
         session.save()
 
         # Paciente sem telefone
-        response = self.client.post(reverse("guiche:chamar_senha", args=[self.paciente2.id]))
+        response = self.client.post(
+            reverse("guiche:chamar_senha", args=[self.paciente2.id])
+        )
         self.assertEqual(response.status_code, 200)
 
         # Verificar se WhatsApp NÃO foi chamado
@@ -212,17 +213,17 @@ class GuicheViewsTest(TestCase):
 
         # Simular guichê na sessão
         session = self.client.session
-        session['guiche_id'] = self.guiche.id
+        session["guiche_id"] = self.guiche.id
         session.save()
 
-        response = self.client.post(reverse("guiche:reanunciar_senha", args=[self.paciente1.id]))
+        response = self.client.post(
+            reverse("guiche:reanunciar_senha", args=[self.paciente1.id])
+        )
         self.assertEqual(response.status_code, 200)
 
         # Verificar se o reanúncio foi registrado
         chamada = Chamada.objects.filter(
-            paciente=self.paciente1,
-            guiche=self.guiche,
-            acao="reanuncio"
+            paciente=self.paciente1, guiche=self.guiche, acao="reanuncio"
         ).exists()
         self.assertTrue(chamada)
 
@@ -232,7 +233,7 @@ class GuicheViewsTest(TestCase):
 
         # Simular guichê na sessão
         session = self.client.session
-        session['guiche_id'] = self.guiche.id
+        session["guiche_id"] = self.guiche.id
         session.save()
 
         # Verificar estado inicial
@@ -241,7 +242,9 @@ class GuicheViewsTest(TestCase):
         self.assertIsNone(self.guiche.senha_atendida)
         self.assertFalse(self.guiche.em_atendimento)
 
-        response = self.client.post(reverse("guiche:confirmar_atendimento", args=[self.paciente1.id]))
+        response = self.client.post(
+            reverse("guiche:confirmar_atendimento", args=[self.paciente1.id])
+        )
         self.assertEqual(response.status_code, 200)
 
         # Verificar se o paciente foi marcado como atendido
@@ -253,9 +256,7 @@ class GuicheViewsTest(TestCase):
 
         # Verificar se a confirmação foi registrada
         chamada = Chamada.objects.filter(
-            paciente=self.paciente1,
-            guiche=self.guiche,
-            acao="confirmado"
+            paciente=self.paciente1, guiche=self.guiche, acao="confirmado"
         ).exists()
         self.assertTrue(chamada)
 
@@ -263,51 +264,49 @@ class GuicheViewsTest(TestCase):
         """Testa view da TV quando não há chamadas"""
         response = self.client.get(reverse("guiche:tv1"))
         self.assertEqual(response.status_code, 200)
-        self.assertIsNone(response.context['senha_chamada'])
-        self.assertIsNone(response.context['nome_completo'])
-        self.assertIsNone(response.context['numero_guiche'])
+        self.assertIsNone(response.context["senha_chamada"])
+        self.assertIsNone(response.context["nome_completo"])
+        self.assertIsNone(response.context["numero_guiche"])
 
     def test_tv1_view_com_chamadas(self):
         """Testa view da TV com chamadas existentes"""
         # Criar uma chamada
         Chamada.objects.create(
-            paciente=self.paciente1,
-            guiche=self.guiche,
-            acao="chamada"
+            paciente=self.paciente1, guiche=self.guiche, acao="chamada"
         )
 
         response = self.client.get(reverse("guiche:tv1"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['senha_chamada'], self.paciente1)
-        self.assertEqual(response.context['nome_completo'], self.paciente1.nome_completo)
-        self.assertEqual(response.context['numero_guiche'], self.guiche.numero)
+        self.assertEqual(response.context["senha_chamada"], self.paciente1)
+        self.assertEqual(
+            response.context["nome_completo"], self.paciente1.nome_completo
+        )
+        self.assertEqual(response.context["numero_guiche"], self.guiche.numero)
 
     def test_tv1_api_view_sem_chamadas(self):
         """Testa API da TV quando não há chamadas"""
         response = self.client.get(reverse("guiche:tv1_api"))
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['senha'], '')
-        self.assertEqual(data['nome_completo'], '')
-        self.assertEqual(data['guiche'], '')
-        self.assertEqual(data['id'], '')
+        self.assertEqual(data["senha"], "")
+        self.assertEqual(data["nome_completo"], "")
+        self.assertEqual(data["guiche"], "")
+        self.assertEqual(data["id"], "")
 
     def test_tv1_api_view_com_chamadas(self):
         """Testa API da TV com chamadas existentes"""
         # Criar uma chamada
         chamada = Chamada.objects.create(
-            paciente=self.paciente1,
-            guiche=self.guiche,
-            acao="chamada"
+            paciente=self.paciente1, guiche=self.guiche, acao="chamada"
         )
 
         response = self.client.get(reverse("guiche:tv1_api"))
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['senha'], self.paciente1.senha)
-        self.assertEqual(data['nome_completo'], self.paciente1.nome_completo)
-        self.assertEqual(data['guiche'], self.guiche.numero)
-        self.assertEqual(data['id'], chamada.id)
+        self.assertEqual(data["senha"], self.paciente1.senha)
+        self.assertEqual(data["nome_completo"], self.paciente1.nome_completo)
+        self.assertEqual(data["guiche"], self.guiche.numero)
+        self.assertEqual(data["id"], chamada.id)
 
     def test_fila_com_proporcoes(self):
         """Testa lógica de fila com proporções diferentes"""
@@ -330,7 +329,7 @@ class GuicheViewsTest(TestCase):
                 cartao_sus=f"111111111{i}",
                 horario_agendamento=timezone.now(),
                 horario_geracao_senha=hoje,
-                atendido=False
+                atendido=False,
             )
             pacientes_g.append(p)
 
@@ -344,15 +343,15 @@ class GuicheViewsTest(TestCase):
                 cartao_sus=f"222222222{i}",
                 horario_agendamento=timezone.now(),
                 horario_geracao_senha=hoje,
-                atendido=False
+                atendido=False,
             )
             pacientes_e.append(p)
 
         # Aplicar filtros: G=2, E=1 (proporção 2:1)
         session = self.client.session
-        session['filtros_guiche'] = {
-            'tipos_selecionados': ['G', 'E'],
-            'proporcoes': {'G': 2, 'E': 1}
+        session["filtros_guiche"] = {
+            "tipos_selecionados": ["G", "E"],
+            "proporcoes": {"G": 2, "E": 1},
         }
         session.save()
 
@@ -361,13 +360,13 @@ class GuicheViewsTest(TestCase):
 
         # Verificar se a fila foi organizada corretamente
         # Com proporção 2:1, deve alternar: G, G, E, G, G, E, etc.
-        senhas = response.context['senhas']
+        senhas = response.context["senhas"]
         self.assertEqual(len(senhas), 5)  # 3G + 2E = 5 pacientes
 
         # Verificar ordem: deve começar com G (mais frequente)
-        self.assertEqual(senhas[0].tipo_senha, 'G')
-        self.assertEqual(senhas[1].tipo_senha, 'G')
-        self.assertEqual(senhas[2].tipo_senha, 'E')
+        self.assertEqual(senhas[0].tipo_senha, "G")
+        self.assertEqual(senhas[1].tipo_senha, "G")
+        self.assertEqual(senhas[2].tipo_senha, "E")
 
     def test_get_guiche_do_usuario_sem_guiche(self):
         """Testa erro quando usuário não tem guichê associado"""
@@ -378,7 +377,7 @@ class GuicheViewsTest(TestCase):
             cpf="33344455566",
             username="33344455566",
             password="testpass",
-            funcao="guiche"
+            funcao="guiche",
         )
 
         with self.assertRaises(Guiche.DoesNotExist):
@@ -391,14 +390,14 @@ class GuicheViewsTest(TestCase):
 
         # Criar request com sessão
         factory = RequestFactory()
-        request = factory.get('/')
-        request.session = {'guiche_id': self.guiche.id}
+        request = factory.get("/")
+        request.session = {"guiche_id": self.guiche.id}
 
         user_sem_guiche = CustomUser.objects.create_user(
             cpf="33344455566",
             username="33344455566",
             password="testpass",
-            funcao="guiche"
+            funcao="guiche",
         )
 
         guiche_obtido = get_guiche_do_usuario(user_sem_guiche, request)
