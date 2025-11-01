@@ -139,7 +139,7 @@ class Atendimento(models.Model):
     # Outros campos do atendimento (observações, etc.)
 
     def __str__(self):
-        return f"Atendimento de {self.paciente.nome} por {self.funcionario.username} em {self.data_hora}"
+        return f"Atendimento de {self.paciente.nome_completo} por {self.funcionario.username} em {self.data_hora}"
 
 
 class RegistroDeAcesso(models.Model):

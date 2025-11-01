@@ -89,11 +89,33 @@ class CadastrarFuncionarioForm(UserCreationForm):
     import re
 
     def validate_cpf(value):
-        # Aceita apenas 11 dígitos numéricos
+        # Remove caracteres não numéricos
         digits = re.sub(r"\D", "", value)
+
+        # Verifica se tem exatamente 11 dígitos
         if len(digits) != 11:
-            raise ValidationError("Informe um CPF válido com 11 dígitos.")
-        # Opcional: pode adicionar validação de dígito verificador aqui
+            raise ValidationError("CPF deve ter exatamente 11 dígitos.")
+
+        # Verifica se todos os dígitos são iguais (CPF inválido)
+        if digits == digits[0] * 11:
+            raise ValidationError("CPF inválido.")
+
+        # Calcula o primeiro dígito verificador
+        sum1 = sum(int(digits[i]) * (10 - i) for i in range(9))
+        digit1 = (sum1 * 10) % 11
+        if digit1 == 10:
+            digit1 = 0
+
+        # Calcula o segundo dígito verificador
+        sum2 = sum(int(digits[i]) * (11 - i) for i in range(10))
+        digit2 = (sum2 * 10) % 11
+        if digit2 == 10:
+            digit2 = 0
+
+        # Verifica se os dígitos calculados batem com os informados
+        if int(digits[9]) != digit1 or int(digits[10]) != digit2:
+            raise ValidationError("CPF inválido.")
+
         return value
 
     cpf = forms.CharField(
