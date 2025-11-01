@@ -18,8 +18,8 @@ class RegistroDeAcessoAdmin(admin.ModelAdmin):
     def data_hora_local(self, obj):
         return timezone.localtime(obj.data_hora).strftime("%d/%m/%Y %H:%M:%S")
 
-    data_hora_local.admin_order_field = "data_hora"
-    data_hora_local.short_description = "Data e Hora (São Paulo)"
+    data_hora_local.admin_order_field = "data_hora"  # type: ignore
+    data_hora_local.short_description = "Data e Hora (São Paulo)"  # type: ignore
 
 
 admin.site.register(CustomUser)
