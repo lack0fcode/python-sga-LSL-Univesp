@@ -99,7 +99,9 @@ jobs:
           pip install -r requirements.txt
           pip install safety bandit mypy
       - name: Run Safety Scan
-        run: safety scan
+        uses: pyupio/safety-action@v1
+        with:
+          api-key: ${{ secrets.SAFETY_API_KEY }}
       - name: Run Bandit Security Linter
         run: |
           bandit -r . --exclude venv,.git,__pycache__,.mypy_cache,staticfiles,node_modules -f json -o bandit-report.json || true
