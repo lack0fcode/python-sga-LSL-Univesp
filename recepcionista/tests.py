@@ -82,11 +82,12 @@ class RecepcionistaViewsTest(TestCase):
         xss_data["nome_completo"] = '<script>alert("XSS")</script>'
         resp = self.client.post(url, xss_data, follow=True)
         self.assertEqual(resp.status_code, 200)
+        # Verificar que o formulário é inválido devido à validação XSS
+        self.assertContains(resp, "Entrada inválida: scripts não são permitidos.")
         paciente = Paciente.objects.filter(
             nome_completo='<script>alert("XSS")</script>'
         )
-        self.assertTrue(paciente.exists())
-        # Nota: A proteção XSS deve ser feita no template
+        self.assertFalse(paciente.exists())
 
     def test_sql_injection_observacoes(self):
         """Testa proteção contra SQL injection nas observações."""

@@ -29,4 +29,4 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-LOGGING["loggers"]["core.views"]["level"] = "WARNING"
+LOGGING["loggers"]["core.views"]["level"] = "WARNING"  # type: ignore

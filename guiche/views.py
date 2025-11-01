@@ -81,7 +81,7 @@ def painel_guiche(request):
             ).order_by("horario_geracao_senha")
 
             # Agrupa por tipo
-            grupos = defaultdict(deque)
+            grupos: defaultdict[str, deque] = defaultdict(deque)
             for paciente in pacientes:
                 prefixo = paciente.tipo_senha
                 if prefixo in proporcoes:
