@@ -10,6 +10,7 @@
             {% csrf_token %}
             <div>
                 {{ form.nome_completo.label_tag }} {{ form.nome_completo }}
+                {{ form.nome_completo.errors }}
             </div>
             <div>
                 {{ form.cartao_sus.label_tag }} {{ form.cartao_sus }}

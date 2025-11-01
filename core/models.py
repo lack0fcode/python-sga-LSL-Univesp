@@ -36,6 +36,13 @@ class CustomUser(AbstractUser):
         null=True, blank=True, verbose_name="Sala do Profissional"
     )  # coloquei agora
 
+    failed_login_attempts = models.IntegerField(
+        default=0, verbose_name="Tentativas de login falhadas"
+    )
+    lockout_until = models.DateTimeField(
+        null=True, blank=True, verbose_name="Bloqueado até"
+    )
+
     USERNAME_FIELD = "cpf"  # Use o CPF como o campo de nome de usuário
     REQUIRED_FIELDS = ["first_name", "last_name", "username"]  # Campos obrigatórios,
 

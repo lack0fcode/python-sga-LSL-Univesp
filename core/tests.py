@@ -1,6 +1,7 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 
 from .forms import CadastrarFuncionarioForm, CadastrarPacienteForm, LoginForm
 from .models import (
@@ -810,10 +811,12 @@ class CadastrarPacienteFormTest(TestCase):
         xss_data = self.valid_data.copy()
         xss_data["nome_completo"] = '<script>alert("XSS")</script>'
         form = CadastrarPacienteForm(data=xss_data)
-        self.assertTrue(form.is_valid())
-        paciente = form.save()
-        self.assertEqual(paciente.nome_completo, '<script>alert("XSS")</script>')
-        # Nota: A proteção XSS deve ser feita no template, não no form
+        self.assertFalse(form.is_valid())
+        self.assertIn("nome_completo", form.errors)
+        self.assertIn(
+            "Entrada inválida: scripts não são permitidos.",
+            str(form.errors["nome_completo"]),
+        )
 
     def test_sql_injection_observacoes(self):
         """Testa proteção contra SQL injection nas observações."""
@@ -1065,7 +1068,6 @@ class CadastrarFuncionarioFormTest(TestCase):
         malicious_data["cpf"] = "123'; DROP TABLE customuser; --"
         malicious_data["username"] = malicious_data["cpf"]
         form = CadastrarFuncionarioForm(data=malicious_data)
-        # O validador deve rejeitar por não ter 11 dígitos
         self.assertFalse(form.is_valid())
         self.assertIn("cpf", form.errors)
 
@@ -1074,10 +1076,12 @@ class CadastrarFuncionarioFormTest(TestCase):
         xss_data = self.valid_data.copy()
         xss_data["first_name"] = '<script>alert("XSS")</script>'
         form = CadastrarFuncionarioForm(data=xss_data)
-        self.assertTrue(form.is_valid())
-        user = form.save()
-        self.assertEqual(user.first_name, '<script>alert("XSS")</script>')
-        # Nota: A proteção XSS deve ser feita no template
+        self.assertFalse(form.is_valid())
+        self.assertIn("first_name", form.errors)
+        self.assertIn(
+            "Entrada inválida: scripts não são permitidos.",
+            str(form.errors["first_name"]),
+        )
 
     def test_funcao_choices_valid(self):
         """Testa choices válidos para função."""
@@ -1221,9 +1225,8 @@ class LoginFormTest(TestCase):
     def test_sql_injection_cpf(self):
         """Testa proteção contra SQL injection no CPF."""
         malicious_data = self.valid_data.copy()
-        malicious_data["cpf"] = "999' OR '1'='1"  # CPF malicioso com aspas
+        malicious_data["cpf"] = "999' OR '1'='1"
         form = LoginForm(data=malicious_data)
-        # Deve falhar na autenticação, não executar SQL malicioso
         self.assertFalse(form.is_valid())
         self.assertIn("__all__", form.errors)
 
@@ -1232,7 +1235,6 @@ class LoginFormTest(TestCase):
         malicious_data = self.valid_data.copy()
         malicious_data["password"] = "' OR '1'='1"
         form = LoginForm(data=malicious_data)
-        # Deve falhar na autenticação
         self.assertFalse(form.is_valid())
         self.assertIn("__all__", form.errors)
 
@@ -1281,31 +1283,49 @@ class LoginFormTest(TestCase):
         self.assertFalse(form.is_valid())
 
     def test_brute_force_protection(self):
-        """Testa proteção contra força bruta (simulada)."""
-        # Múltiplas tentativas com senha errada
-        for i in range(5):
+        """Testa proteção contra força bruta (bloqueio após 4 tentativas)."""
+        # 3 tentativas falhidas
+        for i in range(3):
             data = self.valid_data.copy()
             data["password"] = f"wrongpass{i}"
             form = LoginForm(data=data)
             self.assertFalse(form.is_valid())
             self.assertIn("__all__", form.errors)
+            self.assertIn("CPF ou senha incorretos.", str(form.errors["__all__"]))
+
+        # 4ª tentativa deve bloquear
+        data = self.valid_data.copy()
+        data["password"] = "wrongpass3"
+        form = LoginForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("__all__", form.errors)
+        self.assertIn(
+            "Conta bloqueada por tentativas excessivas.", str(form.errors["__all__"])
+        )
+
+        # Verificar que o usuário está bloqueado
+        user = CustomUser.objects.get(cpf=self.valid_data["cpf"])
+        self.assertIsNotNone(user.lockout_until)
+        self.assertGreater(user.lockout_until, timezone.now())
+
+        # Tentativa adicional deve mostrar mensagem de bloqueio
+        form2 = LoginForm(data=data)
+        self.assertFalse(form2.is_valid())
+        self.assertIn("__all__", form2.errors)
+        self.assertIn("Conta bloqueada.", str(form2.errors["__all__"]))
 
     def test_timing_attack_resistance(self):
         """Testa resistência a ataques de temporização."""
-        # Login válido
         start_time = timezone.now()
         form_valid = LoginForm(data=self.valid_data)
         valid_time = timezone.now() - start_time
 
-        # Login inválido
         start_time = timezone.now()
         data_invalid = self.valid_data.copy()
         data_invalid["password"] = "wrong"
         form_invalid = LoginForm(data=data_invalid)
         invalid_time = timezone.now() - start_time
 
-        # Os tempos deveriam ser similares para evitar ataques de temporização
-        # Nota: Esta é uma verificação básica; sistemas reais precisam de proteção mais sofisticada
         self.assertTrue(abs((valid_time - invalid_time).total_seconds()) < 1.0)
 
 
@@ -1459,3 +1479,65 @@ class IntegracaoFluxoCompletoTest(TestCase):
         # Após logout, usuário não está autenticado
         response2 = self.client.get(reverse("pagina_inicial"))
         self.assertEqual(response2.status_code, 302)
+
+
+class UtilsTest(TestCase):
+    """Testes para funções utilitárias em core.utils."""
+
+    @patch("core.utils.Client")
+    def test_enviar_whatsapp_sucesso(self, mock_client):
+        """Testa envio bem-sucedido de WhatsApp."""
+        from core.utils import enviar_whatsapp
+        from django.conf import settings
+
+        # Mock das configurações
+        settings.TWILIO_ACCOUNT_SID = "test_sid"
+        settings.TWILIO_AUTH_TOKEN = "test_token"
+        settings.TWILIO_WHATSAPP_NUMBER = "+1234567890"
+
+        # Mock do cliente e mensagem
+        mock_message = mock_client.return_value.messages.create.return_value
+        mock_message.sid = "test_sid"
+
+        resultado = enviar_whatsapp("+5511999999999", "Teste mensagem")
+
+        self.assertTrue(resultado)
+        mock_client.assert_called_once_with("test_sid", "test_token")
+        mock_client.return_value.messages.create.assert_called_once_with(
+            from_="whatsapp:+1234567890",
+            body="Teste mensagem",
+            to="whatsapp:+5511999999999",
+        )
+
+    def test_enviar_whatsapp_credenciais_ausentes(self):
+        """Testa falha quando credenciais Twilio não estão configuradas."""
+        from core.utils import enviar_whatsapp
+        from django.conf import settings
+
+        # Simular credenciais ausentes
+        settings.TWILIO_ACCOUNT_SID = None
+        settings.TWILIO_AUTH_TOKEN = "test_token"
+        settings.TWILIO_WHATSAPP_NUMBER = "+1234567890"
+
+        resultado = enviar_whatsapp("+5511999999999", "Teste mensagem")
+
+        self.assertFalse(resultado)
+
+    @patch("core.utils.Client")
+    def test_enviar_whatsapp_erro_api(self, mock_client):
+        """Testa falha na API do Twilio."""
+        from core.utils import enviar_whatsapp
+        from django.conf import settings
+
+        # Mock das configurações
+        settings.TWILIO_ACCOUNT_SID = "test_sid"
+        settings.TWILIO_AUTH_TOKEN = "test_token"
+        settings.TWILIO_WHATSAPP_NUMBER = "+1234567890"
+
+        # Mock do cliente para lançar exceção
+        mock_client.return_value.messages.create.side_effect = Exception("Erro na API")
+
+        resultado = enviar_whatsapp("+5511999999999", "Teste mensagem")
+
+        self.assertFalse(resultado)
+        mock_client.assert_called_once_with("test_sid", "test_token")
