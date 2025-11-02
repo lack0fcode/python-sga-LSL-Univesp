@@ -60,6 +60,16 @@ class CadastrarPacienteForm(forms.ModelForm):
             raise forms.ValidationError("Entrada inválida: scripts não são permitidos.")
         return nome_completo
 
+    def clean_cartao_sus(self):
+        cartao_sus = self.cleaned_data.get("cartao_sus")
+        if cartao_sus:
+            # Verifica se já existe um paciente com este cartão SUS
+            if Paciente.objects.filter(cartao_sus=cartao_sus).exists():
+                raise forms.ValidationError(
+                    "Já existe um paciente cadastrado com este cartão SUS."
+                )
+        return cartao_sus
+
     class Meta:
         model = Paciente
         fields = [
@@ -95,6 +105,7 @@ class CadastrarPacienteForm(forms.ModelForm):
 class CadastrarFuncionarioForm(UserCreationForm):
     import re
 
+    @staticmethod
     def validate_cpf(value):
         # Remove caracteres não numéricos
         digits = re.sub(r"\D", "", value)

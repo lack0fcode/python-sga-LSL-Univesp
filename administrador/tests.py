@@ -306,3 +306,40 @@ class AdministradorViewsTest(TestCase):
 
         # Verificar que todos foram criados
         self.assertEqual(CustomUser.objects.filter(last_name="Teste").count(), 3)
+
+    def test_editar_funcionario(self):
+        self.client.login(cpf="11122233344", password="adminpass")
+        url = reverse("administrador:editar_funcionario", args=[self.func.pk])
+        data = {
+            "cpf": "12345678909",
+            "username": "12345678909",
+            "first_name": "Edited",
+            "last_name": "Funcionario",
+            "email": "edited@func.com",
+            "funcao": "guiche",
+            "password1": "newpass123",
+            "password2": "newpass123",
+        }
+        resp = self.client.post(url, data, follow=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Funcionário atualizado com sucesso")
+        self.func.refresh_from_db()
+        self.assertEqual(self.func.first_name, "Edited")
+        self.assertEqual(self.func.funcao, "guiche")
+
+    def test_editar_funcionario_invalido(self):
+        self.client.login(cpf="11122233344", password="adminpass")
+        url = reverse("administrador:editar_funcionario", args=[self.func.pk])
+        data = {
+            "cpf": "12345678909",
+            "username": "12345678909",
+            "first_name": "Edited",
+            "last_name": "Funcionario",
+            "email": "edited@func.com",
+            "funcao": "guiche",
+            "password1": "newpass123",
+            "password2": "differentpass",  # Senhas diferentes
+        }
+        resp = self.client.post(url, data)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Erro ao atualizar o funcionário")
