@@ -362,7 +362,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         data = response_api.json()
         self.assertEqual(data["nome_completo"], "João Silva Teste Dinâmico")
         self.assertEqual(data["senha"], paciente.senha)
-        self.assertEqual(data["profissional_nome"], "Dr.")
+        self.assertEqual(data["profissional_nome"], "Dr. Silva")
 
         # 8. VERIFICAR PAINEL DO PROFISSIONAL
         response = client_prof.get(reverse("profissional_saude:painel_profissional"))
@@ -527,7 +527,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         data = response_api.json()
         self.assertEqual(data["nome_completo"], "Pedro Costa")
         self.assertEqual(data["senha"], pacientes[1].senha)
-        self.assertEqual(data["profissional_nome"], "Dra.")
+        self.assertEqual(data["profissional_nome"], "Dra. Santos")
 
         # Guichê chama terceiro paciente (Ana)
         response = client_guiche.post(

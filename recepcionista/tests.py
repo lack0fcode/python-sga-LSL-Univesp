@@ -8,6 +8,12 @@ from core.forms import CadastrarPacienteForm
 class RecepcionistaViewsTest(TestCase):
     """Testes abrangentes para recepcionista com foco em segurança."""
 
+    @staticmethod
+    def get_unique_cartao_sus(base="123456789012"):
+        """Gera um cartão SUS único baseado em um timestamp."""
+        import time
+        return f"{base}{int(time.time()*1000000) % 100000}"
+
     def setUp(self):
         self.client = Client()
         self.recep = CustomUser.objects.create_user(
@@ -36,7 +42,7 @@ class RecepcionistaViewsTest(TestCase):
         )
         self.valid_data = {
             "nome_completo": "Paciente Teste",
-            "cartao_sus": "123456789012345",
+            "cartao_sus": self.get_unique_cartao_sus(),
             "horario_agendamento": timezone.now(),
             "profissional_saude": self.prof.id,
             "observacoes": "Observações de teste",
@@ -68,6 +74,7 @@ class RecepcionistaViewsTest(TestCase):
         url = reverse("recepcionista:cadastrar_paciente")
         malicious_data = self.valid_data.copy()
         malicious_data["nome_completo"] = "'; DROP TABLE paciente; --"
+        malicious_data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, malicious_data, follow=True)
         self.assertEqual(resp.status_code, 200)  # Formulário processado e redirecionado
         # Verificar que paciente foi criado (Django protege automaticamente)
@@ -79,7 +86,8 @@ class RecepcionistaViewsTest(TestCase):
         self.client.login(cpf="11122233344", password="receppass")
         url = reverse("recepcionista:cadastrar_paciente")
         xss_data = self.valid_data.copy()
-        xss_data["nome_completo"] = '<script>alert("XSS")</script>'
+        xss_data["nome_completo"] = '<script>alert("xss")</script>'
+        xss_data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, xss_data, follow=True)
         self.assertEqual(resp.status_code, 200)
         # Verificar que o formulário é inválido devido à validação XSS
@@ -95,6 +103,7 @@ class RecepcionistaViewsTest(TestCase):
         url = reverse("recepcionista:cadastrar_paciente")
         malicious_data = self.valid_data.copy()
         malicious_data["observacoes"] = "1' OR '1'='1"
+        malicious_data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, malicious_data, follow=True)
         self.assertEqual(resp.status_code, 200)
         paciente = Paciente.objects.filter(observacoes="1' OR '1'='1")
@@ -116,6 +125,7 @@ class RecepcionistaViewsTest(TestCase):
             data = self.valid_data.copy()
             data["nome_completo"] = f"Paciente {telefone}"
             data["telefone_celular"] = telefone
+            data["cartao_sus"] = self.get_unique_cartao_sus()
             resp = self.client.post(url, data, follow=True)
             self.assertEqual(resp.status_code, 200)
             paciente = Paciente.objects.filter(nome_completo=f"Paciente {telefone}")
@@ -137,6 +147,7 @@ class RecepcionistaViewsTest(TestCase):
             data = self.valid_data.copy()
             data["nome_completo"] = f"Paciente Inválido {telefone}"
             data["telefone_celular"] = telefone
+            data["cartao_sus"] = self.get_unique_cartao_sus()
             resp = self.client.post(url, data)
             self.assertEqual(resp.status_code, 200)
             # Paciente não deve ser criado devido ao telefone inválido
@@ -172,6 +183,7 @@ class RecepcionistaViewsTest(TestCase):
             data = self.valid_data.copy()
             data["nome_completo"] = f"Paciente {tipo}"
             data["tipo_senha"] = tipo
+            data["cartao_sus"] = self.get_unique_cartao_sus()
             resp = self.client.post(url, data, follow=True)
             self.assertEqual(resp.status_code, 200)
             paciente = Paciente.objects.filter(nome_completo=f"Paciente {tipo}")
@@ -185,6 +197,7 @@ class RecepcionistaViewsTest(TestCase):
         data = self.valid_data.copy()
         data["nome_completo"] = "Paciente Tipo Inválido"
         data["tipo_senha"] = "X"  # Inválido
+        data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, data)
         self.assertEqual(resp.status_code, 200)
         paciente = Paciente.objects.filter(nome_completo="Paciente Tipo Inválido")
@@ -234,6 +247,7 @@ class RecepcionistaViewsTest(TestCase):
         data = self.valid_data.copy()
         data["nome_completo"] = "Paciente Sem Profissional"
         data["profissional_saude"] = ""  # Vazio
+        data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, data, follow=True)
         self.assertEqual(resp.status_code, 200)
         paciente = Paciente.objects.filter(nome_completo="Paciente Sem Profissional")
@@ -250,6 +264,7 @@ class RecepcionistaViewsTest(TestCase):
         data = self.valid_data.copy()
         data["nome_completo"] = "Paciente Futuro"
         data["horario_agendamento"] = future_date
+        data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, data, follow=True)
         self.assertEqual(resp.status_code, 200)
         paciente = Paciente.objects.filter(nome_completo="Paciente Futuro")
@@ -259,6 +274,7 @@ class RecepcionistaViewsTest(TestCase):
         past_date = timezone.now() - timezone.timedelta(days=1)
         data["nome_completo"] = "Paciente Passado"
         data["horario_agendamento"] = past_date
+        data["cartao_sus"] = self.get_unique_cartao_sus()
         resp = self.client.post(url, data, follow=True)
         self.assertEqual(resp.status_code, 200)
         paciente = Paciente.objects.filter(nome_completo="Paciente Passado")
@@ -314,6 +330,7 @@ class RecepcionistaViewsTest(TestCase):
         for i in range(3):
             data = self.valid_data.copy()
             data["nome_completo"] = f"Paciente {i}"
+            data["cartao_sus"] = self.get_unique_cartao_sus()
             resp = self.client.post(url, data, follow=True)
             self.assertEqual(resp.status_code, 200)
             paciente = Paciente.objects.filter(nome_completo=f"Paciente {i}")
@@ -332,6 +349,7 @@ class RecepcionistaViewsTest(TestCase):
         # Nome muito longo
         data = self.valid_data.copy()
         data["nome_completo"] = "A" * 300  # Maior que max_length
+        data["cartao_sus"] = self.get_unique_cartao_sus()
         data["observacoes"] = "B" * 1000  # Campo sem limite específico
         resp = self.client.post(url, data)
         self.assertEqual(resp.status_code, 200)
@@ -359,6 +377,7 @@ class RecepcionistaViewsTest(TestCase):
         for name in special_names:
             data = self.valid_data.copy()
             data["nome_completo"] = name
+            data["cartao_sus"] = self.get_unique_cartao_sus()
             resp = self.client.post(url, data, follow=True)
             self.assertEqual(resp.status_code, 200)
             paciente = Paciente.objects.filter(nome_completo=name)
