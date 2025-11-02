@@ -12,6 +12,7 @@ class RecepcionistaViewsTest(TestCase):
     def get_unique_cartao_sus(base="123456789012"):
         """Gera um cartão SUS único baseado em um timestamp."""
         import time
+
         return f"{base}{int(time.time()*1000000) % 100000}"
 
     def setUp(self):

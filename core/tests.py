@@ -830,7 +830,9 @@ class CadastrarPacienteFormTest(TestCase):
         """Testa formatos válidos de telefone."""
         # TODO: Este teste está falhando devido a diferenças entre SQLite e PostgreSQL
         # Os formatos são válidos na prática, mas há incompatibilidades no ambiente de teste
-        self.skipTest("Teste temporariamente desabilitado devido a diferenças entre bancos de dados")
+        self.skipTest(
+            "Teste temporariamente desabilitado devido a diferenças entre bancos de dados"
+        )
 
     def test_telefone_celular_invalid_formats(self):
         """Testa formatos inválidos de telefone."""
