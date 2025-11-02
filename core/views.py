@@ -31,7 +31,7 @@ def login_view(request):
                 login(request, user)
                 # Redirecionamento baseado na função do usuário
                 if user.funcao == "administrador":
-                    return redirect("admin:index")
+                    return redirect("administrador:listar_funcionarios")
                 elif user.funcao == "recepcionista":
                     return redirect("recepcionista:cadastrar_paciente")
                 elif user.funcao == "guiche":

@@ -157,7 +157,7 @@
                 {% if senha_chamada %}
                     <!-- Exibe o nome e a sala no destaque -->
                     <h3 class="text-danger" id="senha-chamada-texto" data-nome="{{ nome_completo }}" data-sala="{{ sala_consulta }}">
-                        {{ nome_completo }} - Sala: {{ sala_consulta }}
+                        {{ nome_completo }} - Profissional: {{ profissional_nome }}
                     </h3>
                     <!-- Remove o segundo h3 -->
                     <p>Profissional: {{ profissional_nome }}</p>
@@ -214,7 +214,7 @@
 
                         if (data.nome_completo && data.sala_consulta && data.profissional_nome && data.id !== ultimaChamadaId) {
                             // Atualiza a tela
-                            var nomeSala = data.nome_completo + " - Sala: " + data.sala_consulta;
+                            var nomeSala = data.nome_completo + " - Profissional: " + data.profissional_nome;
                             $('#senha-chamada-texto').text(nomeSala);
                             $('#senha-chamada-texto').data('nome', data.nome_completo); // Atualiza o data-nome
                             $('#senha-chamada-texto').data('sala', data.sala_consulta); // Atualiza o data-sala
