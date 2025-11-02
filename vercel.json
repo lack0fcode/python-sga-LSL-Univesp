@@ -1,11 +1,12 @@
 {
   "version": 2,
   "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --noinput",
-  "functions": {
-    "api/index.py": {
-      "runtime": "python@3.9"
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/static/(.*)",
