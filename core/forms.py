@@ -128,7 +128,7 @@ class CadastrarFuncionarioForm(UserCreationForm):
     cpf = forms.CharField(
         label="CPF",
         max_length=14,
-        help_text="Obrigatório. 11 dígitos.",
+        help_text="Digite o cpf sem pontos ou traços.",
         validators=[validate_cpf],
     )
     funcao = forms.ChoiceField(
@@ -151,6 +151,7 @@ class CadastrarFuncionarioForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        user = super(UserCreationForm, self).save(commit=False)
         user.username = self.cleaned_data["cpf"]  # Define o username como o CPF
         if commit:
             user.save()
