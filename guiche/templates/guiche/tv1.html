@@ -171,10 +171,7 @@
 
         <!-- Painel Direito: Vídeo -->
         <div class="right-panel">
-            <video id="meuVideo" width="100%" height="auto" controls loop muted volume="0.1" autoplay>
-                <source src="{% static 'video/video-lauro-1.mp4' %}" type="video/mp4">
-                Seu navegador não suporta o formato de vídeo.
-            </video>
+            <iframe id="meuVideo" src="https://player.vimeo.com/video/1132703969?muted=1&loop=1&autoplay=1" width="100%" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
         </div>
     </div>
 
@@ -250,14 +247,14 @@
                     console.log("Nenhuma voz feminina encontrada.");
                 }
 
-                var video = document.getElementById("meuVideo");
+                // var video = document.getElementById("meuVideo");
 
                 utterThis.onstart = function(event) {
-                    video.volume = 0.025;
+                    // video.volume = 0.025;
                 }
 
                 utterThis.onend = function(event) {
-                    video.volume = 0.1;
+                    // video.volume = 0.1;
                 }
 
                 utterThis.onerror = function(event) {

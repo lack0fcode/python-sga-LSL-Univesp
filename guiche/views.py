@@ -12,7 +12,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from gtts import gTTS
 
@@ -82,7 +81,7 @@ def painel_guiche(request):
             ).order_by("horario_geracao_senha")
 
             # Agrupa por tipo
-            grupos = defaultdict(deque)
+            grupos: defaultdict[str, deque] = defaultdict(deque)
             for paciente in pacientes:
                 prefixo = paciente.tipo_senha
                 if prefixo in proporcoes:
@@ -133,7 +132,6 @@ def painel_guiche(request):
 
 
 @require_POST
-@csrf_exempt
 @login_required
 @guiche_required
 def chamar_senha(request, paciente_id):
@@ -168,7 +166,6 @@ def chamar_senha(request, paciente_id):
 
 
 @require_POST
-@csrf_exempt
 @login_required
 @guiche_required
 def reanunciar_senha(request, paciente_id):
@@ -190,7 +187,6 @@ def reanunciar_senha(request, paciente_id):
 
 
 @require_POST
-@csrf_exempt
 @login_required
 @guiche_required
 def confirmar_atendimento(request, paciente_id):

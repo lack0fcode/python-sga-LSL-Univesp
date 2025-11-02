@@ -2,6 +2,7 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
+from django.utils import timezone
 
 import re
 from django.core.exceptions import ValidationError
@@ -53,6 +54,12 @@ class CadastrarPacienteForm(forms.ModelForm):
             )
         return digits
 
+    def clean_nome_completo(self):
+        nome_completo = self.cleaned_data.get("nome_completo")
+        if nome_completo and "<script" in nome_completo.lower():
+            raise forms.ValidationError("Entrada inválida: scripts não são permitidos.")
+        return nome_completo
+
     class Meta:
         model = Paciente
         fields = [
@@ -61,12 +68,12 @@ class CadastrarPacienteForm(forms.ModelForm):
             "horario_agendamento",
             "profissional_saude",
             "observacoes",
-            "tipo_senha",  # <-- adicionado aqui também
+            "tipo_senha",
             "telefone_celular",
         ]
 
         help_texts = {
-            "telefone_celular": None,  # remove help_text só no form para não poluir
+            "telefone_celular": None,
         }
 
         widgets = {
@@ -89,17 +96,39 @@ class CadastrarFuncionarioForm(UserCreationForm):
     import re
 
     def validate_cpf(value):
-        # Aceita apenas 11 dígitos numéricos
+        # Remove caracteres não numéricos
         digits = re.sub(r"\D", "", value)
+
+        # Verifica se tem exatamente 11 dígitos
         if len(digits) != 11:
-            raise ValidationError("Informe um CPF válido com 11 dígitos.")
-        # Opcional: pode adicionar validação de dígito verificador aqui
+            raise ValidationError("CPF deve ter exatamente 11 dígitos.")
+
+        # Verifica se todos os dígitos são iguais (CPF inválido)
+        if digits == digits[0] * 11:
+            raise ValidationError("CPF inválido.")
+
+        # Calcula o primeiro dígito verificador
+        sum1 = sum(int(digits[i]) * (10 - i) for i in range(9))
+        digit1 = (sum1 * 10) % 11
+        if digit1 == 10:
+            digit1 = 0
+
+        # Calcula o segundo dígito verificador
+        sum2 = sum(int(digits[i]) * (11 - i) for i in range(10))
+        digit2 = (sum2 * 10) % 11
+        if digit2 == 10:
+            digit2 = 0
+
+        # Verifica se os dígitos calculados batem com os informados
+        if int(digits[9]) != digit1 or int(digits[10]) != digit2:
+            raise ValidationError("CPF inválido.")
+
         return value
 
     cpf = forms.CharField(
         label="CPF",
         max_length=14,
-        help_text="Obrigatório. 11 dígitos.",
+        help_text="Digite o cpf sem pontos ou traços.",
         validators=[validate_cpf],
     )
     funcao = forms.ChoiceField(
@@ -114,8 +143,15 @@ class CadastrarFuncionarioForm(UserCreationForm):
             "username": None,
         }
 
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get("first_name")
+        if "<script" in first_name.lower():
+            raise forms.ValidationError("Entrada inválida: scripts não são permitidos.")
+        return first_name
+
     def save(self, commit=True):
         user = super().save(commit=False)
+        user = super(UserCreationForm, self).save(commit=False)
         user.username = self.cleaned_data["cpf"]  # Define o username como o CPF
         if commit:
             user.save()
@@ -139,17 +175,43 @@ class LoginForm(forms.Form):
         password = cleaned_data.get("password")
 
         if cpf and password:
-            user = authenticate(
-                username=cpf, password=password
-            )  # Use 'cpf' como username
-            if user is not None:
-                if user.is_active:
-                    cleaned_data["user"] = user
+            try:
+                user = CustomUser.objects.get(cpf=cpf)
+            except CustomUser.DoesNotExist:
+                user = None
+
+            if user:
+                # Verificar se o usuário está bloqueado
+                if user.lockout_until and timezone.now() < user.lockout_until:
+                    remaining_time = (
+                        user.lockout_until - timezone.now()
+                    ).total_seconds() / 60
+                    raise ValidationError(
+                        f"Conta bloqueada. Tente novamente em {int(remaining_time)} minutos."
+                    )
+
+                # Tentar autenticar
+                user_auth = authenticate(username=cpf, password=password)
+                if user_auth and user_auth.is_active:
+                    cleaned_data["user"] = user_auth
+                    # Resetar tentativas em login bem-sucedido
+                    user.failed_login_attempts = 0
+                    user.save()
                 else:
-                    raise ValidationError("Esta conta está inativa.")  # Usuário inativo
+                    # Incrementar tentativas falhidas
+                    user.failed_login_attempts += 1
+                    if user.failed_login_attempts >= 4:
+                        user.lockout_until = timezone.now() + timezone.timedelta(
+                            minutes=5
+                        )
+                        user.save()
+                        raise ValidationError(
+                            "Conta bloqueada por tentativas excessivas. Tente novamente em 5 minutos."
+                        )
+                    else:
+                        user.save()
+                        raise ValidationError("CPF ou senha incorretos.")
             else:
-                raise ValidationError(
-                    "CPF ou senha incorretos."
-                )  # Credenciais incorretas
+                raise ValidationError("CPF ou senha incorretos.")
 
         return cleaned_data

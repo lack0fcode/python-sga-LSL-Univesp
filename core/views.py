@@ -29,7 +29,17 @@ def login_view(request):
                     f"Autenticação bem-sucedida para o usuário: {user.username}"
                 )
                 login(request, user)
-                return redirect("pagina_inicial")
+                # Redirecionamento baseado na função do usuário
+                if user.funcao == "administrador":
+                    return redirect("administrador:listar_funcionarios")
+                elif user.funcao == "recepcionista":
+                    return redirect("recepcionista:cadastrar_paciente")
+                elif user.funcao == "guiche":
+                    return redirect("guiche:selecionar_guiche")
+                elif user.funcao == "profissional_saude":
+                    return redirect("profissional_saude:painel_profissional")
+                else:
+                    return redirect("pagina_inicial")
             else:
                 logger.warning("Credenciais incorretas.")
                 form.add_error(None, "CPF ou senha incorretos.")

@@ -3,7 +3,7 @@ import os
 from .settings import *
 
 if os.environ.get("GITHUB_ACTIONS") == "true":
-    # Use PostgreSQL in GitHub Actions
+    # Use PostgreSQL
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -29,4 +29,4 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-LOGGING["loggers"]["core.views"]["level"] = "WARNING"
+LOGGING["loggers"]["core.views"]["level"] = "WARNING"  # type: ignore
