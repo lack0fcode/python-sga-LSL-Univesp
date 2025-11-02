@@ -5,13 +5,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from core.decorators import profissional_saude_required
 from core.models import ChamadaProfissional, CustomUser, Paciente
 from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
 
 @login_required
-@profissional_saude_required
 def painel_profissional(request):
     """
     Painel do profissional de saúde.

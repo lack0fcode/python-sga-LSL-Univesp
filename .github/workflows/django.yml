@@ -104,7 +104,8 @@ jobs:
           api-key: ${{ secrets.SAFETY_API_KEY }}
       - name: Run Bandit Security Linter
         run: |
-          bandit -r . --exclude venv,.git,__pycache__,.mypy_cache,staticfiles,node_modules -f html -o bandit-report.html || true
+          bandit -r . --exclude venv,.git,__pycache__,.mypy_cache,staticfiles,node_modules -f json -o bandit-report.json || true
+          bandit -r . --exclude venv,.git,__pycache__,.mypy_cache,staticfiles,node_modules -lll -f txt
       - name: Run MyPy Type Checking
         run: mypy .
 
@@ -112,4 +113,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bandit-report
-          path: bandit-report.html
+          path: bandit-report.json
