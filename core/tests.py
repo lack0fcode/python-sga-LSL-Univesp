@@ -1378,7 +1378,7 @@ class CoreViewsTest(TestCase):
             {"cpf": "11122233344", "password": "adminpass"},
             follow=True,
         )
-        self.assertRedirects(response, reverse("admin:index"))
+        self.assertRedirects(response, reverse("administrador:listar_funcionarios"))
 
         self.client.logout()
 
