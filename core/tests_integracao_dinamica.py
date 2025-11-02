@@ -161,7 +161,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         self.assertTemplateUsed(response, "profissional_saude/painel_profissional.html")
 
     def test_fluxo_completo_com_whatsapp(self):
-        """Testa fluxo completo incluindo notificação WhatsApp."""
+        """Testa fluxo completo incluindo notificação WhatsApp com dados válidos."""
 
         # 1. Admin cria recepcionista e profissional de saúde
         recepcionista = self.criar_usuario_direto("recepcionista")
@@ -194,6 +194,56 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
             self.fail(
                 f"Paciente não foi criado. Status: {response.status_code}. Content: {response.content.decode()}"
             )
+
+    def test_fluxo_completo_com_whatsapp_falha(self):
+        """Testa fluxo com WhatsApp quando cadastro falha para cobrir bloco except."""
+        # 1. Admin cria recepcionista e profissional de saúde
+        recepcionista = self.criar_usuario_direto("recepcionista", "88888888888")
+        profissional = self.criar_usuario_direto("profissional_saude", "99999999999")
+
+        # 2. Recepcionista tenta cadastrar paciente com dados que causam erro
+        client_recep = Client()
+        client_recep.login(cpf=recepcionista.cpf, password="recep123")
+
+        # Primeiro cadastra um paciente válido
+        paciente_data_valido = {
+            "nome_completo": "Paciente Original",
+            "cartao_sus": "888888888888888",
+            "telefone_celular": "(11) 97777-7777",
+            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+            "profissional_saude": profissional.id,
+            "tipo_senha": "G",
+        }
+
+        client_recep.post(
+            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_valido
+        )
+
+        # Agora tenta cadastrar com mesmo cartão SUS (deve falhar)
+        paciente_data_invalido = {
+            "nome_completo": "Paciente Duplicado",
+            "cartao_sus": "888888888888888",  # Mesmo cartão SUS
+            "telefone_celular": "(11) 96666-6666",
+            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+            "profissional_saude": profissional.id,
+            "tipo_senha": "P",
+        }
+
+        response = client_recep.post(
+            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_invalido
+        )
+
+        # Verifica se o POST falhou
+        try:
+            paciente = Paciente.objects.get(
+                cartao_sus="888888888888888", nome_completo="Paciente Duplicado"
+            )
+            self.fail("Paciente duplicado não deveria ter sido criado")
+        except Paciente.DoesNotExist:
+            # Se paciente não foi criado, verifica se há mensagens de erro na resposta
+            self.assertContains(
+                response, "Já existe"
+            )  # Deve conter mensagem de erro de duplicata
 
     def test_fluxo_completo_dinamico_cadastro_chamada_consulta(self):
         """Testa o fluxo completo dinâmico: cadastro -> guichê -> profissional -> consulta."""
@@ -553,3 +603,40 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
                     [302, 403],
                     f"{user_type} não deveria acessar {url}",
                 )
+
+    def test_cadastro_paciente_com_dados_invalidos(self):
+        """Testa tentativa de cadastro de paciente com dados inválidos para cobrir bloco de erro."""
+        # Criar recepcionista
+        recepcionista = self.criar_usuario_direto("recepcionista")
+        profissional = self.criar_usuario_direto("profissional_saude")
+
+        # Recepcionista faz login
+        client = Client()
+        client.login(cpf=recepcionista.cpf, password="recep123")
+
+        # Tentar cadastrar paciente com dados inválidos (telefone inválido)
+        paciente_data_invalido = {
+            "nome_completo": "Paciente Inválido",
+            "cartao_sus": "123456789012345",
+            "telefone_celular": "1199999999",  # Inválido - 10 dígitos
+            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+            "profissional_saude": profissional.id,
+            "tipo_senha": "G",
+        }
+
+        response = client.post(
+            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_invalido
+        )
+
+        # Verifica se o POST retornou erro (status 200 com form inválido)
+        self.assertEqual(response.status_code, 200)
+
+        # Verifica se paciente NÃO foi criado devido aos dados inválidos
+        try:
+            paciente = Paciente.objects.get(cartao_sus="123456789012345")
+            self.fail("Paciente não deveria ter sido criado com dados inválidos")
+        except Paciente.DoesNotExist:
+            # Se paciente não foi criado, verifica se há mensagens de erro na resposta
+            self.assertContains(
+                response, "celular válido"
+            )  # Deve conter mensagem de erro

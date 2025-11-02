@@ -138,7 +138,7 @@ def tv2_view(request):
         sala_consulta = (
             ultima_chamada.profissional_saude.sala
         )  # Acessa a sala através do profissional
-        profissional_nome = ultima_chamada.profissional_saude.first_name
+        profissional_nome = ultima_chamada.profissional_saude.get_full_name()
 
         # Pega as 5 chamadas mais recentes, excluindo a última chamada
         historico_chamadas = (
@@ -181,7 +181,7 @@ def tv2_api_view(request):
         sala_consulta = (
             ultima_chamada.profissional_saude.sala
         )  # Acessa a sala através do profissional
-        profissional_nome = ultima_chamada.profissional_saude.first_name
+        profissional_nome = ultima_chamada.profissional_saude.get_full_name()
         chamada_id = ultima_chamada.id
 
         data = {

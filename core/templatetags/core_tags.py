@@ -13,14 +13,14 @@ def get_proporcao_field(form, field_name):
         if value is None or value == "":
             # Define o atributo 'value' para "1"
             return field.as_widget(
-                attrs={"class": field.widget.attrs.get("class", ""), "value": "1"}
+                attrs={"class": field.field.widget.attrs.get("class", ""), "value": "1"}
             )
         else:
             return field
     except:
         # Em caso de erro, também retorna o campo com value="1"
         return field.as_widget(
-            attrs={"class": field.widget.attrs.get("class", ""), "value": "1"}
+            attrs={"class": field.field.widget.attrs.get("class", ""), "value": "1"}
         )
 
 

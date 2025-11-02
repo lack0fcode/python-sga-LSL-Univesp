@@ -1,5 +1,6 @@
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.http import HttpResponse
 from django.utils import timezone
 from unittest.mock import patch
 
@@ -1165,6 +1166,49 @@ class CadastrarFuncionarioFormTest(TestCase):
         user = form.save()
         self.assertEqual(user.username, user.cpf)
 
+    def test_cpf_validation_digit2_ten_becomes_zero(self):
+        """Testa CPF onde segundo dígito verificador seria 10, vira 0."""
+        # CPF 10000002810 faz digit2 = 10 -> 0, mas vamos alterar último dígito para falhar
+        cpf_with_digit2_ten = "10000002811"  # Último dígito alterado para falhar
+        data = self.valid_data.copy()
+        data["cpf"] = cpf_with_digit2_ten
+        data["username"] = cpf_with_digit2_ten
+        form = CadastrarFuncionarioForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("cpf", form.errors)
+
+    def test_cpf_validation_second_digit_check_fails(self):
+        """Testa CPF que passa primeira verificação mas falha na segunda."""
+        # CPF válido 52998224725, alterando último dígito
+        cpf_second_digit_wrong = "52998224726"
+        data = self.valid_data.copy()
+        data["cpf"] = cpf_second_digit_wrong
+        data["username"] = cpf_second_digit_wrong
+        form = CadastrarFuncionarioForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("cpf", form.errors)
+
+    def test_cpf_validation_digit1_ten_becomes_zero(self):
+        """Testa CPF onde primeiro dígito verificador seria 10, vira 0."""
+        # CPF 10000000108 faz digit1 = 10 -> 0, mas vamos alterar penúltimo dígito para falhar
+        cpf_with_digit1_ten = "10000000118"  # Penúltimo dígito alterado
+        data = self.valid_data.copy()
+        data["cpf"] = cpf_with_digit1_ten
+        data["username"] = cpf_with_digit1_ten
+        form = CadastrarFuncionarioForm(data=data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("cpf", form.errors)
+
+    def test_cpf_validation_digit1_ten_valid_cpf(self):
+        """Testa CPF válido onde primeiro dígito verificador é 10 (vira 0)."""
+        # CPF 10000000108: primeiro dígito calculado é 10 -> 0, segundo é 8
+        cpf_valid_digit1_ten = "10000000108"
+        data = self.valid_data.copy()
+        data["cpf"] = cpf_valid_digit1_ten
+        data["username"] = cpf_valid_digit1_ten
+        form = CadastrarFuncionarioForm(data=data)
+        self.assertTrue(form.is_valid())
+
 
 class LoginFormTest(TestCase):
     """Testes abrangentes para LoginForm com foco em segurança."""
@@ -1430,10 +1474,64 @@ class CoreViewsTest(TestCase):
             response, reverse("profissional_saude:painel_profissional")
         )
 
+    def test_login_view_post_form_invalid(self):
+        """Testa login com formulário inválido (CPF vazio)."""
+        response = self.client.post(
+            reverse("login"),
+            {"cpf": "", "password": "testpass"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Este campo é obrigatório")  # Ou similar
+        self.assertFalse(response.context["user"].is_authenticated)
+
+    def test_login_redirect_unknown_role(self):
+        """Testa redirecionamento para função desconhecida."""
+        unknown_user = CustomUser.objects.create_user(
+            cpf="55566677788",
+            username="55566677788",
+            password="unknownpass",
+            funcao="desconhecida",  # Função não reconhecida
+        )
+        response = self.client.post(
+            reverse("login"),
+            {"cpf": "55566677788", "password": "unknownpass"},
+            follow=True,
+        )
+        self.assertRedirects(response, reverse("pagina_inicial"))
+
+    def test_admin_access_registro_acesso(self):
+        """Testa acesso à página admin de RegistroDeAcesso para cobrir configuração."""
+        admin_user = CustomUser.objects.create_user(
+            cpf="11122233344",
+            username="11122233344",
+            password="adminpass",
+            funcao="administrador",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client.login(cpf="11122233344", password="adminpass")
+        response = self.client.get("/admin/core/registrodeacesso/")
+        self.assertEqual(response.status_code, 200)
+
     def test_logout_view(self):
         self.client.login(cpf="00011122233", password="testpass")
         response = self.client.get(reverse("logout"), follow=True)
         self.assertEqual(response.status_code, 200)
+
+    def test_login_creates_registro_acesso(self):
+        """Testa se login cria RegistroDeAcesso via sinal."""
+        from core.models import RegistroDeAcesso
+
+        initial_count = RegistroDeAcesso.objects.count()
+        response = self.client.post(
+            reverse("login"),
+            {"cpf": "00011122233", "password": "testpass"},
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RegistroDeAcesso.objects.count(), initial_count + 1)
+        registro = RegistroDeAcesso.objects.last()
+        self.assertEqual(registro.tipo_de_acesso, "login")
 
     def test_pagina_inicial_requires_login(self):
         response = self.client.get(reverse("pagina_inicial"))
@@ -1541,3 +1639,95 @@ class UtilsTest(TestCase):
 
         self.assertFalse(resultado)
         mock_client.assert_called_once_with("test_sid", "test_token")
+
+
+class DecoratorTest(TestCase):
+    """Testes para os decorators de permissões."""
+
+    def setUp(self):
+        self.client = Client()
+        # Cria usuário recepcionista (não administrador)
+        self.user = CustomUser.objects.create_user(
+            cpf="11122233344",
+            username="11122233344",
+            password="testpass123",
+            first_name="Maria",
+            last_name="Santos",
+            email="maria.santos@test.com",
+            funcao="recepcionista",
+        )
+
+    def test_admin_required_redirects_non_admin(self):
+        """Testa que admin_required redireciona usuário não administrador."""
+        from core.decorators import admin_required
+        from django.http import HttpRequest
+
+        # Cria uma view mock
+        def mock_admin_view(request):
+            return HttpResponse("Acesso permitido")
+
+        # Decora a view
+        decorated_view = admin_required(mock_admin_view)
+
+        # Cria request mock com usuário não admin
+        request = HttpRequest()
+        request.user = self.user
+
+        # Chama a view decorada
+        response = decorated_view(request)
+
+        # Deve redirecionar para pagina_inicial
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("pagina_inicial"))
+
+
+class TemplateTagsTest(TestCase):
+    """Testes para template tags em core.templatetags.core_tags."""
+
+    def setUp(self):
+        from guiche.forms import GuicheForm
+
+        # Cria um formulário GuicheForm que tem os campos proporcao_*
+        self.form = GuicheForm()
+
+    def test_get_proporcao_field_with_empty_value(self):
+        """Testa get_proporcao_field quando o valor está vazio."""
+        from core.templatetags.core_tags import get_proporcao_field
+        from guiche.forms import GuicheForm
+
+        # Modifica o form para simular um campo vazio
+        # Como o form é dinâmico, vamos criar um form com dados que façam value() retornar vazio
+        form_data = {"proporcao_g": ""}  # Campo vazio
+        form = GuicheForm(data=form_data)
+
+        result = get_proporcao_field(form, "tipo_senha_g")
+
+        # Deve retornar o widget com value="1" porque o valor está vazio
+        self.assertIn('value="1"', str(result))
+
+    def test_get_proporcao_field_with_value(self):
+        """Testa get_proporcao_field quando o valor não está vazio."""
+        from core.templatetags.core_tags import get_proporcao_field
+        from guiche.forms import GuicheForm
+
+        # Campo com valor
+        form_data = {"proporcao_g": "5"}
+        form = GuicheForm(data=form_data)
+
+        result = get_proporcao_field(form, "tipo_senha_g")
+
+        # Deve retornar o campo original (não modificado)
+        self.assertEqual(result, form["proporcao_g"])
+
+    def test_add_class_filter(self):
+        """Testa o filtro add_class."""
+        from core.templatetags.core_tags import add_class
+        from guiche.forms import GuicheForm
+
+        form = GuicheForm()
+        field = form["proporcao_g"]
+
+        result = add_class(field, "my-custom-class")
+
+        # Deve conter a classe CSS adicionada
+        self.assertIn('class="my-custom-class"', str(result))
