@@ -4,6 +4,7 @@ import os
 import tempfile
 from collections import defaultdict, deque
 from itertools import cycle
+from typing import Any, Dict, List
 
 from django import forms
 from django.contrib.auth.decorators import login_required
@@ -319,7 +320,7 @@ def tv1_api_view(request):
     return JsonResponse(data)
 
 
-def tv1_historico_api_view(request):
+def tv1_historico_api_view(request) -> JsonResponse:
     """API para obter apenas o histórico de chamadas da TV1"""
     try:
         historico_chamadas = (
@@ -328,7 +329,7 @@ def tv1_historico_api_view(request):
             .order_by("-data_hora")[:8]
         )
 
-        historico_data = []
+        historico_data: List[Dict[str, Any]] = []
         for chamada in historico_chamadas:
             historico_data.append(
                 {
@@ -340,7 +341,7 @@ def tv1_historico_api_view(request):
                 }
             )
 
-        data = {"historico": historico_data}
+        data: Dict[str, Any] = {"historico": historico_data}
     except Exception as e:
         data = {"historico": [], "error": str(e)}
 

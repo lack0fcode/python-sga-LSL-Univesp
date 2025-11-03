@@ -1,4 +1,5 @@
 # profissional_saude/views.py
+from typing import Any, Dict, List
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -203,7 +204,7 @@ def tv2_api_view(request):
     return JsonResponse(data)
 
 
-def tv2_historico_api_view(request):
+def tv2_historico_api_view(request) -> JsonResponse:
     """API para obter apenas o histórico de confirmações da TV2"""
     try:
         # Obtém as últimas 5 confirmações
@@ -213,7 +214,7 @@ def tv2_historico_api_view(request):
             .order_by("-data_hora")[:5]
         )
 
-        historico_data = []
+        historico_data: List[Dict[str, Any]] = []
         for chamada in historico_chamadas:
             historico_data.append(
                 {
@@ -225,7 +226,7 @@ def tv2_historico_api_view(request):
                 }
             )
 
-        data = {"historico": historico_data}
+        data: Dict[str, Any] = {"historico": historico_data}
     except Exception as e:
         data = {"historico": [], "error": str(e)}
 
