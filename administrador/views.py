@@ -63,11 +63,11 @@ def listar_funcionarios(request):
 
     # Calcular status dos funcionários com três categorias
     usuarios_online_ativos_ids = []  # Verde: online e ativo (últimos 2 min)
-    usuarios_online_inativos_ids = []  # Amarelo: online mas inativo (2-10 min)
-    usuarios_offline_ids = []  # Vermelho: offline (mais de 10 min)
+    usuarios_online_inativos_ids = []  # Amarelo: online mas inativo (2-5 min)
+    usuarios_offline_ids = []  # Vermelho: offline (mais de 5 min)
 
     agora = timezone.now()
-    dez_minutos_atras = agora - timezone.timedelta(minutes=10)
+    cinco_minutos_atras = agora - timezone.timedelta(minutes=5)
     dois_minutos_atras = agora - timezone.timedelta(minutes=2)
 
     # Obter sessões ativas (não expiradas)
@@ -83,17 +83,16 @@ def listar_funcionarios(request):
         except:
             continue
 
-    # Usuários com atividade recente (qualquer tipo de acesso nos últimos 10 minutos)
+    # Usuários com atividade recente (nos últimos 5 minutos)
     usuarios_com_atividade_recente = set(
-        RegistroDeAcesso.objects.filter(data_hora__gte=dez_minutos_atras)
+        RegistroDeAcesso.objects.filter(data_hora__gte=cinco_minutos_atras)
         .values_list("usuario_id", flat=True)
         .distinct()
     )
 
-    # Combinar usuários com sessão ativa E atividade recente
-    usuarios_online_potenciais = usuarios_com_sessao_ativa.union(
-        usuarios_com_atividade_recente
-    )
+    # Usuários realmente online: apenas aqueles com atividade nos últimos 10 minutos
+    # (removendo a dependência de sessões ativas que podem durar semanas)
+    usuarios_online_potenciais = usuarios_com_atividade_recente
 
     # Para cada funcionário, determinar seu status
     for usuario in funcionarios:

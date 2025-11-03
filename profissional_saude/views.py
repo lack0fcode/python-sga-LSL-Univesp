@@ -96,6 +96,10 @@ def realizar_acao_profissional(request, paciente_id, acao):
             {"status": "success", "mensagem": "Senha reanunciada com sucesso."}
         )
     elif acao == "confirmar":
+        # Criar registro de confirmação para o histórico da TV2
+        ChamadaProfissional.objects.create(
+            paciente=paciente, profissional_saude=profissional_saude, acao="confirmado"
+        )
         paciente.atendido = False  # Marcar como não atendido para sair da lista
         paciente.save()
         return JsonResponse(
