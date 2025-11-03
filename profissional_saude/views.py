@@ -9,6 +9,8 @@ from core.decorators import profissional_saude_required
 from core.models import ChamadaProfissional, CustomUser, Paciente
 from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
+from .forms import SelecionarSalaForm
+
 
 @login_required
 @profissional_saude_required
@@ -16,6 +18,10 @@ def painel_profissional(request):
     """
     Painel do profissional de saúde.
     """
+    # Verificar se o profissional tem sala atribuída
+    if not request.user.sala:
+        return redirect("profissional_saude:selecionar_sala")
+
     pacientes = Paciente.objects.filter(
         profissional_saude=request.user, atendido=True
     ).order_by("horario_agendamento")
@@ -134,30 +140,23 @@ def tv2_view(request):
         ).latest("data_hora")
         senha_chamada = ultima_chamada.paciente
         nome_completo = ultima_chamada.paciente.nome_completo
-        # Busca a sala do profissional que fez a chamada
-        sala_consulta = (
-            ultima_chamada.profissional_saude.sala
-        )  # Acessa a sala através do profissional
-        profissional_nome = ultima_chamada.profissional_saude.get_full_name()
+        # Busca o número da sala do profissional que fez a chamada
+        sala_profissional = ultima_chamada.profissional_saude.sala
 
-        # Pega as 5 chamadas mais recentes, excluindo a última chamada
-        historico_chamadas = (
-            ChamadaProfissional.objects.filter(acao__in=["chamada", "reanuncio"])
-            .exclude(id=ultima_chamada.id)
-            .order_by("-data_hora")[:5]
-        )
+        # Pega as 5 confirmações mais recentes
+        historico_chamadas = ChamadaProfissional.objects.filter(
+            acao="confirmado"
+        ).order_by("-data_hora")[:5]
     except ChamadaProfissional.DoesNotExist:
         senha_chamada = None
         nome_completo = None
-        sala_consulta = None
-        profissional_nome = None
+        sala_profissional = None
         historico_chamadas = []
 
     context = {
         "senha_chamada": senha_chamada,
         "nome_completo": nome_completo,
-        "sala_consulta": sala_consulta,
-        "profissional_nome": profissional_nome,
+        "sala_profissional": sala_profissional,
         "historico_senhas": historico_chamadas,
         "ultima_chamada": (
             ultima_chamada if senha_chamada else None
@@ -177,17 +176,18 @@ def tv2_api_view(request):
         ).latest("data_hora")
         senha = ultima_chamada.paciente.senha  # Pega a senha
         nome_completo = ultima_chamada.paciente.nome_completo
-        # Busca a sala do profissional que fez a chamada
-        sala_consulta = (
-            ultima_chamada.profissional_saude.sala
-        )  # Acessa a sala através do profissional
-        profissional_nome = ultima_chamada.profissional_saude.get_full_name()
+        # Busca o número da sala do profissional que fez a chamada
+        sala_profissional = ultima_chamada.profissional_saude.sala
+        profissional_nome = (
+            ultima_chamada.profissional_saude.get_full_name()
+            or ultima_chamada.profissional_saude.username
+        )
         chamada_id = ultima_chamada.id
 
         data = {
             "senha": senha,  # Envia a senha
             "nome_completo": nome_completo,
-            "sala_consulta": sala_consulta,
+            "sala_profissional": sala_profissional,
             "profissional_nome": profissional_nome,
             "id": chamada_id,
         }
@@ -195,9 +195,84 @@ def tv2_api_view(request):
         data = {
             "senha": "",
             "nome_completo": "",
-            "sala_consulta": "",
+            "sala_profissional": "",
             "profissional_nome": "",
             "id": "",
         }
 
     return JsonResponse(data)
+
+
+def tv2_historico_api_view(request):
+    """API para obter apenas o histórico de confirmações da TV2"""
+    try:
+        # Obtém as últimas 5 confirmações
+        historico_chamadas = (
+            ChamadaProfissional.objects.filter(acao="confirmado")
+            .select_related("paciente", "profissional_saude")
+            .order_by("-data_hora")[:5]
+        )
+
+        historico_data = []
+        for chamada in historico_chamadas:
+            historico_data.append(
+                {
+                    "id": chamada.id,
+                    "paciente_nome": chamada.paciente.nome_completo,
+                    "paciente_senha": chamada.paciente.senha,
+                    "sala_profissional": chamada.profissional_saude.sala,
+                    "data_hora": chamada.data_hora.strftime("%H:%M:%S"),
+                }
+            )
+
+        data = {"historico": historico_data}
+    except Exception as e:
+        data = {"historico": [], "error": str(e)}
+
+    return JsonResponse(data)
+
+
+@login_required
+@profissional_saude_required
+def selecionar_sala(request):
+    """
+    View para o profissional de saúde selecionar sua sala.
+    """
+    if request.method == "POST":
+        form = SelecionarSalaForm(request.POST)
+        if form.is_valid():
+            sala_numero = int(form.cleaned_data["sala"])
+
+            # Verificar se outro profissional já está usando esta sala
+            outro_profissional = (
+                CustomUser.objects.filter(funcao="profissional_saude", sala=sala_numero)
+                .exclude(id=request.user.id)
+                .first()
+            )
+
+            if outro_profissional:
+                # Sala já ocupada - mostrar erro
+                from django.contrib import messages
+
+                messages.error(
+                    request,
+                    f"A sala {sala_numero} já está sendo usada pelo profissional {outro_profissional.first_name} {outro_profissional.last_name}.",
+                )
+            else:
+                # Sala disponível - salvar
+                request.user.sala = sala_numero
+                request.user.save()
+                from django.contrib import messages
+
+                messages.success(
+                    request, f"Sala {sala_numero} selecionada com sucesso!"
+                )
+                return redirect("profissional_saude:painel_profissional")
+    else:
+        # Inicializar form com sala atual se existir
+        initial = {}
+        if request.user.sala:
+            initial["sala"] = str(request.user.sala)
+        form = SelecionarSalaForm(initial=initial)
+
+    return render(request, "profissional_saude/selecionar_sala.html", {"form": form})

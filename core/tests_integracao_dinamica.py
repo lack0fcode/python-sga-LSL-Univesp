@@ -69,6 +69,12 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         data = self.user_data[user_type].copy()
         if cpf:
             data["cpf"] = cpf
+
+        # Atribuir sala para profissionais de saúde
+        sala = None
+        if user_type == "profissional_saude":
+            sala = 101  # Sala padrão para testes
+
         return User.objects.create_user(
             cpf=data["cpf"],
             username=data["cpf"],
@@ -76,6 +82,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
             first_name=data["first_name"],
             last_name=data["last_name"],
             funcao=data["funcao"],
+            sala=sala,
         )
 
     def test_fluxo_administrador_cria_usuarios(self):

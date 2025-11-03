@@ -3,89 +3,200 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGA - Sistema de Gestão de Atendimento</title>
-    <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=3">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ed3925',
+                        secondary: '#a9a7a7',
+                        accent: '#F5F5DC'
+                    }
+                }
+            }
+        }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
     <link rel="shortcut icon" type="image/ico" href="{% static 'img/favicon.ico' %}">
-
     
     <!-- Importando a biblioteca Inputmask -->
     <script src="https://cdn.jsdelivr.net/npm/inputmask/dist/inputmask.min.js"></script>
 </head>
 <body>
 
-    <!-- Cabeçalho -->
-    <header class="topo">
-        <a href="{% url 'pagina_inicial' %}">
-            <img src="{% static 'img/logo.png' %}" alt="Logo SGA" class="logo">
-        </a>
+<body class="bg-gray-50 font-sans">
 
-        <nav class="menu">
-            <ul>
-                <li>
-                        <a href="#"><i class="bi bi-person-fill"></i> Administradores</a>
-                        <ul class="submenu">
-                                <a href="{% url 'administrador:cadastrar_funcionario' %}">Cadastrar Funcionário</a>
-                                <a href="{% url 'administrador:listar_funcionarios' %}">Listar Funcionários</a>
-                        </ul>
-                </li>
-                <li>
-                    <a href="#"><i class="bi bi-person-fill"></i>Recepcionistas</a>
-                       <ul class="submenu">
-                           <a href="{% url 'recepcionista:cadastrar_paciente' %}">Cadastrar Paciente</a>
-                       </ul>
-              </li>
-              <li>
-                    <a href="#"><i class="bi bi-person-fill"></i>Guichês</a>
-                        <ul class="submenu">
-                            <a href="{% url 'guiche:painel_guiche' %}">Painel do Guichê</a>
-                        </ul>
-                </li>
-                <li>
-                    <a href="#"><i class="bi bi-person-fill"></i>Profissionais de Saúde</a>
-                    <ul class="submenu">
-                        <li>
-                            <a href="{% url 'profissional_saude:painel_profissional' %}">Painel do Profissional</a>
-                        </li>
-                    </ul>
-                </li>
+    <!-- Cabeçalho -->
+    <header class="bg-gradient-to-r from-secondary to-gray-600 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <a href="{% url 'pagina_inicial' %}" class="flex-shrink-0">
+                    <img src="{% static 'img/logo.png' %}" alt="Logo SGA" class="h-12 w-auto">
+                </a>
+
+                <nav class="hidden md:flex space-x-8">
+                    <div class="relative group dropdown-container">
+                        <button class="text-accent hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition duration-300 dropdown-trigger">
+                            <i class="bi bi-person-fill mr-2"></i> Administradores
+                        </button>
+                        <div class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu">
+                            <a href="{% url 'administrador:cadastrar_funcionario' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Funcionário</a>
+                            <a href="{% url 'administrador:listar_funcionarios' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Listar Funcionários</a>
+                        </div>
+                    </div>
+                    <div class="relative group dropdown-container">
+                        <button class="text-accent hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition duration-300 dropdown-trigger">
+                            <i class="bi bi-person-fill mr-2"></i> Recepcionistas
+                        </button>
+                        <div class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu">
+                            <a href="{% url 'recepcionista:cadastrar_paciente' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Paciente</a>
+                        </div>
+                    </div>
+                    <div class="relative group dropdown-container">
+                        <button class="text-accent hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition duration-300 dropdown-trigger">
+                            <i class="bi bi-person-fill mr-2"></i> Guichês
+                        </button>
+                        <div class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu">
+                            <a href="{% url 'guiche:painel_guiche' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Painel do Guichê</a>
+                        </div>
+                    </div>
+                    <div class="relative group dropdown-container">
+                        <button class="text-accent hover:text-white px-3 py-2 rounded-md text-sm font-medium flex items-center transition duration-300 dropdown-trigger">
+                            <i class="bi bi-person-fill mr-2"></i> Profissionais de Saúde
+                        </button>
+                        <div class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu">
+                            <a href="{% url 'profissional_saude:painel_profissional' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Painel do Profissional</a>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-accent hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                        <i class="bi bi-list"></i>
+                    </button>
+                </div>
+
                 <!-- Formulário de Logout -->
-                <form action="{% url 'logout' %}" method="post">
+                <form action="{% url 'logout' %}" method="post" class="flex items-center">
                     {% csrf_token %}
-                    <button type="submit" class="logout-btn">Sair</button>
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300">
+                        <i class="bi bi-box-arrow-right mr-2"></i>Sair
+                    </button>
                 </form>
-            </ul>
-        </nav>
+            </div>
+
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="md:hidden hidden bg-secondary px-4 py-4 space-y-2">
+                <div class="space-y-2">
+                    <div class="border-b border-gray-600 pb-2">
+                        <h3 class="text-accent font-medium mb-2">Administradores</h3>
+                        <a href="{% url 'administrador:cadastrar_funcionario' %}" class="block text-accent hover:text-white py-1">Cadastrar Funcionário</a>
+                        <a href="{% url 'administrador:listar_funcionarios' %}" class="block text-accent hover:text-white py-1">Listar Funcionários</a>
+                    </div>
+                    <div class="border-b border-gray-600 pb-2">
+                        <h3 class="text-accent font-medium mb-2">Recepcionistas</h3>
+                        <a href="{% url 'recepcionista:cadastrar_paciente' %}" class="block text-accent hover:text-white py-1">Cadastrar Paciente</a>
+                    </div>
+                    <div class="border-b border-gray-600 pb-2">
+                        <h3 class="text-accent font-medium mb-2">Guichês</h3>
+                        <a href="{% url 'guiche:painel_guiche' %}" class="block text-accent hover:text-white py-1">Painel do Guichê</a>
+                    </div>
+                    <div>
+                        <h3 class="text-accent font-medium mb-2">Profissionais de Saúde</h3>
+                        <a href="{% url 'profissional_saude:painel_profissional' %}" class="block text-accent hover:text-white py-1">Painel do Profissional</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </header>
 
     <!-- Conteúdo principal -->
-    <main>
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    
-        {% block content %}
-        {% endblock %}
+    <main class="min-h-screen bg-gray-50 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        
+            {% block content %}
+            {% endblock %}
+        </div>
     </main>
 
     <!-- Rodapé -->
-    <footer class="rodape">
-        <a href="https://www.saopaulo.sp.gov.br/" target="_blank">
-            <img src="{% static 'img/logo-rodape-governo-do-estado-sp.png' %}" alt="Governo SP">
-        </a>
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <a href="https://www.saopaulo.sp.gov.br/" target="_blank" class="inline-block">
+                <img src="{% static 'img/logo-rodape-governo-do-estado-sp.png' %}" alt="Governo SP" class="h-12 w-auto mx-auto">
+            </a>
+        </div>
     </footer>
 
-    <!-- JavaScript para aplicar a máscara -->
+    <!-- JavaScript para aplicar a máscara e menu mobile -->
     <script>
         // Aplica a máscara de data e hora
         window.onload = function() {
             var im = new Inputmask('99/99/9999 99:99');
             im.mask(document.getElementById('id_data_agendamento'));
         };
+
+        // Menu mobile toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Dropdown menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownContainers = document.querySelectorAll('.dropdown-container');
+
+            dropdownContainers.forEach(container => {
+                const trigger = container.querySelector('.dropdown-trigger');
+                const menu = container.querySelector('.dropdown-menu');
+                let hideTimeout;
+
+                // Show menu on mouse enter
+                container.addEventListener('mouseenter', function() {
+                    clearTimeout(hideTimeout);
+                    menu.classList.remove('opacity-0', 'invisible');
+                    menu.classList.add('opacity-100');
+                });
+
+                // Hide menu on mouse leave with delay
+                container.addEventListener('mouseleave', function() {
+                    hideTimeout = setTimeout(() => {
+                        menu.classList.add('opacity-0', 'invisible');
+                        menu.classList.remove('opacity-100');
+                    }, 300); // 300ms delay
+                });
+
+                // Keep menu visible when mouse enters the menu itself
+                menu.addEventListener('mouseenter', function() {
+                    clearTimeout(hideTimeout);
+                });
+
+                // Hide menu when mouse leaves the menu
+                menu.addEventListener('mouseleave', function() {
+                    hideTimeout = setTimeout(() => {
+                        menu.classList.add('opacity-0', 'invisible');
+                        menu.classList.remove('opacity-100');
+                    }, 300);
+                });
+            });
+        });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script de atividade para usuários logados -->
+    {% if user.is_authenticated %}
+    <script src="{% static 'js/atividade.js' %}"></script>
+    {% endif %}
 </body>
 </html>

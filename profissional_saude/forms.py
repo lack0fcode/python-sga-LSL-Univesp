@@ -66,3 +66,20 @@ class AtendimentoProfissionalForm(forms.Form):
             acao_selecionada = True
 
         return cleaned_data
+
+
+class SelecionarSalaForm(forms.Form):
+    """
+    Formulário para seleção de sala do profissional de saúde.
+    """
+
+    sala = forms.ChoiceField(
+        choices=[(str(i), f"Sala {i}") for i in range(1, 21)],  # Salas 1 a 20
+        label="Sala do dia",
+        widget=forms.Select(
+            attrs={
+                "class": "form-control",
+                "style": "font-size: 1.2rem; padding: 0.75rem;",
+            }
+        ),
+    )

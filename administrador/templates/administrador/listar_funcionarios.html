@@ -1,36 +1,349 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-    <div class="container">
-        <h1>Listar Funcionários</h1>
-        <p>Lista de todos os funcionários cadastrados:</p>
-
-        {% if funcionarios %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>CPF</th>
-                        <th>Nome</th>
-                        <th>Função</th>
-                        <th>Ações</th>  <!-- Adicione esta coluna -->
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for funcionario in funcionarios %}
-                        <tr>
-                            <td>{{ funcionario.cpf }}</td>
-                            <td>{{ funcionario.first_name }} {{ funcionario.last_name }}</td>
-                            <td>{{ funcionario.funcao }}</td>
-                            <td>  <!-- Adicione os botões aqui -->
-                                <a href="{% url 'administrador:editar_funcionario' funcionario.pk %}" class="btn btn-primary">Editar</a>
-                                <a href="{% url 'administrador:excluir_funcionario' funcionario.pk %}" class="btn btn-danger">Excluir</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p>Nenhum funcionário cadastrado.</p>
-        {% endif %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Funcionários Cadastrados</h1>
+                <p class="text-gray-600">Gerencie todos os funcionários do sistema</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'administrador:cadastrar_funcionario' %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-200 transform hover:scale-105">
+                    <i class="bi bi-person-plus mr-2"></i>
+                    Novo Funcionário
+                </a>
+            </div>
+        </div>
     </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="bi bi-people-fill text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total de Funcionários</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_funcionarios }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="bi bi-circle-fill text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Online Ativos</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ funcionarios_online_ativos }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="bi bi-circle-fill text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Online Inativos</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ funcionarios_online_inativos }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-2 bg-red-100 rounded-lg">
+                    <i class="bi bi-circle-fill text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Offline</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ funcionarios_offline }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 relative group cursor-pointer">
+            <div class="flex items-center">
+                <div class="p-2 bg-purple-100 rounded-lg">
+                    <i class="bi bi-person-badge-fill text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Funções</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ funcoes_distintas }}</p>
+                </div>
+            </div>
+            
+            <!-- Dropdown de funções no hover -->
+            <div class="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div class="py-1">
+                    <a href="{% url 'administrador:listar_funcionarios' %}" 
+                       class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if not funcao_filtro %}bg-gray-50 font-medium{% endif %}">
+                        Todas as funções
+                    </a>
+                    {% for funcao_value, funcao_display in funcoes_disponiveis %}
+                        <a href="?funcao={{ funcao_value }}" 
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if funcao_filtro == funcao_value %}bg-gray-50 font-medium{% endif %}">
+                            {{ funcao_display }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    {% if funcionarios %}
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <!-- Table Header -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 sm:mb-0">Lista de Funcionários</h3>
+                    
+                    <!-- Filtro por Função -->
+                    <div class="flex items-center space-x-4">
+                        <label for="funcao-filter" class="text-sm font-medium text-gray-700">Filtrar por função:</label>
+                        <select id="funcao-filter" onchange="filtrarPorFuncao(this.value)" 
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                            <option value="">Todas as funções</option>
+                            {% for funcao_value, funcao_display in funcoes_disponiveis %}
+                                <option value="{{ funcao_value }}" {% if funcao_filtro == funcao_value %}selected{% endif %}>
+                                    {{ funcao_display }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop Table -->
+            <div class="hidden md:block">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    CPF
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Nome Completo
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Função
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Ações
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for funcionario in funcionarios %}
+                            <tr class="hover:bg-gray-50 transition duration-150">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ funcionario.cpf|slice:":3" }}.{{ funcionario.cpf|slice:"3:6" }}.{{ funcionario.cpf|slice:"6:9" }}-{{ funcionario.cpf|slice:"9:" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <span class="text-sm font-medium text-gray-700">
+                                                    {{ funcionario.first_name|first }}{{ funcionario.last_name|first }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4 flex items-center">
+                                            {% if funcionario.id in usuarios_online_ativos_ids %}
+                                                <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-2" title="Online e ativo"></span>
+                                            {% elif funcionario.id in usuarios_online_inativos_ids %}
+                                                <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2" title="Online mas inativo"></span>
+                                            {% else %}
+                                                <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-2" title="Offline"></span>
+                                            {% endif %}
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ funcionario.first_name }} {{ funcionario.last_name }}
+                                                </div>
+                                                <div class="text-sm text-gray-500">
+                                                    {{ funcionario.email|default:"Sem email" }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        {% if funcionario.funcao == 'administrador' %}bg-purple-100 text-purple-800
+                                        {% elif funcionario.funcao == 'recepcionista' %}bg-blue-100 text-blue-800
+                                        {% elif funcionario.funcao == 'profissional_saude' %}bg-green-100 text-green-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ funcionario.get_funcao_display|default:funcionario.funcao|title }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                        {% if funcionario.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {% if funcionario.is_active %}Ativo{% else %}Inativo{% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end space-x-2">
+                                        <a href="{% url 'administrador:editar_funcionario' funcionario.pk %}"
+                                           class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                                            <i class="bi bi-pencil mr-1"></i>
+                                            Editar
+                                        </a>
+                                        <button onclick="confirmDelete('{{ funcionario.pk }}', '{{ funcionario.first_name }} {{ funcionario.last_name }}')"
+                                                class="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150">
+                                            <i class="bi bi-trash mr-1"></i>
+                                            Excluir
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mobile Cards -->
+            <div class="md:hidden">
+                <div class="divide-y divide-gray-200">
+                    {% for funcionario in funcionarios %}
+                    <div class="p-4 hover:bg-gray-50 transition duration-150">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-12 w-12">
+                                    <div class="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-gray-700">
+                                            {{ funcionario.first_name|first }}{{ funcionario.last_name|first }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="ml-4 flex items-center">
+                                    {% if funcionario.id in usuarios_online_ativos_ids %}
+                                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-2" title="Online e ativo"></span>
+                                    {% elif funcionario.id in usuarios_online_inativos_ids %}
+                                        <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-2" title="Online mas inativo"></span>
+                                    {% else %}
+                                        <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-2" title="Offline"></span>
+                                    {% endif %}
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ funcionario.first_name }} {{ funcionario.last_name }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            CPF: {{ funcionario.cpf|slice:":3" }}.{{ funcionario.cpf|slice:"3:6" }}.{{ funcionario.cpf|slice:"6:9" }}-{{ funcionario.cpf|slice:"9:" }}
+                                        </div>
+                                        <div class="mt-1">
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                                {% if funcionario.funcao == 'administrador' %}bg-purple-100 text-purple-800
+                                                {% elif funcionario.funcao == 'recepcionista' %}bg-blue-100 text-blue-800
+                                                {% elif funcionario.funcao == 'profissional_saude' %}bg-green-100 text-green-800
+                                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ funcionario.get_funcao_display|default:funcionario.funcao|title }}
+                                            </span>
+                                            <span class="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                                {% if funcionario.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                                {% if funcionario.is_active %}Ativo{% else %}Inativo{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col space-y-2">
+                                <a href="{% url 'administrador:editar_funcionario' funcionario.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="bi bi-pencil mr-1"></i>
+                                    Editar
+                                </a>
+                                <button onclick="confirmDelete('{{ funcionario.pk }}', '{{ funcionario.first_name }} {{ funcionario.last_name }}')"
+                                        class="inline-flex items-center px-2 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50">
+                                    <i class="bi bi-trash mr-1"></i>
+                                    Excluir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white shadow-lg rounded-lg p-12 text-center">
+            <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <i class="bi bi-people text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum funcionário cadastrado</h3>
+            <p class="text-gray-500 mb-6">Comece cadastrando o primeiro funcionário do sistema.</p>
+            <a href="{% url 'administrador:cadastrar_funcionario' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-200">
+                <i class="bi bi-person-plus mr-2"></i>
+                Cadastrar Primeiro Funcionário
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <i class="bi bi-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Confirmar Exclusão</h3>
+            <p class="text-sm text-gray-500 mb-4" id="deleteMessage">
+                Tem certeza que deseja excluir este funcionário?
+            </p>
+            <div class="flex justify-center space-x-3">
+                <button onclick="closeDeleteModal()"
+                        class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition duration-200">
+                    Cancelar
+                </button>
+                <a id="confirmDeleteBtn" href="#"
+                   class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200">
+                    Excluir
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(funcionarioId, name) {
+    var url = '/administrador/excluir_funcionario/' + funcionarioId + '/';
+    document.getElementById('deleteMessage').textContent = `Tem certeza que deseja excluir "${name}"? Esta ação não pode ser desfeita.`;
+    document.getElementById('confirmDeleteBtn').href = url;
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+function filtrarPorFuncao(funcao) {
+    const url = new URL(window.location);
+    if (funcao) {
+        url.searchParams.set('funcao', funcao);
+    } else {
+        url.searchParams.delete('funcao');
+    }
+    window.location.href = url.toString();
+}
+</script>
 {% endblock %}

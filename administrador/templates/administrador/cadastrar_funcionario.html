@@ -1,20 +1,245 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-    <div class="container">
-        <h1>Cadastrar Funcionário</h1>
-        <p>Preencha o formulário abaixo para cadastrar um novo funcionário:</p>
+<div class="max-w-4xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Cadastrar Funcionário</h1>
+                <p class="text-gray-600">Adicione um novo funcionário ao sistema SGA</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'administrador:listar_funcionarios' %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                    <i class="bi bi-arrow-left mr-2"></i>
+                    Voltar à Lista
+                </a>
+            </div>
+        </div>
+    </div>
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-
-        <form method="post">
+    <!-- Form Card -->
+    <div class="bg-white shadow-lg rounded-lg p-8 fade-in">
+        <form method="post" class="space-y-6">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Cadastrar</button>
+
+            <!-- Messages -->
+            {% if messages %}
+                <div class="space-y-2">
+                    {% for message in messages %}
+                        <div class="p-4 rounded-md {% if message.tags == 'success' %}bg-green-100 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    {% if message.tags == 'success' %}
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    {% elif message.tags == 'error' %}
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm">{{ message }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Form Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- CPF -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.cpf.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.cpf.label }}
+                        {% if form.cpf.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.cpf }}
+                    {% if form.cpf.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cpf.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.cpf.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.cpf.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Primeiro Nome -->
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.first_name.label }}
+                        {% if form.first_name.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Sobrenome -->
+                <div>
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.last_name.label }}
+                        {% if form.last_name.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Email -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.email.label }}
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.email.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.email.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Função -->
+                <div>
+                    <label for="{{ form.funcao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.funcao.label }}
+                        {% if form.funcao.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.funcao }}
+                    {% if form.funcao.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.funcao.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.funcao.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.funcao.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Data de Admissão -->
+                <div>
+                    <label for="{{ form.data_admissao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.data_admissao.label }}
+                    </label>
+                    {{ form.data_admissao }}
+                    {% if form.data_admissao.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.data_admissao.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.data_admissao.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.data_admissao.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Sala (opcional) -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.sala.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.sala.label }}
+                    </label>
+                    {{ form.sala }}
+                    {% if form.sala.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.sala.errors.0 }}</p>
+                    {% endif %}
+                    {% if form.sala.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.sala.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'administrador:listar_funcionarios' %}"
+                   class="btn-secondary">
+                    <i class="bi bi-x-circle mr-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-person-plus mr-2"></i>Cadastrar Funcionário
+                </button>
+            </div>
         </form>
     </div>
+
+    <!-- Help Section -->
+    <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="bi bi-info-circle-fill text-blue-600 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Dicas para Cadastro</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>CPF deve conter apenas números (11 dígitos)</li>
+                        <li>Email é opcional, mas recomendado para recuperação de senha</li>
+                        <li>A função determina as permissões do usuário no sistema</li>
+                        <li>Data de admissão é usada para controle interno</li>
+                        <li>Sala é opcional e pode ser definida posteriormente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Máscara para CPF
+document.addEventListener('DOMContentLoaded', function() {
+    const cpfInput = document.getElementById('{{ form.cpf.id_for_label }}');
+    if (cpfInput) {
+        Inputmask({
+            mask: '999.999.999-99',
+            placeholder: '_',
+            showMaskOnHover: false,
+            showMaskOnFocus: false
+        }).mask(cpfInput);
+    }
+
+    // Validação em tempo real do CPF
+    cpfInput.addEventListener('blur', function() {
+        const cpf = this.value.replace(/\D/g, '');
+        if (cpf.length === 11) {
+            // Validação básica de CPF
+            if (!validarCPF(cpf)) {
+                this.setCustomValidity('CPF inválido');
+                this.classList.add('border-red-500');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('border-red-500');
+            }
+        }
+    });
+});
+
+function validarCPF(cpf) {
+    // Remove caracteres não numéricos
+    cpf = cpf.replace(/\D/g, '');
+
+    // Verifica se tem 11 dígitos
+    if (cpf.length !== 11) return false;
+
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1+$/.test(cpf)) return false;
+
+    // Calcula primeiro dígito verificador
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+        soma += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let resto = soma % 11;
+    let digito1 = resto < 2 ? 0 : 11 - resto;
+
+    // Calcula segundo dígito verificador
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+        soma += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    resto = soma % 11;
+    let digito2 = resto < 2 ? 0 : 11 - resto;
+
+    // Verifica se os dígitos calculados batem com os informados
+    return parseInt(cpf.charAt(9)) === digito1 && parseInt(cpf.charAt(10)) === digito2;
+}
+</script>
 {% endblock %}

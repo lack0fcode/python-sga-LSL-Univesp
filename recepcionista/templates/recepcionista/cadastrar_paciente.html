@@ -2,44 +2,110 @@
 {% load tz %}
 
 {% block content %}
-    <div class="container">
-        <h1>Cadastrar Paciente</h1>
-        <p>Preencha o formulário abaixo para cadastrar um novo paciente:</p>
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-lg p-8 fade-in">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Cadastrar Paciente</h1>
+            <p class="text-gray-600">Preencha o formulário abaixo para cadastrar um novo paciente no sistema.</p>
+        </div>
 
-        <form method="post">
+        <form method="post" class="space-y-6">
             {% csrf_token %}
-            <div>
-                {{ form.nome_completo.label_tag }} {{ form.nome_completo }}
-                {{ form.nome_completo.errors }}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nome Completo -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.nome_completo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.nome_completo.label }}
+                    </label>
+                    {{ form.nome_completo }}
+                    {% if form.nome_completo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.nome_completo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Cartão SUS -->
+                <div>
+                    <label for="{{ form.cartao_sus.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.cartao_sus.label }}
+                    </label>
+                    {{ form.cartao_sus }}
+                    {% if form.cartao_sus.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cartao_sus.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Horário de Agendamento -->
+                <div>
+                    <label for="{{ form.horario_agendamento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.horario_agendamento.label }}
+                    </label>
+                    {{ form.horario_agendamento }}
+                    {% if form.horario_agendamento.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.horario_agendamento.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Profissional de Saúde -->
+                <div>
+                    <label for="{{ form.profissional_saude.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.profissional_saude.label }}
+                    </label>
+                    {{ form.profissional_saude }}
+                    {% if form.profissional_saude.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.profissional_saude.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tipo de Senha -->
+                <div>
+                    <label for="{{ form.tipo_senha.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.tipo_senha.label }}
+                    </label>
+                    {{ form.tipo_senha }}
+                    {% if form.tipo_senha.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tipo_senha.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Telefone Celular -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.telefone_celular.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.telefone_celular.label }}
+                    </label>
+                    {{ form.telefone_celular }}
+                    {% if form.telefone_celular.help_text %}
+                        <p class="mt-1 text-sm text-gray-500">{{ form.telefone_celular.help_text }}</p>
+                    {% endif %}
+                    {% if form.telefone_celular.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.telefone_celular.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Observações -->
+                <div class="md:col-span-2">
+                    <label for="{{ form.observacoes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.observacoes.label }}
+                    </label>
+                    {{ form.observacoes }}
+                    {% if form.observacoes.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.observacoes.errors.0 }}</p>
+                    {% endif %}
+                </div>
             </div>
-            <div>
-                {{ form.cartao_sus.label_tag }} {{ form.cartao_sus }}
-                {{ form.cartao_sus.errors }}
-            </div>
-            <div>
-                {{ form.horario_agendamento.label_tag }} {{ form.horario_agendamento }}
-            </div>
-            <div>
-                {{ form.profissional_saude.label_tag }} {{ form.profissional_saude }}
-            </div>
-            <div>
-                {{ form.tipo_senha.label_tag }} {{ form.tipo_senha }}
-            </div>
-            <div>
-                {{ form.telefone_celular.label_tag }} {{ form.telefone_celular }}
-                {% if form.telefone_celular.help_text %}
-                    <small class="text-muted">{{ form.telefone_celular.help_text }}</small>
-                {% endif %}
-                {{ form.telefone_celular.errors }}
-            </div>
-            <div>
-                {{ form.observacoes.label_tag }} {{ form.observacoes }}
-            </div>
-            <div>
-            <button type="submit">Cadastrar</button>
+
+            <!-- Botão de Submit -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'pagina_inicial' %}" class="btn-secondary">
+                    <i class="bi bi-arrow-left mr-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="bi bi-person-plus mr-2"></i>Cadastrar Paciente
+                </button>
             </div>
         </form>
     </div>
+</div>
 
 
     <script>

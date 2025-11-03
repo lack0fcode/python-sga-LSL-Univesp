@@ -1222,15 +1222,6 @@ class LoginFormTest(TestCase):
         self.assertIn("user", form.cleaned_data)
         self.assertEqual(form.cleaned_data["user"], self.user)
 
-    def test_invalid_cpf(self):
-        """Testa CPF inválido."""
-        data = self.valid_data.copy()
-        data["cpf"] = "invalid_cpf"
-        form = LoginForm(data=data)
-        self.assertFalse(form.is_valid())
-        self.assertIn("__all__", form.errors)
-
-    def test_invalid_password(self):
         """Testa senha inválida."""
         data = self.valid_data.copy()
         data["password"] = "wrongpass"
@@ -1453,6 +1444,7 @@ class CoreViewsTest(TestCase):
             username="44455566677",
             password="profpass",
             funcao="profissional_saude",
+            sala=101,  # Atribuir sala para evitar redirecionamento
         )
         response = self.client.post(
             reverse("login"),

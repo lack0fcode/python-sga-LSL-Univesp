@@ -126,7 +126,6 @@ def painel_guiche(request):
                 "form": form,
                 "senhas": senhas,
                 "historico_chamadas": historico_chamadas,
-                "form": form,
             },
         )
 
@@ -244,7 +243,9 @@ def tv1_view(request):
         senha_chamada = ultima_chamada.paciente
         nome_completo = ultima_chamada.paciente.nome_completo
         numero_guiche = ultima_chamada.guiche.numero  # Obtém o número do guichê
-        historico_chamadas = Chamada.objects.order_by("-data_hora")[:5]
+        historico_chamadas = Chamada.objects.filter(acao="confirmado").order_by(
+            "-data_hora"
+        )[:5]
     except Chamada.DoesNotExist:
         senha_chamada = None
         nome_completo = None
@@ -314,6 +315,34 @@ def tv1_api_view(request):
             "guiche": "",
             "id": "",
         }  # Garante que o ID também seja vazio
+
+    return JsonResponse(data)
+
+
+def tv1_historico_api_view(request):
+    """API para obter apenas o histórico de chamadas da TV1"""
+    try:
+        historico_chamadas = (
+            Chamada.objects.filter(acao="confirmado")
+            .select_related("paciente", "guiche")
+            .order_by("-data_hora")[:8]
+        )
+
+        historico_data = []
+        for chamada in historico_chamadas:
+            historico_data.append(
+                {
+                    "id": chamada.id,
+                    "paciente_nome": chamada.paciente.nome_completo,
+                    "guiche_numero": chamada.guiche.numero,
+                    "acao": chamada.acao,
+                    "data_hora": chamada.data_hora.strftime("%H:%M:%S"),
+                }
+            )
+
+        data = {"historico": historico_data}
+    except Exception as e:
+        data = {"historico": [], "error": str(e)}
 
     return JsonResponse(data)
 
