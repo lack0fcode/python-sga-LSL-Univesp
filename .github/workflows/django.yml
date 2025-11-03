@@ -55,7 +55,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: sga.settings
           DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
         run: |
-          coverage run --source='.' manage.py test --settings=sga.settings_test
+          coverage run --source='.' manage.py test --settings=sga.tests.settings_test
           coverage report
           coverage html
 
@@ -104,12 +104,27 @@ jobs:
           api-key: ${{ secrets.SAFETY_API_KEY }}
       - name: Run Bandit Security Linter
         run: |
-          bandit -r . --exclude venv,.git,__pycache__,.mypy_cache,staticfiles,node_modules -f html -o bandit-report.html || true
+          echo "Running Bandit security analysis using separate script..."
+          python run_bandit_separate.py
+          echo "Bandit analysis completed successfully"
+          
+      - name: Analyze Bandit Results
+        run: |
+          python analyze_bandit_ci.py
       - name: Run MyPy Type Checking
         run: mypy .
 
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v4
         with:
-          name: bandit-report
-          path: bandit-report.html
+          name: bandit-reports
+          path: |
+            bandit_full_report.json
+            bandit_core_report.json
+            bandit_administrador_report.json
+            bandit_guiche_report.json
+            bandit_recepcionista_report.json
+            bandit_profissional_saude_report.json
+            bandit_api_report.json
+            bandit_sga_report.json
+            bandit_report.html

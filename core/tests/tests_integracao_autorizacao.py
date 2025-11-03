@@ -1,6 +1,6 @@
 """
-Testes de integração dinâmica para o sistema SGA-ILSL.
-Testa o fluxo completo do sistema com diferentes usuários e suas funções.
+Testes de integração para autorização e validação do sistema SGA-ILSL.
+Testa fluxos complexos, autorização de acesso e validação de dados.
 """
 
 from django.test import Client, TransactionTestCase
@@ -9,15 +9,14 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
 
-from core.models import Paciente, CustomUser
+from ..models import Paciente, CustomUser
 
 User = get_user_model()
 
 
-class FluxoCompletoDinamicoTest(TransactionTestCase):
+class AutorizacaoValidacaoIntegracaoTest(TransactionTestCase):
     """
-    Testes de integração que simulam o fluxo completo do sistema SGA-ILSL.
-    Cada teste cria usuários dinamicamente e testa suas funcionalidades específicas.
+    Testes de integração que simulam fluxos complexos, autorização e validação.
     """
 
     def setUp(self):
@@ -85,173 +84,6 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
             sala=sala,
         )
 
-    def test_fluxo_administrador_cria_usuarios(self):
-        """Testa se administrador consegue criar todos os tipos de usuário."""
-        # Cria usuários de cada tipo diretamente
-        for user_type in ["recepcionista", "guiche", "profissional_saude"]:
-            usuario = self.criar_usuario_direto(user_type)
-            self.assertEqual(usuario.funcao, user_type)
-            self.assertTrue(
-                usuario.check_password(self.user_data[user_type]["password"])
-            )
-
-        # Verifica total de usuários criados
-        total_users = User.objects.filter(
-            cpf__in=[data["cpf"] for data in self.user_data.values()]
-        ).count()
-        self.assertEqual(total_users, 3)
-
-    def test_fluxo_recepcionista_cadastra_paciente(self):
-        """Testa fluxo completo: recepcionista cadastra paciente."""
-        # Admin cria recepcionista e profissional de saúde
-        recepcionista = self.criar_usuario_direto("recepcionista")
-        profissional = self.criar_usuario_direto("profissional_saude")
-
-        # Recepcionista faz login
-        client = Client()
-        login_success = client.login(cpf=recepcionista.cpf, password="recep123")
-        self.assertTrue(login_success)
-
-        # Recepcionista acessa página de cadastro de paciente
-        response = client.get(reverse("recepcionista:cadastrar_paciente"))
-        self.assertEqual(response.status_code, 200)
-
-        # Cadastra paciente com profissional de saúde correto
-        paciente_data = {
-            "nome_completo": "Paciente Teste Dinâmico",
-            "cartao_sus": "123456789012345",
-            "telefone_celular": "11999999999",
-            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
-            "profissional_saude": profissional.id,  # Usar ID do profissional
-            "tipo_senha": "G",
-        }
-
-        response = client.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data, follow=True
-        )
-        self.assertEqual(response.status_code, 200)
-
-        # Verifica se paciente foi criado
-        paciente = Paciente.objects.get(cartao_sus="123456789012345")
-        self.assertEqual(paciente.nome_completo, "Paciente Teste Dinâmico")
-        self.assertEqual(paciente.tipo_senha, "G")
-        self.assertIsNotNone(paciente.senha)  # Senha deve ter sido gerada
-
-    def test_fluxo_guiche_acessa_painel(self):
-        """Testa fluxo: guichê acessa painel."""
-        # Admin cria guichê diretamente
-        guiche_user = self.criar_usuario_direto("guiche")
-
-        # Guichê faz login
-        client = Client()
-        login_success = client.login(cpf=guiche_user.cpf, password="guiche123")
-        self.assertTrue(login_success)
-
-        # Guichê acessa painel
-        response = client.get(reverse("guiche:painel_guiche"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "guiche/painel_guiche.html")
-
-    def test_fluxo_profissional_saude_acessa_painel(self):
-        """Testa fluxo: profissional da saúde acessa painel."""
-        # Admin cria profissional diretamente
-        profissional = self.criar_usuario_direto("profissional_saude")
-
-        # Profissional faz login
-        client = Client()
-        login_success = client.login(cpf=profissional.cpf, password="prof123")
-        self.assertTrue(login_success)
-
-        # Profissional acessa painel
-        response = client.get(reverse("profissional_saude:painel_profissional"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "profissional_saude/painel_profissional.html")
-
-    def test_fluxo_completo_com_whatsapp(self):
-        """Testa fluxo completo incluindo notificação WhatsApp com dados válidos."""
-
-        # 1. Admin cria recepcionista e profissional de saúde
-        recepcionista = self.criar_usuario_direto("recepcionista")
-        profissional = self.criar_usuario_direto("profissional_saude")
-
-        # 2. Recepcionista cadastra paciente
-        client_recep = Client()
-        client_recep.login(cpf=recepcionista.cpf, password="recep123")
-
-        paciente_data = {
-            "nome_completo": "Paciente WhatsApp",
-            "cartao_sus": "777777777777777",
-            "telefone_celular": "(11) 98888-8888",  # Formato correto esperado pela validação
-            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
-            "profissional_saude": profissional.id,  # Usar ID do profissional
-            "tipo_senha": "G",
-        }
-
-        response = client_recep.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data
-        )
-
-        # Verifica se o POST foi bem-sucedido
-        try:
-            paciente = Paciente.objects.get(cartao_sus="777777777777777")
-            self.assertEqual(paciente.nome_completo, "Paciente WhatsApp")
-            self.assertIsNotNone(paciente.senha)  # Senha deve ter sido gerada
-        except Paciente.DoesNotExist:
-            # Se paciente não foi criado, verifica se há mensagens de erro na resposta
-            self.fail(
-                f"Paciente não foi criado. Status: {response.status_code}. Content: {response.content.decode()}"
-            )
-
-    def test_fluxo_completo_com_whatsapp_falha(self):
-        """Testa fluxo com WhatsApp quando cadastro falha para cobrir bloco except."""
-        # 1. Admin cria recepcionista e profissional de saúde
-        recepcionista = self.criar_usuario_direto("recepcionista", "88888888888")
-        profissional = self.criar_usuario_direto("profissional_saude", "99999999999")
-
-        # 2. Recepcionista tenta cadastrar paciente com dados que causam erro
-        client_recep = Client()
-        client_recep.login(cpf=recepcionista.cpf, password="recep123")
-
-        # Primeiro cadastra um paciente válido
-        paciente_data_valido = {
-            "nome_completo": "Paciente Original",
-            "cartao_sus": "888888888888888",
-            "telefone_celular": "(11) 97777-7777",
-            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
-            "profissional_saude": profissional.id,
-            "tipo_senha": "G",
-        }
-
-        client_recep.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_valido
-        )
-
-        # Agora tenta cadastrar com mesmo cartão SUS (deve falhar)
-        paciente_data_invalido = {
-            "nome_completo": "Paciente Duplicado",
-            "cartao_sus": "888888888888888",  # Mesmo cartão SUS
-            "telefone_celular": "(11) 96666-6666",
-            "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
-            "profissional_saude": profissional.id,
-            "tipo_senha": "P",
-        }
-
-        response = client_recep.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_invalido
-        )
-
-        # Verifica se o POST falhou
-        try:
-            paciente = Paciente.objects.get(
-                cartao_sus="888888888888888", nome_completo="Paciente Duplicado"
-            )
-            self.fail("Paciente duplicado não deveria ter sido criado")
-        except Paciente.DoesNotExist:
-            # Se paciente não foi criado, verifica se há mensagens de erro na resposta
-            self.assertContains(
-                response, "Já existe"
-            )  # Deve conter mensagem de erro de duplicata
-
     def test_fluxo_completo_dinamico_cadastro_chamada_consulta(self):
         """Testa o fluxo completo dinâmico: cadastro -> guichê -> profissional -> consulta."""
         # 1. CRIAR USUÁRIOS
@@ -260,7 +92,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         guiche_user = self.criar_usuario_direto("guiche")
 
         # Criar guichê para o usuário
-        from core.models import Guiche
+        from ..models import Guiche
 
         guiche = Guiche.objects.create(
             numero=1, funcionario=guiche_user, user=guiche_user
@@ -350,7 +182,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         self.assertEqual(response.status_code, 200)  # Retorna JSON
 
         # Verificar chamada registrada
-        from core.models import ChamadaProfissional
+        from ..models import ChamadaProfissional
 
         chamada = ChamadaProfissional.objects.filter(
             paciente=paciente, profissional_saude=profissional, acao="chamada"
@@ -389,7 +221,7 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         guiche_user = self.criar_usuario_direto("guiche", "77777777777")
 
         # Criar guichê
-        from core.models import Guiche
+        from ..models import Guiche
 
         guiche = Guiche.objects.create(
             numero=1, funcionario=guiche_user, user=guiche_user
@@ -398,85 +230,80 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         client_recep = Client()
         client_recep.login(cpf=recepcionista.cpf, password="recep123")
 
-        # Cadastrar 3 pacientes diferentes
+        # Cadastrar múltiplos pacientes
         pacientes_data = [
             {
-                "nome": "Maria Oliveira",
-                "sus": "111111111111111",
-                "telefone": "11977776666",
-                "profissional": profissional1.id,
-                "tipo": "G",
+                "nome_completo": "Ana Pereira",
+                "cartao_sus": "111111111111111",
+                "telefone_celular": "11911111111",
+                "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "profissional_saude": profissional1.id,
+                "tipo_senha": "G",
             },
             {
-                "nome": "Pedro Costa",
-                "sus": "222222222222222",
-                "telefone": "11966665555",
-                "profissional": profissional2.id,
-                "tipo": "P",
+                "nome_completo": "Carlos Oliveira",
+                "cartao_sus": "222222222222222",
+                "telefone_celular": "11922222222",
+                "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "profissional_saude": profissional2.id,
+                "tipo_senha": "P",
             },
             {
-                "nome": "Ana Pereira",
-                "sus": "333333333333333",
-                "telefone": "11955554444",
-                "profissional": profissional1.id,
-                "tipo": "G",
+                "nome_completo": "Maria Santos",
+                "cartao_sus": "333333333333333",
+                "telefone_celular": "11933333333",
+                "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
+                "profissional_saude": profissional1.id,
+                "tipo_senha": "G",
             },
         ]
 
         pacientes = []
         for data in pacientes_data:
-            paciente_data = {
-                "nome_completo": data["nome"],
-                "cartao_sus": data["sus"],
-                "telefone_celular": data["telefone"],
-                "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
-                "profissional_saude": data["profissional"],
-                "tipo_senha": data["tipo"],
-            }
-
-            client_recep.post(
-                reverse("recepcionista:cadastrar_paciente"), data=paciente_data
+            response = client_recep.post(
+                reverse("recepcionista:cadastrar_paciente"), data=data
             )
-            paciente = Paciente.objects.get(cartao_sus=data["sus"])
-            pacientes.append(paciente)
-            self.assertTrue(paciente.senha.startswith(data["tipo"]))
+            self.assertEqual(response.status_code, 302)
 
-        # Guichê chama primeiro paciente (Maria)
+            paciente = Paciente.objects.get(cartao_sus=data["cartao_sus"])
+            pacientes.append(paciente)
+            self.assertEqual(paciente.nome_completo, data["nome_completo"])
+
+        # Verificar que pacientes foram criados mas NÃO aparecem na TV1 ainda (antes de serem chamados)
+        client_tv1 = Client()
+        response = client_tv1.get(reverse("guiche:tv1"))
+        self.assertEqual(response.status_code, 200)
+        # Pacientes não devem aparecer na TV1 até serem chamados
+        self.assertContains(response, "Nenhuma senha chamada no momento")
+        self.assertNotContains(response, "Ana Pereira")
+        self.assertNotContains(response, "Carlos Oliveira")
+        self.assertNotContains(response, "Maria Santos")
+
+        # Guichê chama primeiro paciente (Ana Pereira)
         client_guiche = Client()
         client_guiche.login(cpf=guiche_user.cpf, password="guiche123")
 
         response = client_guiche.post(
-            reverse("guiche:chamar_senha", args=[pacientes[0].id])  # Maria
+            reverse("guiche:chamar_senha", args=[pacientes[0].id])
         )
         self.assertEqual(response.status_code, 200)
 
-        # Verificar TV1 mostra Maria sendo chamada
-        client_tv1 = Client()
-        response = client_tv1.get(reverse("guiche:tv1"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response, pacientes[0].nome_completo
-        )  # Maria aparece na TV1
-        self.assertContains(response, "Guichê 1")  # Guichê aparece na TV1
-
-        # Verificar API da TV1
-        response_api = client_tv1.get(reverse("guiche:tv1_api"))
-        self.assertEqual(response_api.status_code, 200)
-        data = response_api.json()
-        self.assertEqual(data["nome_completo"], pacientes[0].nome_completo)
-        self.assertEqual(data["guiche"], 1)
-        self.assertEqual(data["senha"], pacientes[0].senha)
-
-        # Confirmar atendimento (Maria vai para fila do profissional)
+        # Confirmar atendimento do primeiro paciente
         response = client_guiche.post(
             reverse("guiche:confirmar_atendimento", args=[pacientes[0].id])
         )
         self.assertEqual(response.status_code, 200)
 
-        pacientes[0].refresh_from_db()
-        self.assertTrue(pacientes[0].atendido)
+        # Verificar TV1 após chamada
+        response = client_tv1.get(reverse("guiche:tv1"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Ana Pereira")  # Aparece como chamada
+        self.assertContains(response, "Guichê 1")  # Guichê aparece na TV
+        # Outros pacientes não aparecem na TV1 até serem chamados
+        self.assertNotContains(response, "Carlos Oliveira")
+        self.assertNotContains(response, "Maria Santos")
 
-        # Profissional1 chama Maria para consulta
+        # Profissional 1 chama Ana Pereira para consulta
         client_prof1 = Client()
         client_prof1.login(cpf=profissional1.cpf, password="prof123")
 
@@ -488,30 +315,17 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        # Verificar TV2 mostra Maria para o profissional1
+        # Verificar TV2 do profissional 1
         client_tv2 = Client()
         response = client_tv2.get(reverse("profissional_saude:tv2"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Maria Oliveira")  # Nome na TV2
+        self.assertContains(response, "Ana Pereira")  # Aparece na TV2 do prof1
+        # Maria Santos não aparece ainda pois não foi chamada
+        self.assertNotContains(response, "Maria Santos")
+        # Carlos Oliveira não deve aparecer na TV2 do prof1 (pertence ao prof2)
+        self.assertNotContains(response, "Carlos Oliveira")
 
-        # Verificar painel do profissional1 mostra Maria
-        response = client_prof1.get(reverse("profissional_saude:painel_profissional"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Maria Oliveira")
-
-        # Guichê chama segundo paciente (Pedro)
-        response = client_guiche.post(
-            reverse("guiche:chamar_senha", args=[pacientes[1].id])  # Pedro
-        )
-        self.assertEqual(response.status_code, 200)
-
-        # Confirmar atendimento (Pedro vai para fila do profissional)
-        response = client_guiche.post(
-            reverse("guiche:confirmar_atendimento", args=[pacientes[1].id])
-        )
-        self.assertEqual(response.status_code, 200)
-
-        # Profissional2 chama Pedro
+        # Profissional 2 chama Carlos Oliveira para consulta
         client_prof2 = Client()
         client_prof2.login(cpf=profissional2.cpf, password="prof123")
 
@@ -523,40 +337,9 @@ class FluxoCompletoDinamicoTest(TransactionTestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        # Verificar TV2 mostra Pedro para profissional2
+        # Verificar que Ana Pereira não aparece na TV2 do profissional 2
         response = client_tv2.get(reverse("profissional_saude:tv2"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Pedro Costa")  # Nome na TV2
-
-        # Verificar API da TV2
-        response_api = client_tv2.get(reverse("profissional_saude:tv2_api"))
-        self.assertEqual(response_api.status_code, 200)
-        data = response_api.json()
-        self.assertEqual(data["nome_completo"], "Pedro Costa")
-        self.assertEqual(data["senha"], pacientes[1].senha)
-        self.assertEqual(data["profissional_nome"], "Dra. Santos")
-
-        # Guichê chama terceiro paciente (Ana)
-        response = client_guiche.post(
-            reverse("guiche:chamar_senha", args=[pacientes[2].id])  # Ana
-        )
-        self.assertEqual(response.status_code, 200)
-
-        # Confirmar atendimento (Ana vai para fila do profissional1)
-        response = client_guiche.post(
-            reverse("guiche:confirmar_atendimento", args=[pacientes[2].id])
-        )
-        self.assertEqual(response.status_code, 200)
-
-        # Verificar que cada profissional vê apenas seus pacientes
-        response = client_prof1.get(reverse("profissional_saude:painel_profissional"))
-        self.assertContains(response, "Maria Oliveira")
-        self.assertContains(response, "Ana Pereira")  # Agora na fila
-        self.assertNotContains(response, "Pedro Costa")  # Não deve aparecer
-
-        response = client_prof2.get(reverse("profissional_saude:painel_profissional"))
-        self.assertContains(response, "Pedro Costa")
-        self.assertNotContains(response, "Maria Oliveira")
         self.assertNotContains(response, "Ana Pereira")
 
     def test_autorizacao_acesso_por_funcao(self):

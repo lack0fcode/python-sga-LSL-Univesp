@@ -96,7 +96,7 @@ O projeto possui **188 testes automatizados** que cobrem as funcionalidades prin
 Para executar os testes, use o comando:
 
 ```bash
-python manage.py test --settings=sga.settings_test
+python manage.py test --settings=sga.tests.settings_test
 ```
 
 **Nota:** Os testes utilizam SQLite em memória para desenvolvimento local (rápido e isolado), mas PostgreSQL no GitHub Actions (igual ao ambiente de produção).

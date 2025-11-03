@@ -1,6 +1,6 @@
 import os
 
-from .settings import *
+from ..settings import *
 
 if os.environ.get("GITHUB_ACTIONS") == "true":
     # Use PostgreSQL
