@@ -8,6 +8,7 @@ import os
 import json
 import subprocess
 from pathlib import Path
+from typing import Any, Dict, List
 
 
 def run_bandit_on_app(app_name):
@@ -46,9 +47,9 @@ def run_bandit_on_app(app_name):
         return False
 
 
-def combine_reports():
+def combine_reports() -> None:
     """Combina todos os relatórios individuais em um único."""
-    combined = {
+    combined: Dict[str, Any] = {
         "generated_at": "2025-11-03T16:08:12Z",
         "metrics": {"_totals": {"loc": 0, "nosec": 0, "skipped_tests": 0}},
         "results": [],
@@ -74,7 +75,7 @@ def combine_reports():
 
                 # Combinar métricas
                 if "_totals" in data.get("metrics", {}):
-                    totals = data["metrics"]["_totals"]
+                    totals: Dict[str, int] = data["metrics"]["_totals"]
                     for key, value in totals.items():
                         if key in combined["metrics"]["_totals"]:
                             combined["metrics"]["_totals"][key] += value
@@ -82,8 +83,10 @@ def combine_reports():
                             combined["metrics"]["_totals"][key] = value
 
                 # Combinar resultados
-                combined["results"].extend(data.get("results", []))
-                combined["errors"].extend(data.get("errors", []))
+                results: List[Dict[str, Any]] = data.get("results", [])
+                errors: List[str] = data.get("errors", [])
+                combined["results"].extend(results)
+                combined["errors"].extend(errors)
 
                 # Combinar métricas por arquivo
                 for file_key, file_metrics in data.get("metrics", {}).items():
