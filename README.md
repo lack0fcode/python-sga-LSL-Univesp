@@ -15,9 +15,9 @@ Este projeto visa informatizar e otimizar o fluxo de atendimento de pacientes no
    - Recebe senha de acordo com o tipo de atendimento
 
 3. **📢 Chamada Automática**
-   - Profissional de saúde chama próximo paciente via painel
-   - Sistema envia notificação automática via WhatsApp
-   - Paciente é direcionado para a sala correta
+   - Guichê ou profissional de saúde chama próximo paciente via painel
+   - Sistema envia notificação automática via SMS/WhatsApp
+   - Paciente é direcionado para o guichê ou sala correta
 
 4. **👨‍⚕️ Atendimento**
    - Profissional confirma início do atendimento
@@ -45,8 +45,14 @@ Este projeto visa informatizar e otimizar o fluxo de atendimento de pacientes no
 - Status online/offline dos funcionários (bolinhas coloridas)
 - Displays atualizados automaticamente a cada 5 segundos
 
+### 📋 Relatórios e Analytics
+- Relatório HTML detalhado de testes de integração
+- Logs visuais categorizados por etapas (Recepcionista, Guichê, Profissional)
+- Estatísticas de cobertura e performance dos testes
+
 ### 📱 Comunicação Integrada
-- Notificações automáticas via WhatsApp
+- Notificações automáticas via SMS/WhatsApp para guichê e profissionais de saúde
+- Relatório visual de testes com logs detalhados das notificações
 
 ## Instalação
 
@@ -101,17 +107,23 @@ Acesse http://127.0.0.1:8000/ e faça login!
 # Testes completos
 python manage.py test --settings=sga.tests.settings_test
 
-# Com cobertura
-coverage run --source='.' manage.py test --settings=sga.tests.settings_test
+# Com cobertura (excluindo arquivos de análise)
+coverage run --source=. --omit="bandit_Rodar.py,bandit_analisar.py,test_fluxocompleto2.py" manage.py test tests --pattern="*test*.py" --settings=sga.tests.settings_test
 coverage report
+
+# Teste de fluxo completo com relatório HTML
+python test_fluxocompleto2.py
 ```
 
 ### Qualidade do Código
-- ✅ **199 testes automatizados** cobrindo funcionalidades críticas
+- ✅ **195 testes automatizados** cobrindo funcionalidades críticas
+- ✅ **96% de cobertura** de testes automatizados
 - ✅ **Análise de segurança** com Bandit e Safety
 - ✅ **Linting** com Flake8 e Black
 - ✅ **Type checking** com MyPy
 - ✅ **CI/CD** automatizado no GitHub Actions
+- ✅ **Workflow completo** com testes, linting e segurança
+- ✅ **Relatórios automáticos** de cobertura e análise de segurança
 
 ## Segurança
 
@@ -127,10 +139,11 @@ coverage report
 - **Backend:** Python 3.11+ com Django 4.2
 - **Banco de Dados:** PostgreSQL (produção) / SQLite (desenvolvimento)
 - **Frontend:** HTML5, CSS3, JavaScript (jQuery, Bootstrap)
-- **APIs:** Twilio (WhatsApp)
-- **Testes:** pytest, Coverage
+- **APIs:** Twilio (SMS/WhatsApp)
+- **Testes:** pytest, Coverage.py, unittest.mock
+- **Qualidade:** Black, Flake8, MyPy, Bandit, Safety
 - **CI/CD:** GitHub Actions
-- **Segurança:** Bandit, Safety, MyPy
+- **Relatórios:** HTML dinâmico com estatísticas visuais
 
 ## Como Contribuir
 

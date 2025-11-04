@@ -1,5 +1,5 @@
 """
-Script para executar teste de fluxo completo e gerar relatório HTML dedicado com dados reais.
+Script para executar teste de fluxo completo e gerar relatório HTML dedicado com dados fictícios.
 """
 
 import os
@@ -16,23 +16,109 @@ django.setup()
 
 # Aplicar mock ANTES de importar as views
 _current_test_instance = None
+_sms_real_enviado = False  # Flag para controlar envio de SMS real apenas uma vez
 
 
-def mock_enviar_whatsapp(numero_destino: str, mensagem: str) -> bool:
-    """Mock que registra as chamadas do WhatsApp."""
-    print(
-        f"[WHATSAPP MOCK] 📱 INTERCEPTADO! Enviando para {numero_destino}: {mensagem}"
-    )
-    # Adicionar log diretamente à instância atual do teste
-    if _current_test_instance is not None:
-        _current_test_instance.log(
-            "whatsapp", f"📱 WhatsApp enviado para {numero_destino}: {mensagem}"
+def mock_enviar_whatsapp(
+    numero_destino: str,
+    mensagem: str = None,
+    content_sid: str = None,
+    content_variables: dict = None,
+) -> Dict[str, Any]:
+    """Mock que registra as chamadas e ENVIA SMS REAL apenas na primeira chamada do guichê."""
+    global _sms_real_enviado
+
+    # Se já enviou SMS real, retorna mock simulado
+    if _sms_real_enviado:
+        resultado_mock = {
+            "status": "success",
+            "sid": "SM_mock_" + str(hash(f"{numero_destino}_{mensagem}"))[:10],
+            "to": numero_destino,
+            "message_status": "sent",
+            "date_created": datetime.now().isoformat(),
+            "direction": "outbound-api",
+            "price": None,
+            "error_message": None,
+            "message_type": "sms",
+        }
+
+        # Adicionar log como mock
+        if _current_test_instance is not None:
+            _current_test_instance.log(
+                "whatsapp",
+                f"📱 SMS MOCK (simulado) para {numero_destino}: {mensagem} | SID: {resultado_mock['sid']}",
+            )
+
+        print(f"[SMS MOCK] 📱 SMS simulado enviado para {numero_destino}: {mensagem}")
+        return resultado_mock
+
+    # Primeira chamada: enviar SMS real
+    from twilio.rest import Client
+    import os
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+    print(f"[SMS REAL] 📱 Enviando SMS REAL para {numero_destino}: {mensagem}")
+
+    # Marcar que SMS real foi enviado ANTES de tentar
+    _sms_real_enviado = True
+
+    try:
+        client = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+
+        # Usar o número Twilio válido para SMS
+        from_number = "+14178554802"  # Número verificado da conta
+
+        # Se for template, usar mensagem padrão
+        if content_sid:
+            body = f"📱 SMS TESTE - Template WhatsApp: Seu atendimento foi agendado para {content_variables.get('1', 'hoje')} às {content_variables.get('2', 'agora')}."
+        else:
+            body = f"📱 SMS TESTE - {mensagem}"
+
+        message = client.messages.create(
+            from_=from_number, body=body, to=numero_destino
         )
-    # Sempre retorna True, independente do log
-    return True
+
+        resultado = {
+            "status": "success",
+            "sid": message.sid,
+            "to": numero_destino,
+            "message_status": message.status,
+            "date_created": (
+                message.date_created.isoformat() if message.date_created else None
+            ),
+            "direction": message.direction,
+            "price": message.price,
+            "error_message": message.error_message,
+            "message_type": "sms",
+        }
+
+        # Adicionar log diretamente à instância atual do teste
+        if _current_test_instance is not None:
+            _current_test_instance.log(
+                "whatsapp",
+                f"📱 SMS REAL enviado para {numero_destino}: {body} | SID: {message.sid} | Status: {message.status}",
+            )
+
+        print(
+            f"[SMS REAL] ✅ SMS REAL enviado! SID: {message.sid}, Status: {message.status}"
+        )
+        return resultado
+
+    except Exception as e:
+        error_msg = f"❌ Erro ao enviar SMS: {str(e)}"
+        print(f"[SMS REAL] {error_msg}")
+
+        if _current_test_instance is not None:
+            _current_test_instance.log("whatsapp", error_msg)
+
+        return {"status": "error", "error": str(e)}
 
 
-mock_patch = patch("core.utils.enviar_whatsapp", side_effect=mock_enviar_whatsapp)
+mock_patch = patch(
+    "core.utils.enviar_sms_ou_whatsapp", side_effect=mock_enviar_whatsapp
+)
 mock_patch.start()
 
 from django.test import Client, TransactionTestCase
@@ -46,13 +132,16 @@ User = get_user_model()
 
 
 class TestFluxoCompletoComRelatorio(TransactionTestCase):
-    """Teste de fluxo completo que gera relatório HTML com dados reais."""
+    """Teste de fluxo completo que gera relatório HTML com dados ficticios."""
 
     def setUp(self):
         """Configura dados iniciais para os testes."""
         # Definir esta instância como a atual para o mock
-        global _current_test_instance
+        global _current_test_instance, _sms_real_enviado
         _current_test_instance = self
+        _sms_real_enviado = (
+            False  # Reset flag para permitir SMS real na primeira chamada
+        )
 
         # Inicializar lista para logs
         self.logs: List[Dict[str, Any]] = []
@@ -138,7 +227,7 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
         paciente_data = {
             "nome_completo": "Kauã Fernandes Azevedo",
             "cartao_sus": "123456789012346",
-            "telefone_celular": "(11) 99999-9999",
+            "telefone_celular": "(51) 99591-9117",
             "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
             "profissional_saude": self.profissional.id,
             "tipo_senha": "G",
@@ -389,7 +478,7 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
         print("=" * 80)
 
     def gerar_relatorio_html(self):
-        """Gera relatório HTML com dados reais do teste."""
+        """Gera relatório HTML com dados ficticios do teste."""
 
         # Organizar logs por etapas
         etapas: Dict[str, List[Tuple[str, str]]] = {
@@ -617,7 +706,7 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
         </div>
 
         <div class="content">
-            <div class="test-title">🔗 Teste de Integração: Fluxo Completo de Atendimento (Dados Reais)</div>
+            <div class="test-title">🔗 Teste de Integração: Fluxo Completo de Atendimento (Dados Fictícios)</div>
 
             <div class="stats">
                 <div class="stat">
@@ -663,7 +752,7 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
 
         <div class="footer">
             <p>Relatório gerado em {data_geracao}</p>
-            <p>Sistema SGA-ILSL - Testes de Integração com Dados Reais</p>
+            <p>Sistema SGA-ILSL - Testes de Integração com Dados Fictícios</p>
         </div>
     </div>
 </body>
@@ -678,7 +767,7 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
         with open("relatorio_teste_real.html", "w", encoding="utf-8") as f:
             f.write(html_final)
 
-        print("✅ Relatório HTML com dados reais gerado com sucesso!")
+        print("✅ Relatório HTML com dados fictícios gerado com sucesso!")
         print("📄 Arquivo: relatorio_teste_real.html")
 
 

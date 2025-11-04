@@ -55,7 +55,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: sga.settings
           DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
         run: |
-          coverage run --source='.' manage.py test tests --pattern="*test*.py" --settings=sga.tests.settings_test
+          coverage run --source=. --omit="bandit_Rodar.py,bandit_analisar.py,test_fluxocompleto2.py" manage.py test tests --pattern="*test*.py" --settings=sga.tests.settings_test
           coverage report
           coverage html
 

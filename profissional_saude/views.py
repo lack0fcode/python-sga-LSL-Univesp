@@ -1,6 +1,6 @@
 # profissional_saude/views.py
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -56,6 +56,7 @@ def realizar_acao_profissional(request, paciente_id, acao):
     """
     paciente = get_object_or_404(Paciente, id=paciente_id)
     profissional_saude = request.user
+    twilio_response: Optional[Dict[str, Any]] = None
 
     if acao == "chamar":
         ChamadaProfissional.objects.create(
@@ -67,18 +68,24 @@ def realizar_acao_profissional(request, paciente_id, acao):
         if numero_celular_paciente:
             mensagem = (
                 f"Olá {paciente.nome_completo.split()[0]}! "
-                f"Seu atendimento com o(a) Dr(a). {profissional_saude.first_name} "
-                f"na Sala {profissional_saude.sala} foi iniciado. Por favor, aguarde."
+                f"O(a) Dr(a). {profissional_saude.first_name}, lhe aguarda. "
+                f"Por favor, dirija-se à Sala {profissional_saude.sala}."
             )
-            enviar_whatsapp(numero_celular_paciente, mensagem)
+            twilio_response = enviar_whatsapp(numero_celular_paciente, mensagem)
         else:
             logger.warning(
-                f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
+                f"Telefone inválido ou ausente para o paciente {paciente.nome_completo} (ID: {paciente_id}). "
+                "WhatsApp não será enviado."
             )
+            twilio_response = {
+                "status": "error",
+                "error": f"Telefone inválido ou ausente para o paciente {paciente.nome_completo} (ID: {paciente_id}).",
+            }
 
-        return JsonResponse(
-            {"status": "success", "mensagem": "Senha chamada com sucesso."}
-        )
+        response_data = {"status": "success", "mensagem": "Senha chamada com sucesso."}
+        if twilio_response:
+            response_data["twilio"] = twilio_response  # type: ignore
+        return JsonResponse(response_data)
     elif acao == "reanunciar":
         ChamadaProfissional.objects.create(
             paciente=paciente, profissional_saude=profissional_saude, acao="reanuncio"
@@ -92,15 +99,24 @@ def realizar_acao_profissional(request, paciente_id, acao):
                 f"O(A) Dr(a). {profissional_saude.first_name} está chamando novamente. "
                 f"Por favor, dirija-se à Sala {profissional_saude.sala}."
             )
-            enviar_whatsapp(numero_celular_paciente, mensagem)
+            twilio_response = enviar_whatsapp(numero_celular_paciente, mensagem)
         else:
             logger.warning(
-                f"Aviso: Não foi possível enviar WhatsApp no reanuncio para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
+                f"Telefone inválido ou ausente para o paciente {paciente.nome_completo} (ID: {paciente_id}). "
+                "WhatsApp não será enviado."
             )
+            twilio_response = {
+                "status": "error",
+                "error": f"Telefone inválido ou ausente para o paciente {paciente.nome_completo} (ID: {paciente_id}).",
+            }
 
-        return JsonResponse(
-            {"status": "success", "mensagem": "Senha reanunciada com sucesso."}
-        )
+        response_data = {
+            "status": "success",
+            "mensagem": "Senha reanunciada com sucesso.",
+        }
+        if twilio_response:
+            response_data["twilio"] = twilio_response  # type: ignore
+        return JsonResponse(response_data)
     elif acao == "confirmar":
         # Criar registro de confirmação para o histórico da TV2
         ChamadaProfissional.objects.create(

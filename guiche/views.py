@@ -19,7 +19,7 @@ from gtts import gTTS
 
 from core.decorators import guiche_required
 from core.models import Chamada, Guiche, Paciente
-from core.utils import enviar_whatsapp  # Importe a função de utilidade
+from core.utils import enviar_sms_ou_whatsapp  # Importe a nova função
 
 from .forms import GuicheForm
 
@@ -207,21 +207,26 @@ def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
     data_for_tv = {"senha": senha, "nome_completo": nome, "guiche": guiche_numero}
 
     # --- LÓGICA DE ENVIO DE SMS ---
+    twilio_response = None
     if acao in ["chamada", "reanuncio"] and paciente.telefone_celular:
         numero_e164 = paciente.telefone_e164()
         if numero_e164:
             mensagem = (
-                f"Seu atendimento foi iniciado. Por favor, dirija-se ao Guichê {guiche_numero}. "
+                f"Por favor, dirija-se ao Guichê {guiche_numero}. "
                 f"Chamado: {senha} - {nome}."
             )
-            enviar_whatsapp(numero_e164, mensagem)
+            twilio_response = enviar_sms_ou_whatsapp(numero_e164, mensagem)
         else:
-            print(
-                f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado."
-            )
+            twilio_response = {
+                "status": "error",
+                "error": f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado.",
+            }
     # --- FIM DA LÓGICA DE ENVIO DE SMS ---
 
-    return JsonResponse({"status": "ok", "data": data_for_tv})
+    response_data = {"status": "ok", "data": data_for_tv}
+    if twilio_response:
+        response_data["twilio"] = twilio_response
+    return JsonResponse(response_data)
 
 
 @never_cache

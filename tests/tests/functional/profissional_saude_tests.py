@@ -179,7 +179,7 @@ class ProfissionalSaudeTests(TestCase):
 
         # Verificar que logger.warning foi chamado com aviso
         mock_warning.assert_called_once()
-        self.assertIn("telefone inválido ou ausente", mock_warning.call_args[0][0])
+        self.assertIn("Telefone inválido ou ausente", mock_warning.call_args[0][0])
 
         # WhatsApp não deve ser chamado
         mock_whatsapp.assert_not_called()

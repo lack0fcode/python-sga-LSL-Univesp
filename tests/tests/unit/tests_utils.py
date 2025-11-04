@@ -45,7 +45,8 @@ class UtilsTest(TestCase):
 
         resultado = enviar_whatsapp("+5511999999999", "Teste mensagem")
 
-        self.assertFalse(resultado)
+        self.assertEqual(resultado["status"], "error")
+        self.assertIn("Credenciais Twilio não configuradas", resultado["error"])
 
     @patch("core.utils.Client")
     def test_enviar_whatsapp_erro_api(self, mock_client):
@@ -63,7 +64,8 @@ class UtilsTest(TestCase):
 
         resultado = enviar_whatsapp("+5511999999999", "Teste mensagem")
 
-        self.assertFalse(resultado)
+        self.assertEqual(resultado["status"], "error")
+        self.assertEqual(resultado["error"], "Erro na API")
         mock_client.assert_called_once_with("test_sid", "test_token")
 
 

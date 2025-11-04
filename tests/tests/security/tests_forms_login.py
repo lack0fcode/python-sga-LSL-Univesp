@@ -115,7 +115,7 @@ class LoginFormTest(TestCase):
 
     def test_brute_force_protection(self):
         """Testa proteção contra força bruta (bloqueio após 4 tentativas)."""
-        # 3 tentativas falhidas
+        # 3 tentativas falhas
         for i in range(3):
             data = self.valid_data.copy()
             data["password"] = f"wrongpass{i}"
