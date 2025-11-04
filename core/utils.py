@@ -1,7 +1,10 @@
 # core/utils.py
+import logging
 import os
 from twilio.rest import Client
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 
 def enviar_whatsapp(numero_destino: str, mensagem: str):
@@ -13,7 +16,7 @@ def enviar_whatsapp(numero_destino: str, mensagem: str):
         or not settings.TWILIO_AUTH_TOKEN
         or not settings.TWILIO_WHATSAPP_NUMBER
     ):
-        print(
+        logger.error(
             "Erro: Credenciais Twilio não configuradas. Verifique as variáveis de ambiente."
         )
         return False
@@ -26,8 +29,8 @@ def enviar_whatsapp(numero_destino: str, mensagem: str):
             body=mensagem,
             to=f"whatsapp:{numero_destino}",  # Número do paciente
         )
-        print(f"Mensagem enviada com SID: {message.sid}")
+        logger.info(f"Mensagem enviada com SID: {message.sid}")
         return True
     except Exception as e:
-        print(f"Erro ao enviar mensagem via WhatsApp: {e}")
+        logger.error(f"Erro ao enviar mensagem via WhatsApp: {e}")
         return False

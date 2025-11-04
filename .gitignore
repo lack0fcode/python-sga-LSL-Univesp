@@ -361,3 +361,7 @@ ROTEIRO_PI2.md
 roteiro_*.md
 planning_*.md
 notes_*.md
+ROTEIRO_TESTES.md
+
+# Generated test reports
+relatorio_teste_real.html 

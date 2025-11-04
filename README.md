@@ -48,11 +48,6 @@ Este projeto visa informatizar e otimizar o fluxo de atendimento de pacientes no
 ### 📱 Comunicação Integrada
 - Notificações automáticas via WhatsApp
 
-### 📈 Relatórios e Analytics
-- Histórico completo de atendimentos
-- Estatísticas de tempo médio por profissional
-- Relatórios de produtividade por período
-
 ## Instalação
 
 ### Pré-requisitos
@@ -132,8 +127,8 @@ coverage report
 - **Backend:** Python 3.11+ com Django 4.2
 - **Banco de Dados:** PostgreSQL (produção) / SQLite (desenvolvimento)
 - **Frontend:** HTML5, CSS3, JavaScript (jQuery, Bootstrap)
-- **APIs:** Twilio (WhatsApp), Google reCAPTCHA
-- **Testes:** pytest, Coverage, Selenium (futuro)
+- **APIs:** Twilio (WhatsApp)
+- **Testes:** pytest, Coverage
 - **CI/CD:** GitHub Actions
 - **Segurança:** Bandit, Safety, MyPy
 

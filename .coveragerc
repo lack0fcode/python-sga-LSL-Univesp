@@ -14,6 +14,8 @@ omit =
     .venv/*
     staticfiles/*
     static/*
+    analyze_bandit_ci.py
+    run_bandit_separate.py
 
 [report]
 exclude_lines =

@@ -1,5 +1,6 @@
 # guiche/views.py
 import datetime
+import logging
 import os
 import tempfile
 from collections import defaultdict, deque
@@ -21,6 +22,8 @@ from core.models import Chamada, Guiche, Paciente
 from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
 from .forms import GuicheForm
+
+logger = logging.getLogger(__name__)
 
 
 @guiche_required
@@ -138,7 +141,7 @@ def chamar_senha(request, paciente_id):
     paciente = get_object_or_404(Paciente, id=paciente_id)
     guiche = get_guiche_do_usuario(request.user, request=request)
 
-    # 1. Cria o registro da chamada (já está feito)
+    # 1. Cria o registro da chamada e envia WhatsApp (através de realizar_acao_senha)
     response_chamada = realizar_acao_senha(
         request,
         paciente.senha,
@@ -148,20 +151,7 @@ def chamar_senha(request, paciente_id):
         "chamada",
     )
 
-    # 2. Tenta enviar mensagem via WhatsApp
-    numero_celular_paciente = paciente.telefone_e164()  # Obtém o número formatado
-    if numero_celular_paciente:
-        mensagem = (
-            f"Olá {paciente.nome_completo.split()[0]}! "
-            f"Seu atendimento foi iniciado. Por favor, dirija-se ao Guichê {guiche.numero}."
-        )
-        enviar_whatsapp(numero_celular_paciente, mensagem)
-    else:
-        print(
-            f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
-        )
-
-    # 3. Retorna o JsonResponse original
+    # 2. Retorna o JsonResponse original
     return response_chamada
 
 

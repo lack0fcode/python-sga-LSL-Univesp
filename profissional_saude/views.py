@@ -1,4 +1,5 @@
 # profissional_saude/views.py
+import logging
 from typing import Any, Dict, List
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -8,6 +9,8 @@ from django.views.decorators.http import require_POST
 
 from core.decorators import profissional_saude_required
 from core.models import ChamadaProfissional, CustomUser, Paciente
+
+logger = logging.getLogger(__name__)
 from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
 from .forms import SelecionarSalaForm
@@ -69,7 +72,7 @@ def realizar_acao_profissional(request, paciente_id, acao):
             )
             enviar_whatsapp(numero_celular_paciente, mensagem)
         else:
-            print(
+            logger.warning(
                 f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
             )
 
@@ -80,17 +83,20 @@ def realizar_acao_profissional(request, paciente_id, acao):
         ChamadaProfissional.objects.create(
             paciente=paciente, profissional_saude=profissional_saude, acao="reanuncio"
         )
-        # Opcional: Reenviar o WhatsApp também no reanuncio?
-        # numero_celular_paciente = paciente.telefone_e164()
-        # if numero_celular_paciente:
-        #     mensagem = (
-        #         f"Olá {paciente.nome_completo.split()[0]}! "
-        #         f"O(A) Dr(a). {profissional_saude.first_name} está chamando novamente. "
-        #         f"Por favor, dirija-se à Sala {profissional_saude.sala}."
-        #     )
-        #     enviar_whatsapp(numero_celular_paciente, mensagem)
-        # else:
-        #     print(f"Aviso: Não foi possível enviar WhatsApp no reanuncio para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente.")
+
+        # Reenviar o WhatsApp no reanuncio
+        numero_celular_paciente = paciente.telefone_e164()
+        if numero_celular_paciente:
+            mensagem = (
+                f"Olá {paciente.nome_completo.split()[0]}! "
+                f"O(A) Dr(a). {profissional_saude.first_name} está chamando novamente. "
+                f"Por favor, dirija-se à Sala {profissional_saude.sala}."
+            )
+            enviar_whatsapp(numero_celular_paciente, mensagem)
+        else:
+            logger.warning(
+                f"Aviso: Não foi possível enviar WhatsApp no reanuncio para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
+            )
 
         return JsonResponse(
             {"status": "success", "mensagem": "Senha reanunciada com sucesso."}
