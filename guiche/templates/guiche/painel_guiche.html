@@ -2,96 +2,123 @@
 {% load core_tags %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="card shadow-sm rounded-4 p-4 mb-4">
-        <h1 class="h3 mb-3"> Painel do Guichê
-        {% if request.session.guiche_id %}
-            <small class="text-muted">— Guichê selecionado: {{ request.session.guiche_id }}</small>
-        {% endif %}
-        </h1>
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="mb-4 sm:mb-0">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    Painel do Guichê
+                    {% if request.session.guiche_id %}
+                        <span class="text-lg font-normal text-gray-600">— Guichê selecionado: {{ request.session.guiche_id }}</span>
+                    {% endif %}
+                </h1>
+                <p class="text-gray-600">Gerencie as senhas e atendimentos do seu guichê</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'guiche:selecionar_guiche' %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200">
+                    <i class="bi bi-gear mr-2"></i>
+                    Selecionar/Trocar Guichê
+                </a>
+            </div>
+        </div>
+    </div>
 
-        <a href="{% url 'guiche:selecionar_guiche' %}" class="btn btn-outline-secondary btn-sm mb-3">
-        Selecionar/Trocar Guichê
-        </a>
+    <!-- Filtro de Tipos de Senha -->
+    <div class="bg-white shadow-lg rounded-lg p-8 mb-8 fade-in">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Configuração de Atendimento</h2>
+        <p class="text-gray-600 mb-6">Selecione os tipos de senha que deseja atender e defina as proporções:</p>
 
-        <p class="text-muted">Selecione os tipos de senha que deseja atender:</p>
-
-        <form method="post" class="needs-validation" id="filtro-form">
+        <form method="post" id="filtro-form">
             {% csrf_token %}
-            <div class="row g-4 align-items-start" id="filtros">
-                <!-- Campos tipo de senha + proporções -->
-                <div class="col-md-12">
-                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-                        {% for field in form %}
-                            {% if "tipo_senha" in field.name %}
-                                {% with tipo_senha=field.name|slice:"11:" %}
-                                    {% with proporcao=form|get_proporcao_field:field.name %}
-                                        <div class="col">
-                                            <div class="border border-primary bg-light rounded shadow-sm p-2 h-100 d-flex justify-content-between align-items-center">
-                                                <div class="form-check m-0 d-flex align-items-center">
-                                                    {{ field|add_class:"form-check-input tipo-checkbox me-2" }}
-                                                    <label class="form-check-label fw-semibold mb-0" for="{{ field.id_for_label }}">
-                                                        {{ field.label }}
-                                                    </label>
-                                                </div>
-                                                <div style="min-width: 50px;">
-                                                    {{ proporcao|add_class:"form-control form-control-sm text-end proporcao-input border border-primary" }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endwith %}
-                                {% endwith %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="filtros">
+                {% for field in form %}
+                    {% if "tipo_senha" in field.name %}
+                        {% with tipo_senha=field.name|slice:"11:" %}
+                            {% with proporcao=form|get_proporcao_field:field.name %}
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between form-check">
+                                    <div class="flex items-center">
+                                        {{ field|add_class:"tipo-checkbox mr-3 h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded" }}
+                                        <label class="text-sm font-medium text-gray-700" for="{{ field.id_for_label }}">
+                                            {{ field.label }}
+                                        </label>
+                                    </div>
+                                    <div class="w-20">
+                                        {{ proporcao|add_class:"proporcao-input w-full px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-primary focus:border-primary" }}
+                                    </div>
+                                </div>
+                            {% endwith %}
+                        {% endwith %}
+                    {% endif %}
+                {% endfor %}
             </div>
 
-            <div class="mt-4" id="filtro-btn-container">
-                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4" id="btn-filtrar">
-                    <i class="bi bi-filter-circle"></i> Filtrar
+            <div class="mt-6 flex justify-end">
+                <button type="submit" class="btn-primary" id="btn-filtrar">
+                    <i class="bi bi-filter-circle mr-2"></i> Aplicar Filtros
                 </button>
             </div>
         </form>
     </div>
 
-    <div class="card shadow-sm rounded-4 p-4">
-        <h2 class="h4 mb-4">Senhas Geradas Hoje</h2>
+    <!-- Senhas Geradas Hoje -->
+    <div class="bg-white shadow-lg rounded-lg p-8 mb-8 fade-in">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Senhas Geradas Hoje</h2>
         {% if senhas %}
-            <div class="list-group">
+            <div class="space-y-3">
                 {% for senha in senhas %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm rounded-3 my-2">
-                        <div>
-                            <span class="fw-bold">{{ senha.senha }}</span> - {{ senha.nome_completo }}
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-lg font-bold text-primary mr-3">{{ senha.senha }}</span>
+                            <span class="text-gray-900">{{ senha.nome_completo }}</span>
                         </div>
-                        <div class="btn-group">
-                            <button class="btn btn-success btn-sm" onclick="chamar({{ senha.id }})">Chamar</button>
-                            <button class="btn btn-warning btn-sm" onclick="reanunciar({{ senha.id }})">Reanunciar</button>
-                            <button class="btn btn-primary btn-sm" onclick="confirmar({{ senha.id }})">Confirmar</button>
+                        <div class="flex space-x-2">
+                            <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ senha.id }})">
+                                <i class="bi bi-megaphone mr-1"></i>Chamar
+                            </button>
+                            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="reanunciar({{ senha.id }})">
+                                <i class="bi bi-arrow-repeat mr-1"></i>Reanunciar
+                            </button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ senha.id }})">
+                                <i class="bi bi-check-circle mr-1"></i>Confirmar
+                            </button>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-muted">Nenhuma senha gerada hoje.</p>
+            <div class="text-center py-8">
+                <i class="bi bi-info-circle text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">Nenhuma senha gerada hoje.</p>
+            </div>
         {% endif %}
     </div>
 
-    <div class="card shadow-sm rounded-4 p-4 mt-4">
-        <h2 class="h4 mb-4">Histórico de Chamadas</h2>
+    <!-- Histórico de Chamadas -->
+    <div class="bg-white shadow-lg rounded-lg p-8 fade-in">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Histórico de Chamadas</h2>
         {% if historico_chamadas %}
-            <ul class="list-group">
+            <div class="space-y-2">
                 {% for chamada in historico_chamadas %}
-                    <li class="list-group-item">{{ chamada }}</li>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                        <span class="text-gray-700">{{ chamada }}</span>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% else %}
-            <p class="text-muted">Nenhuma chamada registrada.</p>
+            <div class="text-center py-8">
+                <i class="bi bi-clock-history text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">Nenhuma chamada registrada.</p>
+            </div>
         {% endif %}
     </div>
 </div>
 
 <script>
+    // Definir o token CSRF para uso nas funções AJAX
+    const csrfToken = '{{ csrf_token }}';
+    
     document.addEventListener("DOMContentLoaded", function () {
         const proporcaoInputs = document.querySelectorAll('.proporcao-input');
 
@@ -118,7 +145,13 @@
 </script>
 <script>
 function chamar(pacienteId) {
-    fetch(`/guiche/chamar/${pacienteId}/`, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}})
+    fetch(`/guiche/chamar/${pacienteId}/`, {
+        method: 'POST', 
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'ok') {
@@ -127,34 +160,60 @@ function chamar(pacienteId) {
         } else {
             alert('Erro ao chamar a senha.');
         }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao chamar a senha.');
     });
 }
 
 function reanunciar(pacienteId) {
-    fetch(`/guiche/reanunciar/${pacienteId}/`, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}}).then(response => response.json())
+    fetch(`/guiche/reanunciar/${pacienteId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
     .then(data => {
         if (data.status === 'ok') {
             console.log('Senha reanunciada com sucesso');
             location.reload(); // Recarrega a página
         } else {
-            alert('Erro ao chamar a senha.');
+            alert('Erro ao reanunciar a senha.');
         }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao reanunciar a senha.');
     });
 }
 
 function confirmar(pacienteId) {
-    fetch(`/guiche/confirmar/${pacienteId}/`, {method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}}).then(response => {
+    fetch(`/guiche/confirmar/${pacienteId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
         if (response.ok) {
-          console.log('Senha Confirmada com sucesso');
-          location.reload();
+            console.log('Senha confirmada com sucesso');
+            location.reload();
         } else {
             alert('Erro ao confirmar o atendimento.');
         }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao confirmar o atendimento.');
     });
 }
 
-function atualizarTelaTv(senha,nome,guiche) {
-            console.log("Atualizando tela da tv...",senha,nome,guiche);
-        }
+function atualizarTelaTv(senha, nome, guiche) {
+    console.log("Atualizando tela da tv...", senha, nome, guiche);
+}
 </script>
 {% endblock %}

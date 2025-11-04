@@ -29,15 +29,24 @@ def login_view(request):
                     f"Autenticação bem-sucedida para o usuário: {user.username}"
                 )
                 login(request, user)
-                # Redirecionamento baseado na função do usuário
+                # Forçar redirecionamento baseado na função do usuário (mesmo para superusers)
+                next_url = None
                 if user.funcao == "administrador":
-                    return redirect("administrador:listar_funcionarios")
+                    next_url = "administrador:listar_funcionarios"
                 elif user.funcao == "recepcionista":
-                    return redirect("recepcionista:cadastrar_paciente")
+                    next_url = "recepcionista:cadastrar_paciente"
                 elif user.funcao == "guiche":
-                    return redirect("guiche:selecionar_guiche")
+                    next_url = "guiche:selecionar_guiche"
                 elif user.funcao == "profissional_saude":
-                    return redirect("profissional_saude:painel_profissional")
+                    if user.sala:
+                        next_url = "profissional_saude:painel_profissional"
+                    else:
+                        next_url = "profissional_saude:selecionar_sala"
+                else:
+                    next_url = "pagina_inicial"
+
+                if next_url:
+                    return redirect(next_url)
                 else:
                     return redirect("pagina_inicial")
             else:

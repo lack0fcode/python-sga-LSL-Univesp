@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "recepcionista",
     "guiche",
     "profissional_saude",
+    "tests",
 ]
 
 MIDDLEWARE = [
@@ -174,6 +175,8 @@ LOGGING = {
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
 # Twilio Settings
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")  # <<-- Use o NOME DA VARIAVEL

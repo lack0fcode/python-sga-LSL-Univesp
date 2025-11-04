@@ -1,71 +1,143 @@
 {% extends 'base.html' %}
 {% load core_tags %}
 
-{% block title %}Painel do Profissional de Saúde{% endblock %}  <!-- Define o título da página -->
+{% block title %}Painel do Profissional de Saúde{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="card shadow-sm rounded-4 p-4 mb-4">
-        <h1 class="h3 mb-3">Painel do Profissional de Saúde</h1>
-        <p class="text-muted">Lista de pacientes para atendimento:</p>
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Painel do Profissional de Saúde</h1>
+                <p class="text-gray-600">Gerencie seus pacientes e atendimentos</p>
+            </div>
+            <div class="flex space-x-4">
+                <a href="{% url 'profissional_saude:selecionar_sala' %}"
+                   class="btn-primary">
+                    <i class="bi bi-door-open mr-2"></i>Selecionar/Trocar Sala
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Pacientes -->
+    <div class="bg-white shadow-lg rounded-lg p-8 fade-in">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">Pacientes para Atendimento</h2>
 
         {% if pacientes %}
-            <div class="list-group">
+            <div class="space-y-4">
                 {% for paciente in pacientes %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm rounded-3 my-2">
-                        <div>
-                            <span class="fw-bold">{{ paciente.senha }}</span> - {{ paciente.nome_completo }}
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-lg font-bold text-primary mr-4">{{ paciente.senha }}</span>
+                            <div>
+                                <span class="text-lg font-medium text-gray-900">{{ paciente.nome_completo }}</span>
+                            </div>
                         </div>
-                        <div class="btn-group">
-                            <button class="btn btn-success btn-sm" onclick="chamar({{ paciente.id }})">Chamar</button>
-                            <button class="btn btn-warning btn-sm" onclick="reanunciar({{ paciente.id }})">Reanunciar</button>
-                            <button class="btn btn-primary btn-sm" onclick="confirmar({{ paciente.id }})">Confirmar</button>
+                        <div class="flex space-x-3">
+                            <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ paciente.id }})">
+                                <i class="bi bi-megaphone mr-2"></i>Chamar
+                            </button>
+                            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="reanunciar({{ paciente.id }})">
+                                <i class="bi bi-arrow-repeat mr-2"></i>Reanunciar
+                            </button>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ paciente.id }})">
+                                <i class="bi bi-check-circle mr-2"></i>Confirmar
+                            </button>
 
-                            <div class="dropdown">
-                                <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButton_{{ paciente.id }}" data-bs-toggle="dropdown" aria-expanded="false"
-                                        onmouseover="this.focus()">
-                                    Encaminhar
+                            <div class="relative">
+                                <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200 dropdown-toggle" type="button" onclick="toggleDropdown({{ paciente.id }})">
+                                    <i class="bi bi-arrow-right-circle mr-2"></i>Encaminhar
                                 </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton_{{ paciente.id }}">
-                                    <li class="dropdown-header">Encaminhar para:</li>
-                                    {% for profissional in profissionais %}
-                                        <li>
-                                            <a class="dropdown-item" href="#" onclick="encaminhar({{ paciente.id }}, {{ profissional.id }})">
+                                <div class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu-{{ paciente.id }}">
+                                    <div class="py-1">
+                                        <div class="px-4 py-2 text-sm font-medium text-gray-700 border-b border-gray-200">
+                                            Encaminhar para:
+                                        </div>
+                                        {% for profissional in profissionais %}
+                                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="#" onclick="encaminhar({{ paciente.id }}, {{ profissional.id }})">
                                                 {{ profissional.first_name }} {{ profissional.last_name }}
                                             </a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="dropdown-item disabled">Nenhum profissional disponível</li>
-                                    {% endfor %}
-                                </ul>
-                        </div>
+                                        {% empty %}
+                                            <div class="px-4 py-2 text-sm text-gray-500">Nenhum profissional disponível</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="text-muted">Nenhum paciente agendado para você.</p>
+            <div class="text-center py-12">
+                <i class="bi bi-person-check text-gray-400 text-6xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum paciente agendado</h3>
+                <p class="text-gray-500">Você não tem pacientes agendados para atendimento no momento.</p>
+            </div>
         {% endif %}
     </div>
+    </div>
 
-    <div class="card shadow-sm rounded-4 p-4 mt-4">
-        <h2 class="h4 mb-4">Histórico de Chamadas</h2>
+    <!-- Histórico de Chamadas -->
+    <div class="bg-white shadow-lg rounded-lg p-8 mt-8 fade-in">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">Histórico de Chamadas</h2>
         {% if historico_chamadas %}
-            <ul class="list-group">
+            <div class="space-y-3">
                 {% for chamada in historico_chamadas %}
-                    <li class="list-group-item">
-                        <strong>{{ chamada.paciente.senha }}</strong> - {{ chamada.paciente.nome_completo }}<br>
-                        Ação: {{ chamada.get_acao_display }} | {{ chamada.data_hora|date:"d/m/Y H:i" }}
-                    </li>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-primary mr-3">{{ chamada.paciente.senha }}</span>
+                                <span class="text-gray-900">{{ chamada.paciente.nome_completo }}</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-medium text-gray-900">{{ chamada.get_acao_display }}</div>
+                                <div class="text-sm text-gray-500">{{ chamada.data_hora|date:"d/m/Y H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% else %}
-            <p class="text-muted">Nenhuma chamada registrada.</p>
+            <div class="text-center py-8">
+                <i class="bi bi-clock-history text-gray-400 text-4xl mb-4"></i>
+                <p class="text-gray-500">Nenhuma chamada registrada.</p>
+            </div>
         {% endif %}
     </div>
 </div>
 
 <script>
+function toggleDropdown(pacienteId) {
+    const menu = document.querySelector(`.dropdown-menu-${pacienteId}`);
+    const isVisible = !menu.classList.contains('opacity-0');
+
+    // Fechar todos os outros dropdowns
+    document.querySelectorAll('.dropdown-menu').forEach(m => {
+        m.classList.add('opacity-0', 'invisible');
+    });
+
+    // Toggle do dropdown atual
+    if (isVisible) {
+        menu.classList.add('opacity-0', 'invisible');
+    } else {
+        menu.classList.remove('opacity-0', 'invisible');
+    }
+}
+
+// Fechar dropdowns quando clicar fora
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.dropdown-toggle')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.add('opacity-0', 'invisible');
+        });
+    }
+});
+
+function atualizarTela() {
+    location.reload();
+}
 function chamar(pacienteId) {
     fetch(`/profissional_saude/acao/${pacienteId}/chamar/`, {
         method: 'POST',

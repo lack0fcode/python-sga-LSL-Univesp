@@ -22,4 +22,9 @@ urlpatterns = [
         views.excluir_funcionario,
         name="excluir_funcionario",
     ),
+    path(
+        "registrar-atividade/",
+        views.registrar_atividade,
+        name="registrar_atividade",
+    ),
 ]

@@ -180,6 +180,13 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={"placeholder": "Digite sua senha"}),
     )
 
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get("cpf")
+        if cpf:
+            # Remove pontos, traços e espaços do CPF
+            cpf = "".join(filter(str.isdigit, cpf))
+        return cpf
+
     def clean(self):
         cleaned_data = super().clean()
         cpf = cleaned_data.get("cpf")

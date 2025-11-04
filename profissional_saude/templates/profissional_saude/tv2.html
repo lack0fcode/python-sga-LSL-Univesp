@@ -155,12 +155,10 @@
         <div class="left-panel">
             <div class="senha-chamada mt-4">
                 {% if senha_chamada %}
-                    <!-- Exibe o nome e a sala no destaque -->
-                    <h3 class="text-danger" id="senha-chamada-texto" data-nome="{{ nome_completo }}" data-sala="{{ sala_consulta }}">
-                        {{ nome_completo }} - Profissional: {{ profissional_nome }}
+                    <!-- Exibe o nome e o profissional no destaque -->
+                    <h3 class="text-danger" id="senha-chamada-texto" data-nome="{{ nome_completo }}" data-sala="{{ sala_profissional }}">
+                        {{ nome_completo }} - Sala: {{ sala_profissional }}
                     </h3>
-                    <!-- Remove o segundo h3 -->
-                    <p>Profissional: {{ profissional_nome }}</p>
                 {% else %}
                     <h5 class="text-muted" id="senha-chamada-texto" data-senha="">
                         Nenhuma senha chamada no momento.
@@ -169,7 +167,7 @@
             </div>
 
             <div class="historico-senhas">
-                <h4>Histórico de Chamadas</h4>
+                <h4>Histórico de Confirmações</h4>
                 <ul>
                     {% for chamada in historico_senhas %}
                         <li>
@@ -212,16 +210,14 @@
                     success: function(data) {
                         console.log("Dados recebidos da API:", data);
 
-                        if (data.nome_completo && data.sala_consulta && data.profissional_nome && data.id !== ultimaChamadaId) {
+                        if (data.nome_completo && data.sala_profissional && data.id !== ultimaChamadaId) {
                             // Atualiza a tela
-                            var nomeSala = data.nome_completo + " - Profissional: " + data.profissional_nome;
+                            var nomeSala = data.nome_completo + " - Sala: " + data.sala_profissional;
                             $('#senha-chamada-texto').text(nomeSala);
                             $('#senha-chamada-texto').data('nome', data.nome_completo); // Atualiza o data-nome
-                            $('#senha-chamada-texto').data('sala', data.sala_consulta); // Atualiza o data-sala
+                            $('#senha-chamada-texto').data('sala', data.sala_profissional); // Atualiza o data-sala
 
-                            $('.senha-chamada p:nth-child(1)').text("Profissional: " + data.profissional_nome);
-
-                            falarSenhaTresVezes(data.nome_completo, data.sala_consulta, data.profissional_nome);
+                            falarSenhaTresVezes(data.nome_completo, data.sala_profissional);
 
                             ultimaChamadaId = data.id; // Atualiza o ID da última chamada
                         } else {
@@ -236,7 +232,7 @@
 
             // Função para chamar o paciente
 
-            function falarSoletracao(nomeCompleto, salaConsulta, profissionalNome) {
+            function falarSoletracao(nomeCompleto, profissionalNome) {
                 console.log("Função falarSoletracao chamada!");
 
                 if (!synth) {
@@ -244,8 +240,8 @@
                     return;
                 }
 
-                if (!nomeCompleto || !salaConsulta || !profissionalNome) {
-                    console.log("Nome, Sala ou Profissional não definidos. Não há nada para falar.");
+                if (!nomeCompleto || !profissionalNome) {
+                    console.log("Nome ou Profissional não definidos. Não há nada para falar.");
                     return;
                 }
 
@@ -301,10 +297,34 @@
                 return null;
             }
 
-            function falarSenhaTresVezes(nomeCompleto, salaConsulta, profissionalNome) { //Removi a senha
+            function falarSenhaTresVezes(nomeCompleto, profissionalNome) { //Removi a senha
                 for (var i = 0; i < 3; i++) {
-                    falarSoletracao(nomeCompleto, salaConsulta, profissionalNome);
+                    falarSoletracao(nomeCompleto, profissionalNome);
                 }
+            }
+
+            function atualizarHistorico() {
+                console.log("Atualizando histórico...");
+                $.ajax({
+                    url: "{% url 'profissional_saude:tv2_historico_api' %}",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        console.log("Dados do histórico recebidos:", data);
+
+                        if (data.historico && data.historico.length > 0) {
+                            var historicoHtml = '';
+                            data.historico.forEach(function(chamada) {
+                                historicoHtml += '<li>' + chamada.paciente_senha + ' - ' + chamada.paciente_nome + ' - Sala: ' + chamada.sala_profissional + '</li>';
+                            });
+
+                            $('.historico-senhas ul').html(historicoHtml);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("Erro ao atualizar o histórico: " + textStatus);
+                    }
+                });
             }
 
             function displayTime() {
@@ -319,8 +339,12 @@
             // Atualiza o horário a cada segundo
             setInterval(displayTime, 1000);
 
-            // Inicializa a atualização da tela
+            // Inicializa a atualização da tela e do histórico
             setInterval(atualizarTela, 5000);
+            setInterval(atualizarHistorico, 5000);
+
+            // Atualiza o histórico imediatamente ao carregar a página
+            atualizarHistorico();
         });
     </script>
 

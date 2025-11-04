@@ -162,7 +162,7 @@
                 <ul>
                     {% for chamada in historico_senhas %}
                         <li>
-                            {{ chamada.paciente.nome_completo }} - Guichê {{ chamada.guiche.numero }}
+                            <span class="text-success">✓ {{ chamada.paciente.nome_completo }} - Guichê {{ chamada.guiche.numero }}</span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -215,6 +215,30 @@
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         console.error("Erro ao atualizar a tela: " + textStatus);
+                    }
+                });
+            }
+
+            function atualizarHistorico() {
+                console.log("Atualizando histórico...");
+                $.ajax({
+                    url: "{% url 'guiche:tv1_historico_api' %}",
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        console.log("Dados do histórico recebidos:", data);
+
+                        if (data.historico && data.historico.length > 0) {
+                            var historicoHtml = '';
+                            data.historico.forEach(function(chamada) {
+                                historicoHtml += '<li><span class="text-success">✓ ' + chamada.paciente_nome + ' - Guichê ' + chamada.guiche_numero + '</span></li>';
+                            });
+
+                            $('.historico-senhas ul').html(historicoHtml);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error("Erro ao atualizar o histórico: " + textStatus);
                     }
                 });
             }
@@ -303,8 +327,12 @@
             // Atualiza o horário a cada segundo
             setInterval(displayTime, 1000);
 
-            // Inicializa a atualização da tela
+            // Inicializa a atualização da tela e do histórico
             setInterval(atualizarTela, 5000);
+            setInterval(atualizarHistorico, 5000);
+
+            // Atualiza o histórico imediatamente ao carregar a página
+            atualizarHistorico();
         });
     </script>
 

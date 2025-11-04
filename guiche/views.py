@@ -1,9 +1,11 @@
 # guiche/views.py
 import datetime
+import logging
 import os
 import tempfile
 from collections import defaultdict, deque
 from itertools import cycle
+from typing import Any, Dict, List
 
 from django import forms
 from django.contrib.auth.decorators import login_required
@@ -17,9 +19,11 @@ from gtts import gTTS
 
 from core.decorators import guiche_required
 from core.models import Chamada, Guiche, Paciente
-from core.utils import enviar_whatsapp  # Importe a função de utilidade
+from core.utils import enviar_sms_ou_whatsapp  # Importe a nova função
 
 from .forms import GuicheForm
+
+logger = logging.getLogger(__name__)
 
 
 @guiche_required
@@ -126,7 +130,6 @@ def painel_guiche(request):
                 "form": form,
                 "senhas": senhas,
                 "historico_chamadas": historico_chamadas,
-                "form": form,
             },
         )
 
@@ -138,7 +141,7 @@ def chamar_senha(request, paciente_id):
     paciente = get_object_or_404(Paciente, id=paciente_id)
     guiche = get_guiche_do_usuario(request.user, request=request)
 
-    # 1. Cria o registro da chamada (já está feito)
+    # 1. Cria o registro da chamada e envia WhatsApp (através de realizar_acao_senha)
     response_chamada = realizar_acao_senha(
         request,
         paciente.senha,
@@ -148,20 +151,7 @@ def chamar_senha(request, paciente_id):
         "chamada",
     )
 
-    # 2. Tenta enviar mensagem via WhatsApp
-    numero_celular_paciente = paciente.telefone_e164()  # Obtém o número formatado
-    if numero_celular_paciente:
-        mensagem = (
-            f"Olá {paciente.nome_completo.split()[0]}! "
-            f"Seu atendimento foi iniciado. Por favor, dirija-se ao Guichê {guiche.numero}."
-        )
-        enviar_whatsapp(numero_celular_paciente, mensagem)
-    else:
-        print(
-            f"Aviso: Não foi possível enviar WhatsApp para o paciente {paciente.nome_completo} (ID: {paciente_id}) - telefone inválido ou ausente."
-        )
-
-    # 3. Retorna o JsonResponse original
+    # 2. Retorna o JsonResponse original
     return response_chamada
 
 
@@ -217,21 +207,26 @@ def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
     data_for_tv = {"senha": senha, "nome_completo": nome, "guiche": guiche_numero}
 
     # --- LÓGICA DE ENVIO DE SMS ---
+    twilio_response = None
     if acao in ["chamada", "reanuncio"] and paciente.telefone_celular:
         numero_e164 = paciente.telefone_e164()
         if numero_e164:
             mensagem = (
-                f"Seu atendimento foi iniciado. Por favor, dirija-se ao Guichê {guiche_numero}. "
+                f"Por favor, dirija-se ao Guichê {guiche_numero}. "
                 f"Chamado: {senha} - {nome}."
             )
-            enviar_whatsapp(numero_e164, mensagem)
+            twilio_response = enviar_sms_ou_whatsapp(numero_e164, mensagem)
         else:
-            print(
-                f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado."
-            )
+            twilio_response = {
+                "status": "error",
+                "error": f"Telefone inválido para o paciente {nome} (ID: {paciente_id}). SMS não enviado.",
+            }
     # --- FIM DA LÓGICA DE ENVIO DE SMS ---
 
-    return JsonResponse({"status": "ok", "data": data_for_tv})
+    response_data = {"status": "ok", "data": data_for_tv}
+    if twilio_response:
+        response_data["twilio"] = twilio_response
+    return JsonResponse(response_data)
 
 
 @never_cache
@@ -244,7 +239,9 @@ def tv1_view(request):
         senha_chamada = ultima_chamada.paciente
         nome_completo = ultima_chamada.paciente.nome_completo
         numero_guiche = ultima_chamada.guiche.numero  # Obtém o número do guichê
-        historico_chamadas = Chamada.objects.order_by("-data_hora")[:5]
+        historico_chamadas = Chamada.objects.filter(acao="confirmado").order_by(
+            "-data_hora"
+        )[:5]
     except Chamada.DoesNotExist:
         senha_chamada = None
         nome_completo = None
@@ -314,6 +311,34 @@ def tv1_api_view(request):
             "guiche": "",
             "id": "",
         }  # Garante que o ID também seja vazio
+
+    return JsonResponse(data)
+
+
+def tv1_historico_api_view(request) -> JsonResponse:
+    """API para obter apenas o histórico de chamadas da TV1"""
+    try:
+        historico_chamadas = (
+            Chamada.objects.filter(acao="confirmado")
+            .select_related("paciente", "guiche")
+            .order_by("-data_hora")[:8]
+        )
+
+        historico_data: List[Dict[str, Any]] = []
+        for chamada in historico_chamadas:
+            historico_data.append(
+                {
+                    "id": chamada.id,
+                    "paciente_nome": chamada.paciente.nome_completo,
+                    "guiche_numero": chamada.guiche.numero,
+                    "acao": chamada.acao,
+                    "data_hora": chamada.data_hora.strftime("%H:%M:%S"),
+                }
+            )
+
+        data: Dict[str, Any] = {"historico": historico_data}
+    except Exception as e:
+        data = {"historico": [], "error": str(e)}
 
     return JsonResponse(data)
 

@@ -1,0 +1,28 @@
+[run]
+source = .
+omit =
+    */migrations/*
+    */__pycache__/*
+    */tests/*
+    */test_*.py
+    manage.py
+    sga/wsgi.py
+    sga/asgi.py
+    sga/settings*.py
+    api/*
+    venv/*
+    .venv/*
+    staticfiles/*
+    static/*
+    analyze_bandit_ci.py
+    run_bandit_separate.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
