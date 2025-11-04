@@ -24,7 +24,6 @@ def mock_enviar_whatsapp(numero_destino: str, mensagem: str) -> bool:
         f"[WHATSAPP MOCK] 📱 INTERCEPTADO! Enviando para {numero_destino}: {mensagem}"
     )
     # Adicionar log diretamente à instância atual do teste
-    global _current_test_instance
     if _current_test_instance is not None:
         _current_test_instance.log(
             "whatsapp", f"📱 WhatsApp enviado para {numero_destino}: {mensagem}"
