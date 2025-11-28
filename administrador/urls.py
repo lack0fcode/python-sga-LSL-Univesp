@@ -18,6 +18,16 @@ urlpatterns = [
         name="editar_funcionario",
     ),
     path(
+        "alterar_senha_funcionario/<int:pk>/",
+        views.alterar_senha_funcionario,
+        name="alterar_senha_funcionario",
+    ),
+    path(
+        "editar_dados_funcionario/<int:pk>/",
+        views.editar_dados_funcionario,
+        name="editar_dados_funcionario",
+    ),
+    path(
         "excluir_funcionario/<int:pk>/",
         views.excluir_funcionario,
         name="excluir_funcionario",

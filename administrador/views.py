@@ -10,8 +10,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 
 from core.decorators import admin_required
-from core.forms import CadastrarFuncionarioForm
+from core.forms import CadastrarFuncionarioForm, EditarFuncionarioForm
 from core.models import CustomUser, RegistroDeAcesso  # Importe o modelo CustomUser
+from django.contrib.auth.forms import SetPasswordForm
 
 
 @admin_required
@@ -170,3 +171,45 @@ def excluir_funcionario(request, pk):
     funcionario.delete()
     messages.success(request, "Funcionário excluído com sucesso!")
     return redirect(reverse("administrador:listar_funcionarios"))
+
+
+@admin_required
+def alterar_senha_funcionario(request, pk):
+    funcionario = get_object_or_404(CustomUser, pk=pk)
+    if request.method == "POST":
+        form = SetPasswordForm(funcionario, request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Senha alterada com sucesso para o funcionário.")
+            return redirect(reverse("administrador:listar_funcionarios"))
+        else:
+            messages.error(request, "Erro ao alterar a senha. Verifique os dados.")
+    else:
+        form = SetPasswordForm(funcionario)
+
+    return render(
+        request,
+        "administrador/alterar_senha_funcionario.html",
+        {"form": form, "funcionario": funcionario},
+    )
+
+
+@admin_required
+def editar_dados_funcionario(request, pk):
+    funcionario = get_object_or_404(CustomUser, pk=pk)
+    if request.method == "POST":
+        form = EditarFuncionarioForm(request.POST, instance=funcionario)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Dados do funcionário atualizados com sucesso!")
+            return redirect(reverse("administrador:listar_funcionarios"))
+        else:
+            messages.error(request, "Erro ao atualizar os dados. Verifique os campos.")
+    else:
+        form = EditarFuncionarioForm(instance=funcionario)
+
+    return render(
+        request,
+        "administrador/editar_dados_funcionario.html",
+        {"form": form, "funcionario": funcionario},
+    )

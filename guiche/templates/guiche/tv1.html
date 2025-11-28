@@ -247,6 +247,11 @@
             function falarSoletracao(nomeCompleto, numeroGuiche) {
                 console.log("Função falarSoletracao chamada!");
 
+                if (!('speechSynthesis' in window)) {
+                    console.log("Speech Synthesis não suportado neste navegador.");
+                    return;
+                }
+
                 if (!synth) {
                     console.error("speechSynthesis não está disponível!");
                     return;
@@ -282,7 +287,11 @@
                 }
 
                 utterThis.onerror = function(event) {
-                    console.error('Erro ao falar:', event.error);
+                    if (event.error === 'not-allowed') {
+                        console.log('Fala bloqueada pelo navegador. Possivelmente requer interação do usuário ou HTTPS.');
+                    } else {
+                        console.error('Erro ao falar:', event.error);
+                    }
                 }
 
                 synth.speak(utterThis);

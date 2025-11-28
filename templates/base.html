@@ -195,8 +195,10 @@
     </script>
 
     <!-- Script de atividade para usuários logados -->
+    {% block atividade_script %}
     {% if user.is_authenticated %}
     <script src="{% static 'js/atividade.js' %}"></script>
     {% endif %}
+    {% endblock %}
 </body>
 </html>
