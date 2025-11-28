@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
+from typing import Dict, Optional
 
 import re
 from django.core.exceptions import ValidationError
@@ -82,7 +83,7 @@ class CadastrarPacienteForm(forms.ModelForm):
             "telefone_celular",
         ]
 
-        help_texts = {
+        help_texts: Dict[str, Optional[str]] = {
             "telefone_celular": None,
         }
 
@@ -165,7 +166,7 @@ class CadastrarFuncionarioForm(UserCreationForm):
             "password1",
             "password2",
         )
-        help_texts = {}
+        help_texts: Dict[str, Optional[str]] = {}
 
     def clean_first_name(self):
         first_name = self.cleaned_data.get("first_name")
@@ -190,11 +191,27 @@ class LoginForm(forms.Form):
     cpf = forms.CharField(
         label="CPF",
         max_length=14,
-        widget=forms.TextInput(attrs={"placeholder": "Digite seu CPF"}),
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Digite seu CPF",
+                "autocomplete": "username",
+                "autocorrect": "off",
+                "autocapitalize": "off",
+                "spellcheck": "false",
+            }
+        ),
     )
     password = forms.CharField(
         label="Senha",
-        widget=forms.PasswordInput(attrs={"placeholder": "Digite sua senha"}),
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "Digite sua senha",
+                "autocomplete": "current-password",
+                "autocorrect": "off",
+                "autocapitalize": "off",
+                "spellcheck": "false",
+            }
+        ),
     )
 
     def clean_cpf(self):

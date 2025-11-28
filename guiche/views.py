@@ -345,17 +345,29 @@ def tv1_historico_api_view(request) -> JsonResponse:
 
 class SelecionarGuicheForm(forms.Form):
     guiche = forms.ModelChoiceField(
-        queryset=Guiche.objects.filter(funcionario__isnull=True).order_by("numero"),
+        queryset=Guiche.objects.none(),
         empty_label="Selecione um guichê",
         label="Guichê do dia",
     )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Mostrar guichês não atribuídos OU já atribuídos ao usuário atual
+        if user is not None:
+            self.fields["guiche"].queryset = Guiche.objects.filter(
+                funcionario__isnull=True
+            ).order_by("numero") | Guiche.objects.filter(funcionario=user)
+        else:
+            self.fields["guiche"].queryset = Guiche.objects.filter(
+                funcionario__isnull=True
+            ).order_by("numero")
 
 
 @login_required
 @guiche_required
 def selecionar_guiche(request):
     if request.method == "POST":
-        form = SelecionarGuicheForm(request.POST)
+        form = SelecionarGuicheForm(request.POST, user=request.user)
         if form.is_valid():
             g = form.cleaned_data["guiche"]
             # Liberar guichê anterior se existir
@@ -377,6 +389,6 @@ def selecionar_guiche(request):
         gid = request.session.get("guiche_id")
         if gid:
             initial["guiche"] = gid
-        form = SelecionarGuicheForm(initial=initial)
+        form = SelecionarGuicheForm(initial=initial, user=request.user)
 
     return render(request, "guiche/selecionar_guiche.html", {"form": form})
