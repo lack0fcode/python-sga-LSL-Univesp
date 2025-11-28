@@ -18,6 +18,9 @@ def login_view(request):
     logger.info("A view de login foi chamada.")
     if request.method == "POST":
         form = LoginForm(request.POST)
+        print("DEBUG: form.is_valid() =", form.is_valid())
+        print("DEBUG: form.errors =", form.errors)
+        print("DEBUG: form.data =", form.data)
         logger.info("Formulário POST recebido.")
         if form.is_valid():
             cpf = form.cleaned_data["cpf"]
@@ -50,10 +53,11 @@ def login_view(request):
                 else:
                     return redirect("pagina_inicial")
             else:
-                logger.warning("Credenciais incorretas.")
+                print(f"Autenticação falhou para CPF: {cpf}")
                 form.add_error(None, "CPF ou senha incorretos.")
         else:
-            logger.warning("Formulário inválido.")
+            print(f"Form inválido: {form.errors}")
+            form.add_error(None, "Dados inválidos. Verifique o CPF.")
     else:
         form = LoginForm()
     return render(request, "login.html", {"form": form})
@@ -66,6 +70,18 @@ def pagina_inicial(request):
 
 @login_required
 def logout_view(request):
+    # Liberar guichê se o usuário for do tipo guiche
+    if hasattr(request.user, "funcao") and request.user.funcao == "guiche":
+        guiche_id = request.session.get("guiche_id")
+        if guiche_id:
+            try:
+                from core.models import Guiche
+
+                guiche = Guiche.objects.get(id=guiche_id)
+                guiche.funcionario = None
+                guiche.save()
+            except Guiche.DoesNotExist:
+                pass
     RegistroDeAcesso.objects.create(
         usuario=request.user,
         tipo_de_acesso="logout",

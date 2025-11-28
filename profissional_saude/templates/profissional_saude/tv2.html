@@ -7,9 +7,12 @@
     <title>Painel de Chamadas</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        /* Base e espaçamento (igual ao tv1 para evitar sobreposição com a top-bar) */
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
+            padding-top: 80px;
+            padding-bottom: 60px;
         }
 
         .top-bar {
@@ -41,7 +44,6 @@
             flex-direction: row;
             justify-content: space-between;
             padding: 20px;
-            margin-top: 80px;
         }
 
         .left-panel, .right-panel {
@@ -53,18 +55,22 @@
             margin-bottom: 20px;
         }
 
-        .senha-chamada h3 {
-            font-size: 2rem; /* Reduz o tamanho da fonte inicial */
-            color: #dc3545;
+        /* Regra única, específica e mais forte para o destaque da chamada */
+        .senha-chamada h3, #senha-chamada-texto {
+            font-size: 3.5rem;
+            color: #dc3545 !important;
             animation: blinkBackground 1s steps(5, start) infinite;
-            padding: 10px; /* Reduz o preenchimento */
+            padding: 12px 20px;
             border: 2px solid #dc3545;
             border-radius: 10px;
-            margin-bottom: 15px; /* Reduz a margem inferior */
+            margin-bottom: 15px;
             display: inline-block;
-            max-height: 70%; /* Define uma altura máxima */
-            overflow: hidden; /* Esconde o conteúdo que ultrapassa a altura */
-            line-height: 1.2; /* Ajusta o espaçamento entre linhas */
+            line-height: 1.1;
+            text-transform: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* evita overflow visual sem cortar completamente */
+            max-width: 100%;
         }
 
         @keyframes blinkBackground {
@@ -76,7 +82,7 @@
         .historico-senhas {
             margin-top: 20px;
             height: 500px;
-            overflow-y: scroll;
+            overflow-y: auto;
             border: 1px solid #ddd;
             padding: 10px;
             border-radius: 5px;
@@ -123,18 +129,6 @@
 
         footer img {
             height: 40px;
-        }
-
-        /* Estilos para a mensagem de boas-vindas */
-        .mensagem-boas-vindas {
-            color: #007bff; /* Cor do texto */
-            font-size: 1.2em;
-            white-space: nowrap; /* Evita que o texto que ultrapassa o container */
-            overflow: hidden; /* Esconde o texto que ultrapassa o container */
-            position: absolute; /* Posiciona o texto absolutamente */
-            top: 50%; /* Centraliza verticalmente */
-            left: 50%; /* Centraliza horizontalmente */
-            transform: translateX(-50%) translateY(-50%); /* Ajusta o posicionamento */
         }
     </style>
 </head>
@@ -217,7 +211,7 @@
                             $('#senha-chamada-texto').data('nome', data.nome_completo); // Atualiza o data-nome
                             $('#senha-chamada-texto').data('sala', data.sala_profissional); // Atualiza o data-sala
 
-                            falarSenhaTresVezes(data.nome_completo, data.sala_profissional);
+                            falarSenhaTresVezes(data.nome_completo, data.sala_profissional, data.profissional_nome);
 
                             ultimaChamadaId = data.id; // Atualiza o ID da última chamada
                         } else {
@@ -232,7 +226,7 @@
 
             // Função para chamar o paciente
 
-            function falarSoletracao(nomeCompleto, profissionalNome) {
+            function falarSoletracao(nomeCompleto, sala, profissionalNome) {
                 console.log("Função falarSoletracao chamada!");
 
                 if (!synth) {
@@ -240,13 +234,13 @@
                     return;
                 }
 
-                if (!nomeCompleto || !profissionalNome) {
-                    console.log("Nome ou Profissional não definidos. Não há nada para falar.");
+                if (!nomeCompleto || !sala || !profissionalNome) {
+                    console.log("Nome, sala ou profissional não definidos. Não há nada para falar.");
                     return;
                 }
 
                 var utterThis = new SpeechSynthesisUtterance();
-                utterThis.text = "Paciente " + nomeCompleto + ", dirija-se à sala " + salaConsulta + " para consulta com o Doutor " + profissionalNome + ".";  // Formata a frase
+                utterThis.text = "Paciente " + nomeCompleto + ", dirija-se à sala " + sala + ".";  // Formata a frase
                 console.log("String de fala:", utterThis.text);
 
                 utterThis.lang = 'pt-BR';
@@ -270,7 +264,11 @@
                 }
 
                 utterThis.onerror = function(event) {
-                    console.error('Erro ao falar:', event.error);
+                    if (event.error === 'not-allowed') {
+                        console.log('Fala bloqueada pelo navegador. Clique na página para permitir.');
+                    } else {
+                        console.error('Erro ao falar:', event.error);
+                    }
                 }
 
                 synth.speak(utterThis);
@@ -297,9 +295,9 @@
                 return null;
             }
 
-            function falarSenhaTresVezes(nomeCompleto, profissionalNome) { //Removi a senha
+            function falarSenhaTresVezes(nomeCompleto, sala, profissionalNome) {
                 for (var i = 0; i < 3; i++) {
-                    falarSoletracao(nomeCompleto, profissionalNome);
+                    falarSoletracao(nomeCompleto, sala, profissionalNome);
                 }
             }
 

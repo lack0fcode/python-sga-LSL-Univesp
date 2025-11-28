@@ -193,10 +193,15 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
-                                        <a href="{% url 'administrador:editar_funcionario' funcionario.pk %}"
+                                        <a href="{% url 'administrador:editar_dados_funcionario' funcionario.pk %}"
                                            class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
                                             <i class="bi bi-pencil mr-1"></i>
-                                            Editar
+                                            Editar Dados
+                                        </a>
+                                        <a href="{% url 'administrador:alterar_senha_funcionario' funcionario.pk %}"
+                                           class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
+                                            <i class="bi bi-key mr-1"></i>
+                                            Alterar Senha
                                         </a>
                                         <button onclick="confirmDelete('{{ funcionario.pk }}', '{{ funcionario.first_name }} {{ funcionario.last_name }}')"
                                                 class="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150">
@@ -258,10 +263,15 @@
                                 </div>
                             </div>
                             <div class="flex flex-col space-y-2">
-                                <a href="{% url 'administrador:editar_funcionario' funcionario.pk %}"
+                                <a href="{% url 'administrador:editar_dados_funcionario' funcionario.pk %}"
                                    class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
                                     <i class="bi bi-pencil mr-1"></i>
-                                    Editar
+                                    Editar Dados
+                                </a>
+                                <a href="{% url 'administrador:alterar_senha_funcionario' funcionario.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                    <i class="bi bi-key mr-1"></i>
+                                    Alterar Senha
                                 </a>
                                 <button onclick="confirmDelete('{{ funcionario.pk }}', '{{ funcionario.first_name }} {{ funcionario.last_name }}')"
                                         class="inline-flex items-center px-2 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50">
