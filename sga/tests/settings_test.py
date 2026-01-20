@@ -1,6 +1,6 @@
 import os
 
-from .settings import *
+from ..settings import *
 
 if os.environ.get("GITHUB_ACTIONS") == "true":
     # Use PostgreSQL
@@ -23,10 +23,16 @@ else:
         }
     }
 
-print("USANDO BANCO:", DATABASES["default"]["ENGINE"])
+# print("USANDO BANCO:", DATABASES["default"]["ENGINE"])
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-LOGGING["loggers"]["core.views"]["level"] = "WARNING"  # type: ignore
+LOGGING["loggers"]["core.views"] = {"level": "CRITICAL", "handlers": []}  # type: ignore
+
+LOGGING["handlers"]["console"] = {"class": "logging.NullHandler"}
+
+LOGGING["root"] = {"handlers": [], "level": "CRITICAL"}  # type: ignore
+
+LOGGING["disable_existing_loggers"] = True

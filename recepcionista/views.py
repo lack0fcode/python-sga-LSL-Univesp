@@ -2,6 +2,7 @@
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from core.decorators import recepcionista_required
 from core.forms import CadastrarPacienteForm
@@ -18,7 +19,23 @@ def cadastrar_paciente(request):
             request.POST, profissionais_de_saude=profissionais_de_saude
         )
         if form.is_valid():
-            paciente = form.save()
+            paciente = form.save(commit=False)
+
+            # Adicionar hora de entrada às observações
+            hora_entrada = timezone.now().strftime("%H:%M")
+            observacoes_existentes = paciente.observacoes or ""
+
+            if observacoes_existentes.strip():
+                # Se já tem observações, adiciona a hora embaixo
+                paciente.observacoes = (
+                    f"{observacoes_existentes}\nHora de entrada: {hora_entrada}"
+                )
+            else:
+                # Se não tem observações, coloca apenas a hora
+                paciente.observacoes = f"Hora de entrada: {hora_entrada}"
+
+            paciente.save()
+
             messages.success(
                 request,
                 f"Paciente {paciente.nome_completo} cadastrado com senha: {paciente.senha}!",

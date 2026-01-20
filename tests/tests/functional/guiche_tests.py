@@ -164,9 +164,17 @@ class GuicheViewsTest(TestCase):
         # Verificar se o guichê foi salvo na sessão
         self.assertEqual(self.client.session.get("guiche_id"), self.guiche.id)
 
-    @patch("guiche.views.enviar_whatsapp")
-    def test_chamar_senha(self, mock_enviar_whatsapp):
+    @patch("guiche.views.enviar_sms_ou_whatsapp")
+    def test_chamar_senha(self, mock_enviar_sms_ou_whatsapp):
         """Testa chamada de senha com envio de WhatsApp"""
+        # Configurar mock para retornar resposta válida
+        mock_enviar_sms_ou_whatsapp.return_value = {
+            "status": "success",
+            "sid": "SM123456789",
+            "to": "+5511999999999",
+            "message_status": "sent",
+        }
+
         self.client.login(cpf="11122233344", password="guichepass")
 
         # Simular guichê na sessão
@@ -186,10 +194,10 @@ class GuicheViewsTest(TestCase):
         self.assertTrue(chamada)
 
         # Verificar se WhatsApp foi chamado (pode ser chamado 2 vezes devido à implementação)
-        self.assertGreaterEqual(mock_enviar_whatsapp.call_count, 1)
+        self.assertGreaterEqual(mock_enviar_sms_ou_whatsapp.call_count, 1)
 
-    @patch("guiche.views.enviar_whatsapp")
-    def test_chamar_senha_sem_telefone(self, mock_enviar_whatsapp):
+    @patch("guiche.views.enviar_sms_ou_whatsapp")
+    def test_chamar_senha_sem_telefone(self, mock_enviar_sms_ou_whatsapp):
         """Testa chamada de senha sem telefone (não deve enviar WhatsApp)"""
         self.client.login(cpf="11122233344", password="guichepass")
 
@@ -205,7 +213,7 @@ class GuicheViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Verificar se WhatsApp NÃO foi chamado
-        mock_enviar_whatsapp.assert_not_called()
+        mock_enviar_sms_ou_whatsapp.assert_not_called()
 
     def test_reanunciar_senha(self):
         """Testa reanúncio de senha"""

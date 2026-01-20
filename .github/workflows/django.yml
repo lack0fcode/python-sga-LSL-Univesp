@@ -37,7 +37,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install coverage
+          pip install coverage pytest pytest-django
 
       - name: Run Database Migrations
         env:
@@ -55,15 +55,30 @@ jobs:
           DJANGO_SETTINGS_MODULE: sga.settings
           DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
         run: |
-          coverage run --source='.' manage.py test --settings=sga.settings_test
+          coverage run --source=. --omit="bandit_Rodar.py,bandit_analisar.py,test_fluxocompleto2.py" manage.py test tests --pattern="*test*.py" --settings=sga.tests.settings_test
           coverage report
           coverage html
+
+      - name: Run Integration Test with HTML Report
+        env:
+          DJANGO_SETTINGS_MODULE: sga.settings
+          DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
+        run: |
+          echo "Running complete integration test with HTML report generation..."
+          python test_fluxocompleto2.py
+          echo "Integration test completed successfully"
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: htmlcov/
+
+      - name: Upload Integration Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-report
+          path: relatorio_teste_real.html
 
   lint:
     runs-on: ubuntu-latest
@@ -99,17 +114,23 @@ jobs:
           pip install -r requirements.txt
           pip install safety bandit mypy
       - name: Run Safety Scan
-        uses: pyupio/safety-action@v1
-        with:
-          api-key: ${{ secrets.SAFETY_API_KEY }}
+        run: safety scan .
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
       - name: Run Bandit Security Linter
         run: |
-          bandit -r . --exclude venv,.git,__pycache__,.mypy_cache,staticfiles,node_modules -f html -o bandit-report.html || true
+          echo "Running Bandit security analysis using separate script..."
+          python bandit_Rodar.py
+          echo "Bandit analysis completed successfully"
+          
+      - name: Analyze Bandit Results
+        run: |
+          python bandit_analisar.py
       - name: Run MyPy Type Checking
         run: mypy .
 
       - name: Upload Bandit Report
         uses: actions/upload-artifact@v4
         with:
-          name: bandit-report
-          path: bandit-report.html
+          name: bandit-reports
+          path: bandit_report.html

@@ -5,6 +5,10 @@ from core.models import CustomUser
 
 class AdministradorViewsTest(TestCase):
 
+    def setUp(self):
+        print("\033[95m🎯 Teste funcional: Views Administrador\033[0m")
+        self.client = Client()
+
     def test_cadastrar_funcionario_cpf_duplicado(self):
         self.client.login(cpf="11122233344", password="adminpass")
         url = reverse("administrador:cadastrar_funcionario")

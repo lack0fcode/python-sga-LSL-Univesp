@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 
 from django.contrib.auth.signals import user_logged_in
@@ -7,6 +8,8 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from core.models import RegistroDeAcesso
+
+logger = logging.getLogger(__name__)
 
 from .models import CustomUser
 
@@ -29,7 +32,7 @@ def gerar_senha_paciente(sender, instance, **kwargs):
 @receiver(user_logged_in)
 def log_user_login(sender, request, user, **kwargs):
     # Registra o login do usuário
-    print(
+    logger.info(
         f"Usuário {user.username} (CPF: {user.cpf}) logou-se em {request.META.get('REMOTE_ADDR')}"
     )
     # Aqui você pode salvar essas informações em um modelo específico, como 'RegistroDeAcesso'

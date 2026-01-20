@@ -3,6 +3,7 @@ from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
+from typing import Dict, Optional
 
 import re
 from django.core.exceptions import ValidationError
@@ -62,12 +63,8 @@ class CadastrarPacienteForm(forms.ModelForm):
 
     def clean_cartao_sus(self):
         cartao_sus = self.cleaned_data.get("cartao_sus")
-        if cartao_sus:
-            # Verifica se já existe um paciente com este cartão SUS
-            if Paciente.objects.filter(cartao_sus=cartao_sus).exists():
-                raise forms.ValidationError(
-                    "Já existe um paciente cadastrado com este cartão SUS."
-                )
+        # Removida validação de unicidade para permitir que o mesmo cartão SUS
+        # seja usado em múltiplos atendimentos (pacientes retornando)
         return cartao_sus
 
     class Meta:
@@ -82,7 +79,7 @@ class CadastrarPacienteForm(forms.ModelForm):
             "telefone_celular",
         ]
 
-        help_texts = {
+        help_texts: Dict[str, Optional[str]] = {
             "telefone_celular": None,
         }
 
@@ -147,12 +144,25 @@ class CadastrarFuncionarioForm(UserCreationForm):
         help_text="Selecione a função do funcionário.",
     )
 
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get("cpf")
+        if CustomUser.objects.filter(username=cpf).exists():
+            raise forms.ValidationError("Este CPF já está cadastrado.")
+        return cpf
+
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ("cpf", "username", "first_name", "last_name", "email", "funcao")
-        help_texts = {
-            "username": None,
-        }
+        # include password fields so admin can set initial password
+        fields = (
+            "cpf",
+            "first_name",
+            "last_name",
+            "email",
+            "funcao",
+            "password1",
+            "password2",
+        )
+        help_texts: Dict[str, Optional[str]] = {}
 
     def clean_first_name(self):
         first_name = self.cleaned_data.get("first_name")
@@ -161,9 +171,13 @@ class CadastrarFuncionarioForm(UserCreationForm):
         return first_name
 
     def save(self, commit=True):
+        # Use UserCreationForm handling for password, but ensure username becomes CPF
         user = super().save(commit=False)
-        user = super(UserCreationForm, self).save(commit=False)
-        user.username = self.cleaned_data["cpf"]  # Define o username como o CPF
+        user.username = self.cleaned_data.get("cpf")
+        # If password1 provided, set it explicitly (UserCreationForm normally handles this in its save)
+        pwd = self.cleaned_data.get("password1")
+        if pwd:
+            user.set_password(pwd)
         if commit:
             user.save()
         return user
@@ -173,12 +187,35 @@ class LoginForm(forms.Form):
     cpf = forms.CharField(
         label="CPF",
         max_length=14,
-        widget=forms.TextInput(attrs={"placeholder": "Digite seu CPF"}),
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Digite seu CPF",
+                "autocomplete": "username",
+                "autocorrect": "off",
+                "autocapitalize": "off",
+                "spellcheck": "false",
+            }
+        ),
     )
     password = forms.CharField(
         label="Senha",
-        widget=forms.PasswordInput(attrs={"placeholder": "Digite sua senha"}),
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "Digite sua senha",
+                "autocomplete": "current-password",
+                "autocorrect": "off",
+                "autocapitalize": "off",
+                "spellcheck": "false",
+            }
+        ),
     )
+
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get("cpf")
+        if cpf:
+            # Remove pontos, traços e espaços do CPF
+            cpf = "".join(filter(str.isdigit, cpf))
+        return cpf
 
     def clean(self):
         cleaned_data = super().clean()
@@ -188,7 +225,9 @@ class LoginForm(forms.Form):
         if cpf and password:
             try:
                 user = CustomUser.objects.get(cpf=cpf)
+                print(f"DEBUG clean: user found {user.username}")
             except CustomUser.DoesNotExist:
+                print(f"DEBUG clean: user not found for cpf {cpf}")
                 user = None
 
             if user:
@@ -226,3 +265,23 @@ class LoginForm(forms.Form):
                 raise ValidationError("CPF ou senha incorretos.")
 
         return cleaned_data
+
+
+class EditarFuncionarioForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        # Excluir CPF e campos de senha — apenas editar dados administrativos
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "funcao",
+            "data_admissao",
+            "sala",
+            "is_active",
+        )
+        widgets = {
+            "data_admissao": forms.DateInput(attrs={"type": "date"}),
+            "sala": forms.NumberInput(),
+            "email": forms.EmailInput(),
+        }
