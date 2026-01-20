@@ -120,12 +120,12 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
             )
 
     def test_fluxo_completo_com_whatsapp_falha(self):
-        """Testa fluxo com WhatsApp quando cadastro falha para cobrir bloco except."""
+        """Testa fluxo com WhatsApp permitindo reutilização do mesmo Cartão SUS."""
         # 1. Admin cria recepcionista e profissional de saúde
         recepcionista = self.criar_usuario_direto("recepcionista", "88888888888")
         profissional = self.criar_usuario_direto("profissional_saude", "99999999999")
 
-        # 2. Recepcionista tenta cadastrar paciente com dados que causam erro
+        # 2. Recepcionista cadastra paciente
         client_recep = Client()
         client_recep.login(cpf=recepcionista.cpf, password="recep123")
 
@@ -139,32 +139,35 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
             "tipo_senha": "G",
         }
 
-        client_recep.post(
+        response1 = client_recep.post(
             reverse("recepcionista:cadastrar_paciente"), data=paciente_data_valido
         )
+        self.assertEqual(response1.status_code, 302)  # Redirect após sucesso
 
-        # Agora tenta cadastrar com mesmo cartão SUS (deve falhar)
-        paciente_data_invalido = {
-            "nome_completo": "Paciente Duplicado",
-            "cartao_sus": "888888888888888",  # Mesmo cartão SUS
+        # Agora cadastra paciente retornando com mesmo cartão SUS (deve permitir)
+        paciente_data_retorno = {
+            "nome_completo": "Paciente Retorno",
+            "cartao_sus": "888888888888888",  # Mesmo cartão SUS (paciente retornando)
             "telefone_celular": "(11) 96666-6666",
             "horario_agendamento": timezone.now().strftime("%Y-%m-%dT%H:%M"),
             "profissional_saude": profissional.id,
             "tipo_senha": "P",
         }
 
-        response = client_recep.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_invalido
+        response2 = client_recep.post(
+            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_retorno
         )
 
-        # Verifica se o POST falhou
-        try:
-            paciente = Paciente.objects.get(
-                cartao_sus="888888888888888", nome_completo="Paciente Duplicado"
-            )
-            self.fail("Paciente duplicado não deveria ter sido criado")
-        except Paciente.DoesNotExist:
-            # Se paciente não foi criado, verifica se há mensagens de erro na resposta
-            self.assertContains(
-                response, "Já existe"
-            )  # Deve conter mensagem de erro de duplicata
+        # Verifica se ambos os pacientes foram criados (permite reutilização do cartão)
+        self.assertEqual(response2.status_code, 302)  # Redirect após sucesso
+        pacientes_com_mesmo_cartao = Paciente.objects.filter(
+            cartao_sus="888888888888888"
+        )
+        self.assertEqual(
+            pacientes_com_mesmo_cartao.count(), 2
+        )  # Deve ter 2 pacientes com mesmo cartão
+        
+        # Verifica que ambos têm observações com hora de entrada
+        for paciente in pacientes_com_mesmo_cartao:
+            self.assertIn("Hora de entrada:", paciente.observacoes)
+

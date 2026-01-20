@@ -28,44 +28,57 @@
         {% if pacientes %}
             <div class="space-y-4">
                 {% for paciente in pacientes %}
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 flex items-center justify-between">
-                        <div class="flex items-center">
-                            <span class="text-lg font-bold text-primary mr-4">{{ paciente.senha }}</span>
-                            <div>
-                                <span class="text-lg font-medium text-gray-900">{{ paciente.nome_completo }}</span>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-primary mr-4">{{ paciente.senha }}</span>
+                                <div>
+                                    <span class="text-lg font-medium text-gray-900">{{ paciente.nome_completo }}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="flex space-x-3">
-                            <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ paciente.id }})">
-                                <i class="bi bi-megaphone mr-2"></i>Chamar
-                            </button>
-                            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="reanunciar({{ paciente.id }})">
-                                <i class="bi bi-arrow-repeat mr-2"></i>Reanunciar
-                            </button>
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ paciente.id }})">
-                                <i class="bi bi-check-circle mr-2"></i>Confirmar
-                            </button>
-
-                            <div class="relative">
-                                <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200 dropdown-toggle" type="button" onclick="toggleDropdown({{ paciente.id }})">
-                                    <i class="bi bi-arrow-right-circle mr-2"></i>Encaminhar
+                            <div class="flex space-x-3">
+                                <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ paciente.id }})">
+                                    <i class="bi bi-megaphone mr-2"></i>Chamar
                                 </button>
-                                <div class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu-{{ paciente.id }}">
-                                    <div class="py-1">
-                                        <div class="px-4 py-2 text-sm font-medium text-gray-700 border-b border-gray-200">
-                                            Encaminhar para:
+                                <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="reanunciar({{ paciente.id }})">
+                                    <i class="bi bi-arrow-repeat mr-2"></i>Reanunciar
+                                </button>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ paciente.id }})">
+                                    <i class="bi bi-check-circle mr-2"></i>Confirmar
+                                </button>
+
+                                <div class="relative">
+                                    <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200 dropdown-toggle" type="button" onclick="toggleDropdown({{ paciente.id }})">
+                                        <i class="bi bi-arrow-right-circle mr-2"></i>Encaminhar
+                                    </button>
+                                    <div class="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu-{{ paciente.id }}">
+                                        <div class="py-1">
+                                            <div class="px-4 py-2 text-sm font-medium text-gray-700 border-b border-gray-200">
+                                                Encaminhar para:
+                                            </div>
+                                            {% for profissional in profissionais %}
+                                                <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="#" onclick="encaminhar({{ paciente.id }}, {{ profissional.id }})">
+                                                    {{ profissional.first_name }} {{ profissional.last_name }}
+                                                </a>
+                                            {% empty %}
+                                                <div class="px-4 py-2 text-sm text-gray-500">Nenhum profissional disponível</div>
+                                            {% endfor %}
                                         </div>
-                                        {% for profissional in profissionais %}
-                                            <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="#" onclick="encaminhar({{ paciente.id }}, {{ profissional.id }})">
-                                                {{ profissional.first_name }} {{ profissional.last_name }}
-                                            </a>
-                                        {% empty %}
-                                            <div class="px-4 py-2 text-sm text-gray-500">Nenhum profissional disponível</div>
-                                        {% endfor %}
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        {% if paciente.observacoes %}
+                            <div class="mt-4 pt-4 border-t border-gray-300">
+                                <div class="flex items-start">
+                                    <i class="bi bi-info-circle text-blue-600 mr-2 mt-0.5"></i>
+                                    <div>
+                                        <span class="text-xs font-semibold text-gray-600 uppercase">Observações:</span>
+                                        <p class="text-sm text-gray-700 mt-1">{{ paciente.observacoes }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
