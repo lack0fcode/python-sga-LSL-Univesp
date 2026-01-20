@@ -63,12 +63,8 @@ class CadastrarPacienteForm(forms.ModelForm):
 
     def clean_cartao_sus(self):
         cartao_sus = self.cleaned_data.get("cartao_sus")
-        if cartao_sus:
-            # Verifica se já existe um paciente com este cartão SUS
-            if Paciente.objects.filter(cartao_sus=cartao_sus).exists():
-                raise forms.ValidationError(
-                    "Já existe um paciente cadastrado com este cartão SUS."
-                )
+        # Removida validação de unicidade para permitir que o mesmo cartão SUS
+        # seja usado em múltiplos atendimentos (pacientes retornando)
         return cartao_sus
 
     class Meta:

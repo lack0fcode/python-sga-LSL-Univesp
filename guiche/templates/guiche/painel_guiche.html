@@ -68,22 +68,35 @@
         {% if senhas %}
             <div class="space-y-3">
                 {% for senha in senhas %}
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
-                        <div class="flex items-center">
-                            <span class="text-lg font-bold text-primary mr-3">{{ senha.senha }}</span>
-                            <span class="text-gray-900">{{ senha.nome_completo }}</span>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center">
+                                <span class="text-lg font-bold text-primary mr-3">{{ senha.senha }}</span>
+                                <span class="text-gray-900">{{ senha.nome_completo }}</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ senha.id }})">
+                                    <i class="bi bi-megaphone mr-1"></i>Chamar
+                                </button>
+                                <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="reanunciar({{ senha.id }})">
+                                    <i class="bi bi-arrow-repeat mr-1"></i>Reanunciar
+                                </button>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ senha.id }})">
+                                    <i class="bi bi-check-circle mr-1"></i>Confirmar
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex space-x-2">
-                            <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ senha.id }})">
-                                <i class="bi bi-megaphone mr-1"></i>Chamar
-                            </button>
-                            <button class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="reanunciar({{ senha.id }})">
-                                <i class="bi bi-arrow-repeat mr-1"></i>Reanunciar
-                            </button>
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ senha.id }})">
-                                <i class="bi bi-check-circle mr-1"></i>Confirmar
-                            </button>
-                        </div>
+                        {% if senha.observacoes %}
+                            <div class="mt-2 pt-2 border-t border-gray-300">
+                                <div class="flex items-start">
+                                    <i class="bi bi-info-circle text-blue-600 mr-2 mt-0.5"></i>
+                                    <div>
+                                        <span class="text-xs font-semibold text-gray-600 uppercase">Observações:</span>
+                                        <p class="text-sm text-gray-700 mt-1">{{ senha.observacoes }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
