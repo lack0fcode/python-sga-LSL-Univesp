@@ -21,18 +21,27 @@ def cadastrar_paciente(request):
         if form.is_valid():
             paciente = form.save(commit=False)
 
-            # Adicionar hora de entrada às observações
-            hora_entrada = timezone.now().strftime("%H:%M")
+            # Usar o horário de agendamento (escolhido pelo recepcionista)
+            # nas observações; se não existir, cair para hora de entrada.
+            horario_atendimento = paciente.horario_agendamento
             observacoes_existentes = paciente.observacoes or ""
 
-            if observacoes_existentes.strip():
-                # Se já tem observações, adiciona a hora embaixo
-                paciente.observacoes = (
-                    f"{observacoes_existentes}\nHora de entrada: {hora_entrada}"
-                )
+            if horario_atendimento:
+                # Formata data e hora do agendamento
+                try:
+                    formatted = horario_atendimento.strftime("%d/%m/%Y %H:%M")
+                except Exception:
+                    # Caso venha em outro formato, usa str()
+                    formatted = str(horario_atendimento)
+                novo_texto = f"Horário do atendimento: {formatted}"
             else:
-                # Se não tem observações, coloca apenas a hora
-                paciente.observacoes = f"Hora de entrada: {hora_entrada}"
+                hora_entrada = timezone.now().strftime("%H:%M")
+                novo_texto = f"Hora de entrada: {hora_entrada}"
+
+            if observacoes_existentes.strip():
+                paciente.observacoes = f"{observacoes_existentes}\n{novo_texto}"
+            else:
+                paciente.observacoes = novo_texto
 
             paciente.save()
 
