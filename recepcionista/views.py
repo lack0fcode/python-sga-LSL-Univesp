@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from zoneinfo import ZoneInfo
 
 from core.decorators import recepcionista_required
 from core.forms import CadastrarPacienteForm
@@ -35,7 +36,10 @@ def cadastrar_paciente(request):
                     formatted = str(horario_atendimento)
                 novo_texto = f"Horário do atendimento: {formatted}"
             else:
-                hora_entrada = timezone.now().strftime("%H:%M")
+                br_tz = ZoneInfo("America/Sao_Paulo")
+                hora_entrada = timezone.localtime(timezone.now(), br_tz).strftime(
+                    "%H:%M"
+                )
                 novo_texto = f"Hora de entrada: {hora_entrada}"
 
             if observacoes_existentes.strip():

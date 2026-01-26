@@ -122,7 +122,10 @@ def realizar_acao_profissional(request, paciente_id, acao):
         ChamadaProfissional.objects.create(
             paciente=paciente, profissional_saude=profissional_saude, acao="confirmado"
         )
-        paciente.atendido = False  # Marcar como não atendido para sair da lista
+        # Marcar como definitivamente atendido e remover vínculo com o profissional
+        # (mantém o registro em ChamadaProfissional para histórico)
+        paciente.atendido = True
+        paciente.profissional_saude = None
         paciente.save()
         return JsonResponse(
             {"status": "success", "mensagem": "Atendimento confirmado com sucesso."}
