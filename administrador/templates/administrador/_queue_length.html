@@ -1,0 +1,7 @@
+<div>
+  <h4 class="font-medium mb-2">Fila atual</h4>
+  <div id="queue-length" class="text-2xl font-bold">{{ queue_length }}</div>
+  {% if range_start %}
+    <div class="text-sm text-gray-500">Período: {{ range_start }} — {{ range_end }}</div>
+  {% endif %}
+</div>

@@ -1,7 +1,9 @@
-from django.test import TestCase
-from django.http import HttpRequest, HttpResponse
-from django.urls import reverse
 from unittest.mock import patch
+
+from django.http import HttpRequest, HttpResponse
+from django.test import TestCase
+from django.urls import reverse
+
 from core.models import CustomUser
 
 
@@ -11,8 +13,9 @@ class UtilsTest(TestCase):
     @patch("core.utils.Client")
     def test_enviar_whatsapp_sucesso(self, mock_client):
         """Testa envio bem-sucedido de WhatsApp."""
-        from core.utils import enviar_whatsapp
         from django.conf import settings
+
+        from core.utils import enviar_whatsapp
 
         # Mock das configurações
         settings.TWILIO_ACCOUNT_SID = "test_sid"
@@ -35,8 +38,9 @@ class UtilsTest(TestCase):
 
     def test_enviar_whatsapp_credenciais_ausentes(self):
         """Testa falha quando credenciais Twilio não estão configuradas."""
-        from core.utils import enviar_whatsapp
         from django.conf import settings
+
+        from core.utils import enviar_whatsapp
 
         # Simular credenciais ausentes
         settings.TWILIO_ACCOUNT_SID = None
@@ -51,8 +55,9 @@ class UtilsTest(TestCase):
     @patch("core.utils.Client")
     def test_enviar_whatsapp_erro_api(self, mock_client):
         """Testa falha na API do Twilio."""
-        from core.utils import enviar_whatsapp
         from django.conf import settings
+
+        from core.utils import enviar_whatsapp
 
         # Mock das configurações
         settings.TWILIO_ACCOUNT_SID = "test_sid"

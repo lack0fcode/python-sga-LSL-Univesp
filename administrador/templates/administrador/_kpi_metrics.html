@@ -1,0 +1,20 @@
+<div>
+  <h3>Métricas</h3>
+  {% if range_start %}
+    <div class="text-sm text-gray-500">Período: {{ range_start }} — {{ range_end }}</div>
+  {% endif %}
+  <ul>
+    <li>Total de senhas geradas: {{ total_senhas_geradas|default:total_senhas_geradas_hoje }}</li>
+    <li>Total de atendimentos: {{ total_atendimentos|default:total_atendimentos_hoje }}</li>
+    <li>Reanúncios: {{ reanuncios|default:reanuncios_hoje }}</li>
+    <li>Guichês em atendimento: {{ guiches_em_atendimento }} / {{ guiches_total }}</li>
+    <li>
+      Tempo médio de espera:
+      {% if avg_wait_seconds %}
+        {{ avg_wait_minutes|floatformat:2 }} minutos ({{ avg_wait_seconds|floatformat:0 }} segundos)
+      {% else %}
+        Não disponível
+      {% endif %}
+    </li>
+  </ul>
+</div>

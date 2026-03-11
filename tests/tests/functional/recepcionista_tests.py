@@ -1,8 +1,8 @@
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
+
 from core.models import CustomUser, Paciente
-from core.forms import CadastrarPacienteForm
 
 
 class RecepcionistaViewsTest(TestCase):
@@ -127,7 +127,8 @@ class RecepcionistaViewsTest(TestCase):
 
         # Verificar que todos foram criados
         self.assertEqual(
-            Paciente.objects.filter(nome_completo__startswith="Paciente ").count(), 3
+            Paciente.objects.filter(nome_completo__startswith="Paciente ").count(),
+            3,
         )
 
     def test_large_input_handling(self):

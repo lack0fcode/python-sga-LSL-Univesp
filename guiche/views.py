@@ -1,8 +1,6 @@
 # guiche/views.py
 import datetime
 import logging
-import os
-import tempfile
 from collections import defaultdict, deque
 from itertools import cycle
 from typing import Any, Dict, List
@@ -11,11 +9,9 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from gtts import gTTS
 
 from core.decorators import guiche_required
 from core.models import Chamada, Guiche, Paciente
@@ -204,7 +200,11 @@ def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
     Chamada.objects.create(paciente=paciente, guiche=guiche_obj, acao=acao)
 
     # Preparar dados para a TV
-    data_for_tv = {"senha": senha, "nome_completo": nome, "guiche": guiche_numero}
+    data_for_tv = {
+        "senha": senha,
+        "nome_completo": nome,
+        "guiche": guiche_numero,
+    }
 
     # --- LÓGICA DE ENVIO DE SMS ---
     twilio_response = None
@@ -272,8 +272,11 @@ def get_guiche_do_usuario(user, request=None):
     # 1) Tenta OneToOne: user.guiche
     try:
         return user.guiche
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.debug("user.guiche access failed: %s", exc)
 
     # 2) Tenta via FK: Guiche.funcionario
     g = Guiche.objects.filter(funcionario=user).first()
@@ -378,7 +381,10 @@ def selecionar_guiche(request):
                     old_guiche.funcionario = None
                     old_guiche.save()
                 except Guiche.DoesNotExist:
-                    pass
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.debug("old guiche id not found: %s", old_guiche_id)
             g.funcionario = request.user
             g.save()
             request.session["guiche_id"] = g.id

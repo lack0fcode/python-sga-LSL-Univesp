@@ -4,7 +4,8 @@ Script para executar teste de fluxo completo e gerar relatório HTML dedicado co
 
 import os
 from datetime import datetime
-from typing import Dict, Any, List, Tuple
+from typing import Any, Dict, List, Tuple
+import tempfile
 from unittest.mock import patch
 
 # Configurar Django primeiro
@@ -53,9 +54,10 @@ def mock_enviar_whatsapp(
         return resultado_mock
 
     # Primeira chamada: enviar SMS real
-    from twilio.rest import Client
     import os
+
     from dotenv import load_dotenv
+    from twilio.rest import Client
 
     load_dotenv()
 
@@ -121,12 +123,13 @@ mock_patch = patch(
 )
 mock_patch.start()
 
-from django.test import Client, TransactionTestCase
-from django.urls import reverse
-from django.utils import timezone
-from django.contrib.auth import get_user_model
+# Imports tardios necessários após configurar Django; flake8 pode sinalizar E402 aqui
+from django.contrib.auth import get_user_model  # noqa: E402
+from django.test import Client, TransactionTestCase  # noqa: E402
+from django.urls import reverse  # noqa: E402
+from django.utils import timezone  # noqa: E402
 
-from core.models import Paciente, CustomUser, Guiche, Chamada, ChamadaProfissional
+from core.models import Chamada, ChamadaProfissional, Guiche, Paciente  # noqa: E402
 
 User = get_user_model()
 
@@ -182,7 +185,6 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
 
     def tearDown(self):
         """Limpa dados após os testes."""
-        pass
 
     def log(self, tipo: str, mensagem: str):
         """Adiciona log à lista."""
@@ -237,7 +239,9 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
             f"Cadastrando paciente: Nome={paciente_data['nome_completo']}, Cartão SUS={paciente_data['cartao_sus']}, Tipo Senha={paciente_data['tipo_senha']}, Profissional ID={paciente_data['profissional_saude']}",
         )
         response = client1.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data, follow=True
+            reverse("recepcionista:cadastrar_paciente"),
+            data=paciente_data,
+            follow=True,
         )
         self.assertEqual(response.status_code, 200)
 
@@ -294,7 +298,10 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
         )
 
         # Verificar TV1
-        self.log("info", f"Verificando TV1 para paciente {paciente.nome_completo}...")
+        self.log(
+            "info",
+            f"Verificando TV1 para paciente {paciente.nome_completo}...",
+        )
         response = client2.get(reverse("guiche:tv1"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, paciente.nome_completo)
@@ -397,7 +404,10 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
         )
 
         # Verificar TV2
-        self.log("info", f"Verificando TV2 para paciente {paciente.nome_completo}...")
+        self.log(
+            "info",
+            f"Verificando TV2 para paciente {paciente.nome_completo}...",
+        )
         response = client3.get(reverse("profissional_saude:tv2"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, paciente.nome_completo)
@@ -759,16 +769,18 @@ class TestFluxoCompletoComRelatorio(TransactionTestCase):
 </html>"""
 
         # Formatar o template com os dados
-        html_final = html_template.format(
-            data_geracao=datetime.now().strftime("%d de %B de %Y"),
+        # Use replace instead of str.format to avoid issues with braces in CSS
+        html_final = html_template.replace(
+            "{data_geracao}", datetime.now().strftime("%d de %B de %Y")
         )
 
-        # Salvar o arquivo
-        with open("relatorio_teste_real.html", "w", encoding="utf-8") as f:
+        # Salvar o arquivo em diretório temporário para evitar problemas de permissões
+        out_path = os.path.join(tempfile.gettempdir(), "relatorio_teste_real.html")
+        with open(out_path, "w", encoding="utf-8") as f:
             f.write(html_final)
 
         print("✅ Relatório HTML com dados fictícios gerado com sucesso!")
-        print("📄 Arquivo: relatorio_teste_real.html")
+        print(f"📄 Arquivo: {out_path}")
 
 
 if __name__ == "__main__":

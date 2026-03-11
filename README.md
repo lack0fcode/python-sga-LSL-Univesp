@@ -145,6 +145,30 @@ python test_fluxocompleto2.py
 - **CI/CD:** GitHub Actions
 - **Relatórios:** HTML dinâmico com estatísticas visuais
 
+## Static Assets and Deployment
+
+This repository currently includes a `staticfiles/` directory with vendored frontend libraries (jQuery, Select2, XRegExp, etc.). To keep the repository lightweight and avoid tracking large third-party files, follow this workflow:
+
+- Do not commit `staticfiles/` to the repository. It is already listed in `.gitignore`.
+- Use Django's `collectstatic` to gather static assets at build/deploy time.
+- Prefer CDN-hosted or package-managed copies of third-party libraries (npm, yarn, or CDN links).
+
+If `staticfiles/` is already tracked in the repo, remove it from the index (keeps local files but stops tracking):
+
+```bash
+# remove tracked staticfiles from git index (won't delete local files)
+git rm -r --cached staticfiles staticfiles_build || true
+git commit -m "chore: stop tracking vendored staticfiles; use collectstatic/CDN"
+```
+
+CI / Deployment notes:
+
+- The GitHub Actions workflow already runs `python manage.py collectstatic --noinput` during the `django.yml` CI job. Ensure your production build or Docker image runs `collectstatic` as part of deployment.
+- If you rely on CDN links, update templates to reference the CDN URLs (example: include jQuery from code.jquery.com).
+- Document any required build steps (npm/yarn install, webpack, etc.) in this README or your deployment scripts.
+
+Security note: when switching to CDN-hosted libraries, prefer using subresource integrity (SRI) attributes or a trusted CDN to avoid supply-chain risks.
+
 ## Como Contribuir
 
 1. **Fork** o projeto

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Dashboard de Análise</h1>
+
+<!-- KPI metrics loaded via HTMX fragment -->
+<div id="kpi-metrics" hx-get="{% url 'administrador:kpi_metrics_fragment' %}" hx-trigger="load" hx-swap="innerHTML">
+  <div>Carregando métricas…</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+  <div class="card p-4 bg-white rounded shadow">
+    <h4 class="font-medium mb-2">Throughput (últimos 14 dias)</h4>
+    <canvas id="chart-throughput" width="400" height="200"></canvas>
+    <div id="chart-throughput-msg" class="text-sm text-gray-500 mt-2">Carregando dados…</div>
+  </div>
+
+  <div class="card p-4 bg-white rounded shadow">
+    <h4 class="font-medium mb-2">Picos por hora (últimos 7 dias)</h4>
+    <canvas id="chart-peak-hours" width="400" height="200"></canvas>
+    <div id="chart-peak-hours-msg" class="text-sm text-gray-500 mt-2">Carregando dados…</div>
+  </div>
+
+  <div class="card p-4 bg-white rounded shadow">
+    <div hx-get="{% url 'administrador:kpi_queue_fragment' %}" hx-trigger="load" hx-swap="innerHTML"></div>
+  </div>
+
+  <div class="card p-4 bg-white rounded shadow">
+    <div hx-get="{% url 'administrador:kpi_guiche_fragment' %}" hx-trigger="load" hx-swap="innerHTML"></div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<!-- HTMX (loads KPI fragment into #kpi-metrics) -->
+<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.2.0/dist/chartjs-chart-matrix.min.js"></script>
+<script>
+async function fetchJSON(path){
+  const r = await fetch(path, {credentials: 'same-origin'});
+  if(!r.ok) throw new Error('fetch failed');
+  return r.json();
+}
+
+function showChartMessage(id, text){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = text;
+}
+
+function renderThroughput(data){
+  const msgId = 'chart-throughput-msg';
+  if(!data || data.length === 0){
+    showChartMessage(msgId, 'Sem dados para o período selecionado.');
+    return;
+  }
+  showChartMessage(msgId, '');
+  const ctx = document.getElementById('chart-throughput').getContext('2d');
+  // prepare time-series points: {x: ISOdate, y: value}
+  const points = data.map(d=>({x: d.day, y: d.count}));
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'Senhas geradas',
+        data: points,
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75,192,192,0.12)',
+        tension: 0.25,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      parsing: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'day', tooltipFormat: 'yyyy-MM-dd' },
+          title: { display: false }
+        },
+        y: {
+          beginAtZero: true
+        }
+      },
+      plugins: { legend: { display: true } }
+    }
+  });
+}
+
+function renderPeakHours(data){
+  const msgId = 'chart-peak-hours-msg';
+  if(!data || data.length === 0){
+    showChartMessage(msgId, 'Sem dados para o período selecionado.');
+    return;
+  }
+  showChartMessage(msgId, '');
+  const ctx = document.getElementById('chart-peak-hours').getContext('2d');
+  // entries_by_day_hour returns {day: 'YYYY-MM-DD', hour: H, count: N}
+  // convert to matrix points {x: day, y: hour, v: count}
+  const points = data.map(d=>({x: d.day, y: d.hour, v: d.count}));
+  // compute color scale domain
+  const counts = points.map(p=>p.v);
+  const max = Math.max(...counts, 1);
+
+  new Chart(ctx, {
+    type: 'matrix',
+    data: {
+      datasets: [{
+        label: 'Entradas por dia/hora',
+        data: points,
+        backgroundColor(ctx){
+          const v = ctx.dataset.data[ctx.dataIndex].v;
+          const t = v / max;
+          // color from light blue to deep blue
+          const r = Math.round(240 - t * 120);
+          const g = Math.round(248 - t * 120);
+          const b = Math.round(255 - t * 40);
+          return `rgba(${r},${g},${b},0.9)`;
+        },
+        width: ({chart}) => (chart.chartArea || {width:100}).width / Math.max(1, new Set(points.map(p=>p.x)).size),
+        height: ({chart}) => (chart.chartArea || {height:200}).height / 24,
+      }]
+    },
+    options: {
+      parsing: false,
+      scales: {
+        x: { type: 'time', time: { unit: 'day', displayFormats: { day: 'yyyy-MM-dd' } }, offset: true },
+        y: { type: 'linear', min:0, max:23, ticks: { stepSize:1 } }
+      },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { title: (items) => items[0].raw.x, label: (ctx) => `Hora ${ctx.raw.y}: ${ctx.raw.v} entradas` } } }
+    }
+  });
+}
+
+async function initDashboard(){
+  try{
+    const tp = await fetchJSON('/administrador/dashboard-analise/api/throughput/');
+    renderThroughput(tp.throughput);
+
+    const ph = await fetchJSON('/administrador/dashboard-analise/api/entries_by_day_hour/');
+    renderPeakHours(ph.entries_by_day_hour);
+    // queue length and guiche utilization are loaded via HTMX fragments
+  }catch(e){
+    console.error(e);
+    showChartMessage('chart-throughput-msg', 'Erro carregando dados. Veja console.');
+    showChartMessage('chart-peak-hours-msg', 'Erro carregando dados. Veja console.');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+
+{% endblock %}

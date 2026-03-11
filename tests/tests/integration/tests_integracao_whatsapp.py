@@ -3,13 +3,14 @@ Testes de integração para funcionalidades WhatsApp do sistema SGA-ILSL.
 Testa os fluxos que envolvem notificações via WhatsApp.
 """
 
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
 from django.test import Client, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from unittest.mock import patch
 
-from core.models import Paciente, CustomUser
+from core.models import Paciente
 
 User = get_user_model()
 
@@ -140,7 +141,8 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
         }
 
         response1 = client_recep.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_valido
+            reverse("recepcionista:cadastrar_paciente"),
+            data=paciente_data_valido,
         )
         self.assertEqual(response1.status_code, 302)  # Redirect após sucesso
 
@@ -155,7 +157,8 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
         }
 
         response2 = client_recep.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_retorno
+            reverse("recepcionista:cadastrar_paciente"),
+            data=paciente_data_retorno,
         )
 
         # Verifica se ambos os pacientes foram criados (permite reutilização do cartão)

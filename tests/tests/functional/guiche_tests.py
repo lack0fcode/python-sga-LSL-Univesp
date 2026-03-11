@@ -1,10 +1,11 @@
-from django.test import TestCase, Client
+import datetime
+from unittest.mock import patch
+
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
-from unittest.mock import patch, MagicMock
-import datetime
 
-from core.models import CustomUser, Paciente, Guiche, Chamada
+from core.models import Chamada, CustomUser, Guiche, Paciente
 
 
 class GuicheViewsTest(TestCase):
@@ -379,7 +380,6 @@ class GuicheViewsTest(TestCase):
     def test_get_guiche_do_usuario_sem_guiche(self):
         """Testa erro quando usuário não tem guichê associado"""
         from guiche.views import get_guiche_do_usuario
-        from django.core.exceptions import ObjectDoesNotExist
 
         user_sem_guiche = CustomUser.objects.create_user(
             cpf="33344455566",
@@ -393,8 +393,9 @@ class GuicheViewsTest(TestCase):
 
     def test_get_guiche_do_usuario_com_sessao(self):
         """Testa obtenção de guichê via sessão"""
-        from guiche.views import get_guiche_do_usuario
         from django.test import RequestFactory
+
+        from guiche.views import get_guiche_do_usuario
 
         # Criar request com sessão
         factory = RequestFactory()

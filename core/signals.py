@@ -1,6 +1,5 @@
 import datetime
 import logging
-import random
 
 from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import pre_save
@@ -11,18 +10,33 @@ from core.models import RegistroDeAcesso
 
 logger = logging.getLogger(__name__)
 
-from .models import CustomUser
-
 
 @receiver(pre_save, sender="core.Paciente")
 def gerar_senha_paciente(sender, instance, **kwargs):
     from .models import Paciente
 
     if not instance.senha and instance.tipo_senha:
-        hoje = datetime.date.today()
+        # If the instance already has a generation datetime, use its date so
+        # that historical or synthetic records receive a senha consistent
+        # with their generation day. Fall back to today otherwise.
+        try:
+            if getattr(instance, "horario_geracao_senha", None):
+                # localize aware datetimes to current timezone before taking date
+                from django.utils import timezone as _tz
+
+                dt = instance.horario_geracao_senha
+                if hasattr(_tz, "localtime"):
+                    dt = _tz.localtime(dt)
+                hoje = dt.date()
+            else:
+                hoje = datetime.date.today()
+        except Exception:
+            hoje = datetime.date.today()
+
         contador = (
             Paciente.objects.filter(
-                horario_geracao_senha__date=hoje, tipo_senha=instance.tipo_senha
+                horario_geracao_senha__date=hoje,
+                tipo_senha=instance.tipo_senha,
             ).count()
             + 1
         )

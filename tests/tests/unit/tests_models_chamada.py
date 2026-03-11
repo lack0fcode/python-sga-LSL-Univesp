@@ -1,7 +1,13 @@
 from django.test import TestCase
 from django.utils import timezone
 
-from core.models import Chamada, ChamadaProfissional, CustomUser, Guiche, Paciente
+from core.models import (
+    Chamada,
+    ChamadaProfissional,
+    CustomUser,
+    Guiche,
+    Paciente,
+)
 
 
 class ChamadaModelTest(TestCase):

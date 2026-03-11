@@ -1,11 +1,7 @@
-import datetime
-
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
 
 
 class CustomUser(AbstractUser):
@@ -26,12 +22,6 @@ class CustomUser(AbstractUser):
     data_admissao = models.DateField(
         null=True, blank=True, verbose_name="Data de Admissão"
     )
-    funcao = models.CharField(
-        max_length=20,
-        choices=FUNCAO_CHOICES,
-        default="recepcionista",
-        verbose_name="Função",
-    )  # coloquei agora
     sala = models.IntegerField(
         null=True, blank=True, verbose_name="Sala do Profissional"
     )  # coloquei agora
@@ -44,7 +34,11 @@ class CustomUser(AbstractUser):
     )
 
     USERNAME_FIELD = "cpf"  # Use o CPF como o campo de nome de usuário
-    REQUIRED_FIELDS = ["first_name", "last_name", "username"]  # Campos obrigatórios,
+    REQUIRED_FIELDS = [
+        "first_name",
+        "last_name",
+        "username",
+    ]  # Campos obrigatórios,
 
     objects = UserManager()
 
@@ -244,7 +238,9 @@ class ChamadaProfissional(models.Model):
         Paciente, on_delete=models.CASCADE, verbose_name="Paciente"
     )
     profissional_saude = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, verbose_name="ProfissionalDeSaude"
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name="ProfissionalDeSaude",
     )
     acao = models.CharField(max_length=15, choices=ACOES)
     data_hora = models.DateTimeField(auto_now_add=True)

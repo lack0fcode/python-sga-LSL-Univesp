@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.utils import timezone
 
-from core.forms import CadastrarPacienteForm, CadastrarFuncionarioForm
+from core.forms import CadastrarFuncionarioForm, CadastrarPacienteForm
 from core.models import CustomUser
 
 

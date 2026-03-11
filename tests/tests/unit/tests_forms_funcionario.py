@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from core.forms import CadastrarFuncionarioForm
-from core.models import CustomUser
 
 
 class CadastrarFuncionarioFormTest(TestCase):

@@ -131,7 +131,8 @@ class LoginFormTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("__all__", form.errors)
         self.assertIn(
-            "Conta bloqueada por tentativas excessivas.", str(form.errors["__all__"])
+            "Conta bloqueada por tentativas excessivas.",
+            str(form.errors["__all__"]),
         )
 
         # Verificar que o usuário está bloqueado
@@ -148,13 +149,13 @@ class LoginFormTest(TestCase):
     def test_timing_attack_resistance(self):
         """Testa resistência a ataques de temporização."""
         start_time = timezone.now()
-        form_valid = LoginForm(data=self.valid_data)
+        LoginForm(data=self.valid_data)
         valid_time = timezone.now() - start_time
 
         start_time = timezone.now()
         data_invalid = self.valid_data.copy()
         data_invalid["password"] = "wrong"
-        form_invalid = LoginForm(data=data_invalid)
+        LoginForm(data=data_invalid)
         invalid_time = timezone.now() - start_time
 
         self.assertTrue(abs((valid_time - invalid_time).total_seconds()) < 1.0)

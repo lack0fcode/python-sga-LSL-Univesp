@@ -1,8 +1,9 @@
 # core/utils.py
 import logging
 import os
-from twilio.rest import Client
+
 from django.conf import settings
+from twilio.rest import Client
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,10 @@ def enviar_whatsapp(
 
     # Validar parâmetros
     if not mensagem and not content_sid:
-        return {"status": "error", "error": "Deve fornecer 'mensagem' ou 'content_sid'"}
+        return {
+            "status": "error",
+            "error": "Deve fornecer 'mensagem' ou 'content_sid'",
+        }
 
     if content_sid and mensagem:
         return {

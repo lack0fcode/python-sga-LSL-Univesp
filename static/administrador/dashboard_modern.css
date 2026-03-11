@@ -1,0 +1,3 @@
+/* Minimal styling for the modern dashboard */
+.card-header { font-weight: 600; }
+#kpi-queue, #kpi-avg-wait, #kpi-p95-wait, #kpi-abandonment { font-weight:700; }

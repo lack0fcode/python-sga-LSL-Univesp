@@ -1,6 +1,7 @@
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
+
 from core.models import CustomUser, Paciente
 
 

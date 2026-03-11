@@ -4,10 +4,9 @@ Script para executar Bandit em todos os apps Django separadamente
 e combinar os resultados em um único relatório.
 """
 
-import os
 import json
+import os
 import subprocess
-from pathlib import Path
 from typing import Any, Dict, List
 
 
@@ -100,7 +99,7 @@ def combine_reports() -> None:
     with open("bandit_full_report.json", "w", encoding="utf-8") as f:
         json.dump(combined, f, indent=2, ensure_ascii=False)
 
-    print(f"Relatório combinado salvo em bandit_full_report.json")
+    print("Relatório combinado salvo em bandit_full_report.json")
     print(f"Total de vulnerabilidades encontradas: {len(combined['results'])}")
 
 

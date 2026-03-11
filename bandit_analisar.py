@@ -7,10 +7,9 @@ Generates HTML report for better visualization
 """
 
 import json
-import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def generate_html_report(
@@ -170,7 +169,7 @@ def generate_html_report(
     with open("bandit_report.html", "w", encoding="utf-8") as f:
         f.write(html_template)
 
-    print(f"\n HTML Report generated: bandit_report.html")
+    print("\n HTML Report generated: bandit_report.html")
 
 
 def analyze_bandit_reports():
@@ -226,7 +225,7 @@ def analyze_bandit_reports():
         else:
             print(f"\n {report_file}: Not found")
 
-    print(f"\n SUMMARY:")
+    print("\n SUMMARY:")
     print(f"   Total files scanned: {total_files}")
     print(f"   Total issues: {total_issues}")
     print(f"   HIGH severity: {severity_counts['HIGH']}")
@@ -235,7 +234,11 @@ def analyze_bandit_reports():
 
     # Generate HTML report
     generate_html_report(
-        all_results, severity_counts, confidence_counts, total_issues, total_files
+        all_results,
+        severity_counts,
+        confidence_counts,
+        total_issues,
+        total_files,
     )
 
     # Determine overall status

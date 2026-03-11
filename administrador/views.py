@@ -1,18 +1,41 @@
 # administrador/views.py
+import logging
+
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.sessions.models import Session
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.sessions.models import Session
-from django.contrib.auth import get_user_model
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
+from datetime import datetime, timedelta
+from django.views.decorators.http import require_POST
+
+from django.contrib.auth.forms import SetPasswordForm
 
 from core.decorators import admin_required
 from core.forms import CadastrarFuncionarioForm, EditarFuncionarioForm
-from core.models import CustomUser, RegistroDeAcesso  # Importe o modelo CustomUser
-from django.contrib.auth.forms import SetPasswordForm
+from core.models import (
+    Atendimento,  # Importe os modelos necessários
+    Chamada,
+    CustomUser,
+    Guiche,
+    Paciente,
+    RegistroDeAcesso,
+)
+
+from administrador.analytics.service import (
+    average_wait_time,
+    peak_hours,
+    entries_by_hour,
+    entries_by_day_hour,
+    reanuncio_rate,
+    throughput_by_day,
+    queue_stats,
+)
+from administrador.analytics.dashboards import dashboard_overview
+
+logger = logging.getLogger(__name__)
 
 
 @admin_required
@@ -20,7 +43,7 @@ def cadastrar_funcionario(request):
     if request.method == "POST":
         form = CadastrarFuncionarioForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            form.save()
             messages.success(request, "Funcionário cadastrado com sucesso!")
             return redirect(
                 reverse("administrador:listar_funcionarios")
@@ -35,16 +58,20 @@ def cadastrar_funcionario(request):
 
 
 @login_required
-@csrf_exempt
+@require_POST
 def registrar_atividade(request):
-    """View para registrar atividade do usuário em tempo real"""
-    if request.method == "POST":
-        # Registrar atividade no banco de dados
-        RegistroDeAcesso.objects.create(
-            usuario=request.user, tipo_de_acesso="atividade", data_hora=timezone.now()
-        )
-        return JsonResponse({"status": "ok"})
-    return JsonResponse({"status": "error"}, status=400)
+    """View para registrar atividade do usuário em tempo real.
+
+    Protected by CSRF (default) and requires POST. Clients must include the
+    CSRF token when sending the request.
+    """
+    # Registrar atividade no banco de dados
+    RegistroDeAcesso.objects.create(
+        usuario=request.user,
+        tipo_de_acesso="atividade",
+        data_hora=timezone.now(),
+    )
+    return JsonResponse({"status": "ok"})
 
 
 @admin_required
@@ -81,7 +108,8 @@ def listar_funcionarios(request):
             user_id = dados_sessao.get("_auth_user_id")
             if user_id:
                 usuarios_com_sessao_ativa.add(int(user_id))
-        except:
+        except Exception as e:
+            logger.exception("Erro decodificando sessão: %s", e)
             continue
 
     # Usuários com atividade recente (nos últimos 5 minutos)
@@ -145,6 +173,225 @@ def listar_funcionarios(request):
             "funcao_filtro": funcao_filtro,
         },
     )
+
+
+@admin_required
+def dashboard_analise(request):
+    """Página de análise de dados — acesso restrito a administradores."""
+    # default range: last 14 days
+    hoje = timezone.localdate()
+    end_dt = datetime.now()
+    start_dt = end_dt - timedelta(days=14)
+    overview = dashboard_overview(start_dt, end_dt)
+    # keep compatibility with existing templates/tests expecting daily quick KPIs
+    total_senhas_geradas_hoje = Paciente.objects.filter(
+        horario_geracao_senha__date=hoje
+    ).count()
+    total_atendimentos_hoje = Atendimento.objects.filter(data_hora__date=hoje).count()
+
+    context = {
+        "overview": overview,
+        "range_start": start_dt,
+        "range_end": end_dt,
+        "total_senhas_geradas_hoje": total_senhas_geradas_hoje,
+        "total_atendimentos_hoje": total_atendimentos_hoje,
+    }
+    return render(request, "administrador/dashboard_modern.html", context)
+
+
+@admin_required
+def dashboard_analise_api(request):
+    """Retorna métricas básicas em JSON para alimentar o frontend do dashboard."""
+    # allow client to pass start/end ISO params; default last 14 days
+    start_dt, end_dt = _parse_date_range(request, default_days=14)
+    overview = dashboard_overview(start_dt, end_dt)
+    # ensure date objects are serialized to ISO strings within throughput
+    if overview.get("throughput"):
+        for d in overview["throughput"]:
+            if isinstance(d.get("day"), (datetime,)):
+                d["day"] = d["day"].isoformat()
+    return JsonResponse(overview)
+
+
+@admin_required
+def kpi_metrics_fragment(request):
+    """Retorna um fragmento HTML com os KPIs básicos (usado por HTMX)."""
+    # Default to "since UP" unless the UI provides a start param
+    start_dt, end_dt = _parse_date_range(request, default_days=None)
+    stats = queue_stats(start_dt, end_dt)
+    # today's quick KPIs for default fallbacks in the fragment template
+    hoje = timezone.localdate()
+    total_senhas_geradas_hoje = Paciente.objects.filter(
+        horario_geracao_senha__date=hoje
+    ).count()
+    total_atendimentos_hoje = Atendimento.objects.filter(data_hora__date=hoje).count()
+    chamadas_hoje = Chamada.objects.filter(data_hora__date=hoje)
+    reanuncios_hoje = chamadas_hoje.filter(acao="reanuncio").count()
+    avg_wait_seconds = stats.get("avg_wait_seconds")
+    avg_wait_minutes = None
+    if avg_wait_seconds is not None:
+        try:
+            avg_wait_minutes = float(avg_wait_seconds) / 60.0
+        except Exception:
+            avg_wait_minutes = None
+
+    guiche_util = stats.get("guiche_utilization")
+    guiche_util_percent = None
+    if guiche_util is not None:
+        try:
+            guiche_util_percent = float(guiche_util) * 100.0
+        except Exception:
+            guiche_util_percent = None
+
+    context = {
+        "total_senhas_geradas": stats.get("total_senhas_generated"),
+        "total_senhas_geradas_hoje": total_senhas_geradas_hoje,
+        "total_atendimentos": stats.get("total_atendimentos"),
+        "total_atendimentos_hoje": total_atendimentos_hoje,
+        "avg_wait_seconds": avg_wait_seconds,
+        "avg_wait_minutes": avg_wait_minutes,
+        "throughput": stats.get("throughput"),
+        "peak_hours": stats.get("peak_hours"),
+        "reanuncios": stats.get("reanuncio_rate"),
+        "guiches_em_atendimento": Guiche.objects.filter(em_atendimento=True).count(),
+        "guiches_total": Guiche.objects.count(),
+        "guiche_utilization": guiche_util,
+        "guiche_util_percent": guiche_util_percent,
+        "current_queue_length": stats.get("current_queue_length"),
+        "range_start": start_dt,
+        "range_end": end_dt,
+        "total_chamadas_hoje": chamadas_hoje.count(),
+        "reanuncios_hoje": reanuncios_hoje,
+    }
+
+    return render(request, "administrador/_kpi_metrics.html", context)
+
+
+def _parse_date_range(
+    request, default_days: int | None = 7
+) -> tuple[datetime | None, datetime]:
+    """Parseia parâmetros GET `start` e `end` em ISO ou retorna range padrão."""
+    end = request.GET.get("end")
+    start = request.GET.get("start")
+    start_dt: datetime | None = None
+    if end:
+        try:
+            end_dt = datetime.fromisoformat(end)
+        except Exception:
+            end_dt = datetime.now()
+    else:
+        end_dt = datetime.now()
+
+    if start:
+        try:
+            start_dt = datetime.fromisoformat(start)
+        except Exception:
+            start_dt = (
+                None if default_days is None else end_dt - timedelta(days=default_days)
+            )
+    else:
+        start_dt = (
+            None if default_days is None else end_dt - timedelta(days=default_days)
+        )
+
+    return start_dt, end_dt
+
+
+@admin_required
+def kpi_throughput(request):
+    start_dt, end_dt = _parse_date_range(request, default_days=14)
+    qs = throughput_by_day(start_dt, end_dt)
+    data = [{"day": obj["day"].isoformat(), "count": obj["count"]} for obj in qs]
+    return JsonResponse({"throughput": data})
+
+
+@admin_required
+def kpi_avg_wait(request):
+    start_dt, end_dt = _parse_date_range(request, default_days=7)
+    avg = average_wait_time(start_dt, end_dt)
+    # avg may be timedelta or None
+    avg_seconds = None
+    if avg is not None:
+        avg_seconds = avg.total_seconds()
+    return JsonResponse({"avg_wait_seconds": avg_seconds})
+
+
+@admin_required
+def kpi_peak_hours(request):
+    start_dt, end_dt = _parse_date_range(request, default_days=7)
+    qs = peak_hours(start_dt, end_dt)
+    data = [{"hour": obj["hour"], "count": obj["count"]} for obj in qs]
+    return JsonResponse({"peak_hours": data})
+
+
+@admin_required
+def kpi_entries_by_hour(request):
+    """Return hourly time-series counts for the given range (used for temporal charts)."""
+    start_dt, end_dt = _parse_date_range(request, default_days=7)
+    qs = entries_by_hour(start_dt, end_dt)
+    data = [{"hour": obj["hour"], "count": obj["count"]} for obj in qs]
+    return JsonResponse({"entries_by_hour": data})
+
+
+@admin_required
+def kpi_entries_by_day_hour(request):
+    """Return day/hour counts for heatmap display."""
+    start_dt, end_dt = _parse_date_range(request, default_days=14)
+    qs = entries_by_day_hour(start_dt, end_dt)
+    return JsonResponse({"entries_by_day_hour": qs})
+
+
+@admin_required
+def kpi_queue_length(request):
+    start_dt, end_dt = _parse_date_range(request, default_days=None)
+    stats = queue_stats(start_dt, end_dt)
+    return JsonResponse({"queue_length": stats.get("current_queue_length")})
+
+
+@admin_required
+def kpi_guiche_utilization(request):
+    start_dt, end_dt = _parse_date_range(request, default_days=None)
+    stats = queue_stats(start_dt, end_dt)
+    return JsonResponse({"guiche_utilization": stats.get("guiche_utilization")})
+
+
+@admin_required
+def kpi_queue_fragment(request):
+    """Fragmento HTML com o tamanho atual da fila."""
+    start_dt, end_dt = _parse_date_range(request, default_days=None)
+    stats = queue_stats(start_dt, end_dt)
+    return render(
+        request,
+        "administrador/_queue_length.html",
+        {
+            "queue_length": stats.get("current_queue_length"),
+            "range_start": start_dt,
+            "range_end": end_dt,
+        },
+    )
+
+
+@admin_required
+def kpi_guiche_fragment(request):
+    """Fragmento HTML com a utilização dos guichês."""
+    start_dt, end_dt = _parse_date_range(request, default_days=None)
+    stats = queue_stats(start_dt, end_dt)
+    return render(
+        request,
+        "administrador/_guiche_util.html",
+        {
+            "guiche_utilization": stats.get("guiche_utilization"),
+            "range_start": start_dt,
+            "range_end": end_dt,
+        },
+    )
+
+
+@admin_required
+def kpi_reanuncio_rate(request):
+    start_dt, end_dt = _parse_date_range(request, default_days=7)
+    rate = reanuncio_rate(start_dt, end_dt)
+    return JsonResponse({"reanuncio_rate": rate})
 
 
 @admin_required

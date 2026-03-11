@@ -1,9 +1,10 @@
 # recepcionista/views.py
+from zoneinfo import ZoneInfo
+
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from zoneinfo import ZoneInfo
 
 from core.decorators import recepcionista_required
 from core.forms import CadastrarPacienteForm
@@ -27,19 +28,31 @@ def cadastrar_paciente(request):
             horario_atendimento = paciente.horario_agendamento
             observacoes_existentes = paciente.observacoes or ""
 
-            if horario_atendimento:
-                # Formata data e hora do agendamento
+            # Se já existe paciente cadastrado com o mesmo Cartão SUS,
+            # assumimos que é um retorno e registramos apenas a hora de entrada.
+            from core.models import Paciente as _Paciente
+
+            is_returning = False
+            if paciente.cartao_sus:
+                is_returning = _Paciente.objects.filter(
+                    cartao_sus=paciente.cartao_sus
+                ).exists()
+
+            # Calcular hora de entrada sempre (usado tanto para retorno quanto
+            # para registrar o horário local do cadastro)
+            br_tz = ZoneInfo("America/Sao_Paulo")
+            hora_entrada = timezone.localtime(timezone.now(), br_tz).strftime("%H:%M")
+
+            if horario_atendimento and not is_returning:
+                # Formata data e hora do agendamento e também inclui a hora de
+                # entrada para compatibilidade com os relatórios.
                 try:
                     formatted = horario_atendimento.strftime("%d/%m/%Y %H:%M")
                 except Exception:
                     # Caso venha em outro formato, usa str()
                     formatted = str(horario_atendimento)
-                novo_texto = f"Horário do atendimento: {formatted}"
+                novo_texto = f"Horário do atendimento: {formatted}\nHora de entrada: {hora_entrada}"
             else:
-                br_tz = ZoneInfo("America/Sao_Paulo")
-                hora_entrada = timezone.localtime(timezone.now(), br_tz).strftime(
-                    "%H:%M"
-                )
                 novo_texto = f"Hora de entrada: {hora_entrada}"
 
             if observacoes_existentes.strip():

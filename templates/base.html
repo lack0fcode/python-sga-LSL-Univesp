@@ -46,6 +46,9 @@
                         <div class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible transition duration-300 z-50 dropdown-menu">
                             <a href="{% url 'administrador:cadastrar_funcionario' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Cadastrar Funcionário</a>
                             <a href="{% url 'administrador:listar_funcionarios' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Listar Funcionários</a>
+                            {% if user.is_authenticated and user.funcao == 'administrador' %}
+                            <a href="{% url 'administrador:dashboard_analise' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard de Análise</a>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="relative group dropdown-container">
@@ -97,6 +100,9 @@
                         <h3 class="text-accent font-medium mb-2">Administradores</h3>
                         <a href="{% url 'administrador:cadastrar_funcionario' %}" class="block text-accent hover:text-white py-1">Cadastrar Funcionário</a>
                         <a href="{% url 'administrador:listar_funcionarios' %}" class="block text-accent hover:text-white py-1">Listar Funcionários</a>
+                            {% if user.is_authenticated and user.funcao == 'administrador' %}
+                            <a href="{% url 'administrador:dashboard_analise' %}" class="block text-accent hover:text-white py-1">Dashboard de Análise</a>
+                            {% endif %}
                     </div>
                     <div class="border-b border-gray-600 pb-2">
                         <h3 class="text-accent font-medium mb-2">Recepcionistas</h3>

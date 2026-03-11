@@ -1,0 +1,7 @@
+<div>
+  <h4 class="font-medium mb-2">Utilização de guichês</h4>
+  <div id="guiche-util" class="text-2xl font-bold">{% if guiche_util_percent is not None %}{{ guiche_util_percent|floatformat:0 }}%{% else %}—{% endif %}</div>
+  {% if range_start %}
+    <div class="text-sm text-gray-500">Período: {{ range_start }} — {{ range_end }}</div>
+  {% endif %}
+</div>

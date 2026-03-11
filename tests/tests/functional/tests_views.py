@@ -1,7 +1,7 @@
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
-from django.utils import timezone
-from core.models import CustomUser, RegistroDeAcesso
+
+from core.models import CustomUser
 
 
 class CoreViewsTest(TestCase):
@@ -21,7 +21,7 @@ class CoreViewsTest(TestCase):
         print(
             "\033[91m  → Testando acesso à página admin de RegistroDeAcesso...\033[0m"
         )  # Vermelho
-        admin_user = CustomUser.objects.create_user(
+        _admin_user = CustomUser.objects.create_user(
             cpf="11122233344",
             username="11122233344",
             password="adminpass",

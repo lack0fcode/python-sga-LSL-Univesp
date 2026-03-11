@@ -3,13 +3,14 @@ Testes de integração para autorização e validação do sistema SGA-ILSL.
 Testa fluxos complexos, autorização de acesso e validação de dados.
 """
 
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
 from django.test import Client, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from unittest.mock import patch
 
-from core.models import Paciente, CustomUser
+from core.models import Paciente
 
 User = get_user_model()
 
@@ -95,9 +96,7 @@ class AutorizacaoValidacaoIntegracaoTest(TransactionTestCase):
         # Criar guichê para o usuário
         from core.models import Guiche
 
-        guiche = Guiche.objects.create(
-            numero=1, funcionario=guiche_user, user=guiche_user
-        )
+        Guiche.objects.create(numero=1, funcionario=guiche_user, user=guiche_user)
 
         # 2. RECEPCIONISTA CADASTRA PACIENTE
         client_recep = Client()
@@ -224,9 +223,7 @@ class AutorizacaoValidacaoIntegracaoTest(TransactionTestCase):
         # Criar guichê
         from core.models import Guiche
 
-        guiche = Guiche.objects.create(
-            numero=1, funcionario=guiche_user, user=guiche_user
-        )
+        Guiche.objects.create(numero=1, funcionario=guiche_user, user=guiche_user)
 
         client_recep = Client()
         client_recep.login(cpf=recepcionista.cpf, password="recep123")
@@ -383,7 +380,9 @@ class AutorizacaoValidacaoIntegracaoTest(TransactionTestCase):
             for url in permissoes[user_type]["permitido"]:
                 response = client.get(url)
                 self.assertEqual(
-                    response.status_code, 200, f"{user_type} deveria acessar {url}"
+                    response.status_code,
+                    200,
+                    f"{user_type} deveria acessar {url}",
                 )
 
             # Testa acessos negados (redirect ou 403)
@@ -416,7 +415,8 @@ class AutorizacaoValidacaoIntegracaoTest(TransactionTestCase):
         }
 
         response = client.post(
-            reverse("recepcionista:cadastrar_paciente"), data=paciente_data_invalido
+            reverse("recepcionista:cadastrar_paciente"),
+            data=paciente_data_invalido,
         )
 
         # Verifica se o POST retornou erro (status 200 com form inválido)
@@ -424,7 +424,7 @@ class AutorizacaoValidacaoIntegracaoTest(TransactionTestCase):
 
         # Verifica se paciente NÃO foi criado devido aos dados inválidos
         try:
-            paciente = Paciente.objects.get(cartao_sus="123456789012345")
+            Paciente.objects.get(cartao_sus="123456789012345")
             self.fail("Paciente não deveria ter sido criado com dados inválidos")
         except Paciente.DoesNotExist:
             # Se paciente não foi criado, verifica se há mensagens de erro na resposta

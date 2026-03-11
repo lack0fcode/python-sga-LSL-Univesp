@@ -15,7 +15,6 @@ from pathlib import Path
 
 import dj_database_url
 from decouple import config
-
 from dotenv import load_dotenv
 
 # Carrega variáveis de ambiente do arquivo .env

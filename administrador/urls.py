@@ -11,7 +11,11 @@ urlpatterns = [
         views.cadastrar_funcionario,
         name="cadastrar_funcionario",
     ),
-    path("listar_funcionarios/", views.listar_funcionarios, name="listar_funcionarios"),
+    path(
+        "listar_funcionarios/",
+        views.listar_funcionarios,
+        name="listar_funcionarios",
+    ),
     path(
         "editar_funcionario/<int:pk>/",
         views.editar_funcionario,
@@ -36,5 +40,70 @@ urlpatterns = [
         "registrar-atividade/",
         views.registrar_atividade,
         name="registrar_atividade",
+    ),
+    path(
+        "dashboard-analise/",
+        views.dashboard_analise,
+        name="dashboard_analise",
+    ),
+    path(
+        "dashboard-analise/api/",
+        views.dashboard_analise_api,
+        name="dashboard_analise_api",
+    ),
+    path(
+        "dashboard-analise/api/throughput/",
+        views.kpi_throughput,
+        name="kpi_throughput",
+    ),
+    path(
+        "dashboard-analise/api/avg_wait/",
+        views.kpi_avg_wait,
+        name="kpi_avg_wait",
+    ),
+    path(
+        "dashboard-analise/api/peak_hours/",
+        views.kpi_peak_hours,
+        name="kpi_peak_hours",
+    ),
+    path(
+        "dashboard-analise/api/entries_by_hour/",
+        views.kpi_entries_by_hour,
+        name="kpi_entries_by_hour",
+    ),
+    path(
+        "dashboard-analise/api/entries_by_day_hour/",
+        views.kpi_entries_by_day_hour,
+        name="kpi_entries_by_day_hour",
+    ),
+    path(
+        "dashboard-analise/api/queue_length/",
+        views.kpi_queue_length,
+        name="kpi_queue_length",
+    ),
+    path(
+        "dashboard-analise/api/guiche_utilization/",
+        views.kpi_guiche_utilization,
+        name="kpi_guiche_utilization",
+    ),
+    path(
+        "dashboard-analise/api/reanuncio_rate/",
+        views.kpi_reanuncio_rate,
+        name="kpi_reanuncio_rate",
+    ),
+    path(
+        "dashboard-analise/fragment/metrics/",
+        views.kpi_metrics_fragment,
+        name="kpi_metrics_fragment",
+    ),
+    path(
+        "dashboard-analise/fragment/queue_length/",
+        views.kpi_queue_fragment,
+        name="kpi_queue_fragment",
+    ),
+    path(
+        "dashboard-analise/fragment/guiche_util/",
+        views.kpi_guiche_fragment,
+        name="kpi_guiche_fragment",
     ),
 ]

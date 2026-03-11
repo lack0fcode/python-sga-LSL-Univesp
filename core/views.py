@@ -3,7 +3,6 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -18,9 +17,9 @@ def login_view(request):
     logger.info("A view de login foi chamada.")
     if request.method == "POST":
         form = LoginForm(request.POST)
-        print("DEBUG: form.is_valid() =", form.is_valid())
-        print("DEBUG: form.errors =", form.errors)
-        print("DEBUG: form.data =", form.data)
+        logger.debug("Form valid: %s", form.is_valid())
+        logger.debug("Form errors: %s", form.errors)
+        logger.debug("Form data: %s", form.data)
         logger.info("Formulário POST recebido.")
         if form.is_valid():
             cpf = form.cleaned_data["cpf"]
@@ -53,10 +52,10 @@ def login_view(request):
                 else:
                     return redirect("pagina_inicial")
             else:
-                print(f"Autenticação falhou para CPF: {cpf}")
+                logger.warning("Autenticação falhou para CPF: %s", cpf)
                 form.add_error(None, "CPF ou senha incorretos.")
         else:
-            print(f"Form inválido: {form.errors}")
+            logger.debug("Form inválido: %s", form.errors)
             form.add_error(None, "Dados inválidos. Verifique o CPF.")
     else:
         form = LoginForm()

@@ -1,8 +1,6 @@
 # profissional_saude/forms.py
 from django import forms
 
-from core.models import Paciente
-
 
 class AtendimentoProfissionalForm(forms.Form):
     """

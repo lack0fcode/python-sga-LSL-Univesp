@@ -1,6 +1,6 @@
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
-from django.utils import timezone
+
 from core.models import CustomUser, RegistroDeAcesso
 
 
@@ -41,7 +41,7 @@ class SecurityViewsTest(TestCase):
     def test_login_redirect_based_on_role(self):
         """Testa redirecionamento após login baseado na função do usuário."""
         # Teste para administrador
-        admin_user = CustomUser.objects.create_user(
+        CustomUser.objects.create_user(
             cpf="11122233344",
             username="11122233344",
             password="adminpass",
@@ -58,7 +58,7 @@ class SecurityViewsTest(TestCase):
 
         # Teste para recepcionista
         self.client.logout()
-        recepcionista_user = CustomUser.objects.create_user(
+        CustomUser.objects.create_user(
             cpf="22233344455",
             username="22233344455",
             password="recepcionistapass",
@@ -73,7 +73,7 @@ class SecurityViewsTest(TestCase):
 
         # Teste para profissional de saúde
         self.client.logout()
-        profissional_user = CustomUser.objects.create_user(
+        CustomUser.objects.create_user(
             cpf="33344455566",
             username="33344455566",
             password="profissionalpass",
@@ -100,7 +100,7 @@ class SecurityViewsTest(TestCase):
 
     def test_login_redirect_unknown_role(self):
         """Testa redirecionamento para função desconhecida."""
-        unknown_user = CustomUser.objects.create_user(
+        CustomUser.objects.create_user(
             cpf="44455566677",
             username="44455566677",
             password="unknownpass",

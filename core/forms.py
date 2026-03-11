@@ -1,13 +1,12 @@
 # core/forms.py
-from django import forms
-from django.contrib.auth import authenticate
-from django.contrib.auth.forms import UserCreationForm
-from django.utils import timezone
+import re
 from typing import Dict, Optional
 
-import re
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 
+from .auth_service import authenticate_and_update
 from .models import CustomUser, Paciente  # Importação única
 
 LETRAS_SENHA = [
@@ -223,46 +222,11 @@ class LoginForm(forms.Form):
         password = cleaned_data.get("password")
 
         if cpf and password:
-            try:
-                user = CustomUser.objects.get(cpf=cpf)
-                print(f"DEBUG clean: user found {user.username}")
-            except CustomUser.DoesNotExist:
-                print(f"DEBUG clean: user not found for cpf {cpf}")
-                user = None
-
-            if user:
-                # Verificar se o usuário está bloqueado
-                if user.lockout_until and timezone.now() < user.lockout_until:
-                    remaining_time = (
-                        user.lockout_until - timezone.now()
-                    ).total_seconds() / 60
-                    raise ValidationError(
-                        f"Conta bloqueada. Tente novamente em {int(remaining_time)} minutos."
-                    )
-
-                # Tentar autenticar
-                user_auth = authenticate(username=cpf, password=password)
-                if user_auth and user_auth.is_active:
-                    cleaned_data["user"] = user_auth
-                    # Resetar tentativas em login bem-sucedido
-                    user.failed_login_attempts = 0
-                    user.save()
-                else:
-                    # Incrementar tentativas falhidas
-                    user.failed_login_attempts += 1
-                    if user.failed_login_attempts >= 4:
-                        user.lockout_until = timezone.now() + timezone.timedelta(
-                            minutes=5
-                        )
-                        user.save()
-                        raise ValidationError(
-                            "Conta bloqueada por tentativas excessivas. Tente novamente em 5 minutos."
-                        )
-                    else:
-                        user.save()
-                        raise ValidationError("CPF ou senha incorretos.")
+            user_auth, error = authenticate_and_update(cpf, password)
+            if user_auth:
+                cleaned_data["user"] = user_auth
             else:
-                raise ValidationError("CPF ou senha incorretos.")
+                raise ValidationError(error)
 
         return cleaned_data
 

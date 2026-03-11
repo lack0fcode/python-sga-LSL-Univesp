@@ -1,9 +1,9 @@
 import json
-from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -169,7 +169,10 @@ class ProfissionalSaudeTests(TestCase):
             response = self.client.post(
                 reverse(
                     "profissional_saude:realizar_acao_profissional",
-                    kwargs={"paciente_id": paciente_sem_telefone.id, "acao": "chamar"},
+                    kwargs={
+                        "paciente_id": paciente_sem_telefone.id,
+                        "acao": "chamar",
+                    },
                 )
             )
 
@@ -193,7 +196,10 @@ class ProfissionalSaudeTests(TestCase):
         response = self.client.post(
             reverse(
                 "profissional_saude:realizar_acao_profissional",
-                kwargs={"paciente_id": self.paciente1.id, "acao": "reanunciar"},
+                kwargs={
+                    "paciente_id": self.paciente1.id,
+                    "acao": "reanunciar",
+                },
             )
         )
 
@@ -240,7 +246,10 @@ class ProfissionalSaudeTests(TestCase):
         response = self.client.post(
             reverse(
                 "profissional_saude:realizar_acao_profissional",
-                kwargs={"paciente_id": self.paciente1.id, "acao": "encaminhar"},
+                kwargs={
+                    "paciente_id": self.paciente1.id,
+                    "acao": "encaminhar",
+                },
             ),
             {"profissional_encaminhar_id": self.profissional2.id},
         )
@@ -262,7 +271,10 @@ class ProfissionalSaudeTests(TestCase):
         response = self.client.post(
             reverse(
                 "profissional_saude:realizar_acao_profissional",
-                kwargs={"paciente_id": self.paciente1.id, "acao": "encaminhar"},
+                kwargs={
+                    "paciente_id": self.paciente1.id,
+                    "acao": "encaminhar",
+                },
             )
         )
 
@@ -278,7 +290,10 @@ class ProfissionalSaudeTests(TestCase):
         response = self.client.post(
             reverse(
                 "profissional_saude:realizar_acao_profissional",
-                kwargs={"paciente_id": self.paciente1.id, "acao": "acao_invalida"},
+                kwargs={
+                    "paciente_id": self.paciente1.id,
+                    "acao": "acao_invalida",
+                },
             )
         )
 
@@ -312,7 +327,7 @@ class ProfissionalSaudeTests(TestCase):
     def test_tv2_view_with_calls(self):
         """Testa tv2_view com chamadas existentes."""
         # Criar algumas chamadas com timestamps diferentes
-        chamada1 = ChamadaProfissional.objects.create(
+        ChamadaProfissional.objects.create(
             paciente=self.paciente1,
             profissional_saude=self.profissional1,
             acao="chamada",
@@ -321,7 +336,7 @@ class ProfissionalSaudeTests(TestCase):
         import time
 
         time.sleep(0.01)
-        chamada2 = ChamadaProfissional.objects.create(
+        ChamadaProfissional.objects.create(
             paciente=self.paciente2,
             profissional_saude=self.profissional1,
             acao="reanuncio",
@@ -424,7 +439,8 @@ class ProfissionalSaudeTests(TestCase):
         # Verificar ordenação (mais recente primeiro)
         chamadas_ordenadas = list(
             ChamadaProfissional.objects.filter(
-                profissional_saude=self.profissional1, acao__in=["chamada", "reanuncio"]
+                profissional_saude=self.profissional1,
+                acao__in=["chamada", "reanuncio"],
             ).order_by("-data_hora")[:10]
         )
 

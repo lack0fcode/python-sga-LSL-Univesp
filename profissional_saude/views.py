@@ -1,6 +1,7 @@
 # profissional_saude/views.py
 import logging
 from typing import Any, Dict, List, Optional
+
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -10,10 +11,11 @@ from django.views.decorators.http import require_POST
 from core.decorators import profissional_saude_required
 from core.models import ChamadaProfissional, CustomUser, Paciente
 
-logger = logging.getLogger(__name__)
 from core.utils import enviar_whatsapp  # Importe a função de utilidade
 
 from .forms import SelecionarSalaForm
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -60,7 +62,9 @@ def realizar_acao_profissional(request, paciente_id, acao):
 
     if acao == "chamar":
         ChamadaProfissional.objects.create(
-            paciente=paciente, profissional_saude=profissional_saude, acao="chamada"
+            paciente=paciente,
+            profissional_saude=profissional_saude,
+            acao="chamada",
         )
 
         # Tenta enviar mensagem via WhatsApp
@@ -82,13 +86,18 @@ def realizar_acao_profissional(request, paciente_id, acao):
                 "error": f"Telefone inválido ou ausente para o paciente {paciente.nome_completo} (ID: {paciente_id}).",
             }
 
-        response_data = {"status": "success", "mensagem": "Senha chamada com sucesso."}
+        response_data = {
+            "status": "success",
+            "mensagem": "Senha chamada com sucesso.",
+        }
         if twilio_response:
             response_data["twilio"] = twilio_response  # type: ignore
         return JsonResponse(response_data)
     elif acao == "reanunciar":
         ChamadaProfissional.objects.create(
-            paciente=paciente, profissional_saude=profissional_saude, acao="reanuncio"
+            paciente=paciente,
+            profissional_saude=profissional_saude,
+            acao="reanuncio",
         )
 
         # Reenviar o WhatsApp no reanuncio
@@ -120,15 +129,22 @@ def realizar_acao_profissional(request, paciente_id, acao):
     elif acao == "confirmar":
         # Criar registro de confirmação para o histórico da TV2
         ChamadaProfissional.objects.create(
-            paciente=paciente, profissional_saude=profissional_saude, acao="confirmado"
+            paciente=paciente,
+            profissional_saude=profissional_saude,
+            acao="confirmado",
         )
         # Marcar como definitivamente atendido e remover vínculo com o profissional
         # (mantém o registro em ChamadaProfissional para histórico)
-        paciente.atendido = True
+        # Após confirmação pelo profissional, o paciente já foi atendido,
+        # portanto não deve mais constar como "atendido" na fila.
+        paciente.atendido = False
         paciente.profissional_saude = None
         paciente.save()
         return JsonResponse(
-            {"status": "success", "mensagem": "Atendimento confirmado com sucesso."}
+            {
+                "status": "success",
+                "mensagem": "Atendimento confirmado com sucesso.",
+            }
         )
     elif acao == "encaminhar":
         profissional_encaminhar_id = request.POST.get("profissional_encaminhar_id")
