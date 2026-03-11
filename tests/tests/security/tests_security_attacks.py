@@ -52,7 +52,7 @@ class SecurityAttacksTest(TestCase):
         }
         form = CadastrarFuncionarioForm(data=weak)
         # The test is written to pass if the weak password is accepted (vulnerable)
-        self.assertTrue(form.is_valid())
+        self.assertFalse(form.is_valid())
 
     def test_templates_include_external_cdns_without_sri(self):
         """Quick check: templates that include external CDN resources should
