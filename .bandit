@@ -1,0 +1,11 @@
+[bandit]
+exclude_dirs = __pycache__,migrations,htmlcov,staticfiles,.git,.venv,.mypy_cache,venv,tests
+verbose = True
+debug = True
+format = json
+output_file = bandit_debug_report.json
+
+[tool:bandit]
+# Configurações específicas do Bandit
+severity = all
+confidence = all

@@ -1,0 +1,136 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ "staging", "lack0fdev" ]
+  pull_request:
+    branches: [ "staging", "lack0fdev" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.11-slim-bookworm
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies
+        run: |
+          apt-get update && apt-get install -y build-essential libpq-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install coverage pytest pytest-django
+
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
+        run: python manage.py migrate --run-syncdb
+
+      - name: Collect Static Files
+        env:
+          DJANGO_SETTINGS_MODULE: sga.settings
+          DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
+        run: python manage.py collectstatic --noinput
+
+      - name: Run Tests with Coverage
+        env:
+          DJANGO_SETTINGS_MODULE: sga.settings
+          DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
+        run: |
+          coverage run --source=. --omit="bandit_Rodar.py,bandit_analisar.py,test_fluxocompleto2.py" manage.py test tests --pattern="*test*.py" --settings=sga.tests.settings_test
+          coverage report
+          coverage html
+
+      - name: Run Integration Test with HTML Report
+        env:
+          DJANGO_SETTINGS_MODULE: sga.settings
+          DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
+        run: |
+          echo "Running complete integration test with HTML report generation..."
+          python test_fluxocompleto2.py
+          echo "Integration test completed successfully"
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+      - name: Upload Integration Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-report
+          path: relatorio_teste_real.html
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black
+      - name: Run Flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --statistics
+      - name: Run Black
+        run: black --check .
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install safety bandit mypy
+      - name: Run Safety Scan
+        run: safety scan .
+        env:
+          SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
+      - name: Run Bandit Security Linter
+        run: |
+          echo "Running Bandit security analysis using separate script..."
+          python bandit_Rodar.py
+          echo "Bandit analysis completed successfully"
+          
+      - name: Analyze Bandit Results
+        run: |
+          python bandit_analisar.py
+      - name: Run MyPy Type Checking
+        run: mypy .
+
+      - name: Upload Bandit Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-reports
+          path: bandit_report.html
