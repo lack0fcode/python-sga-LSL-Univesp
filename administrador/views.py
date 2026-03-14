@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 
 from core.decorators import admin_required
 from core.forms import CadastrarFuncionarioForm, EditarFuncionarioForm
-from core.models import CustomUser,Paciente, Chamada, ChamadaProfissional, RegistroDeAcesso  # Importe o modelo CustomUser
+from core.models import CustomUser, Paciente, Chamada, ChamadaProfissional, RegistroDeAcesso  # Importe o modelo CustomUser
 from django.contrib.auth.forms import SetPasswordForm
 
 from django.db.models import Count, Q
