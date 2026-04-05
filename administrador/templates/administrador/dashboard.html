@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Administrativo — ILSL{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --azul:    #1a56db;
+    --azul-lt: #e8f0fe;
+    --verde:   #0e9f6e;
+    --verde-lt:#d1fae5;
+    --laranja: #ff5a1f;
+    --laranja-lt:#fff0e6;
+    --cinza:   #6b7280;
+    --borda:   #e5e7eb;
+    --bg:      #f9fafb;
+    --card:    #ffffff;
+    --txt:     #111827;
+    --txt2:    #6b7280;
+  }
+
+  .dash-wrapper { padding: 1.5rem 2rem; background: var(--bg); min-height: 100vh; }
+
+  /* ── CABEÇALHO ── */
+  .dash-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .dash-header h1 { font-size: 1.4rem; font-weight: 700; color: var(--txt); margin: 0; }
+  .dash-header .badge-data {
+    background: var(--azul-lt); color: var(--azul);
+    padding: .3rem .8rem; border-radius: 20px; font-size: .85rem; font-weight: 600;
+  }
+
+  /* ── GRID DE CARDS ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem;
+    display: flex; flex-direction: column; gap: .3rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .card .card-label { font-size: .75rem; color: var(--txt2); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .card .card-value { font-size: 2rem; font-weight: 800; color: var(--txt); line-height: 1; }
+  .card .card-sub   { font-size: .78rem; color: var(--txt2); }
+  .card.azul    { border-left: 4px solid var(--azul);    background: linear-gradient(135deg,#fff,var(--azul-lt)); }
+  .card.verde   { border-left: 4px solid var(--verde);   background: linear-gradient(135deg,#fff,var(--verde-lt)); }
+  .card.laranja { border-left: 4px solid var(--laranja); background: linear-gradient(135deg,#fff,var(--laranja-lt)); }
+
+  /* ── LINHA DE TEMPO MÉDIO ── */
+  .tempos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .tempo-card {
+    background: var(--card); border: 1px solid var(--borda); border-radius: 12px;
+    padding: 1rem 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .tempo-card .t-label { font-size: .75rem; color: var(--txt2); font-weight: 600; text-transform: uppercase; margin-bottom: .4rem; }
+  .tempo-card .t-value { font-size: 1.7rem; font-weight: 800; color: var(--azul); }
+  .tempo-card .t-unit  { font-size: .8rem; color: var(--txt2); }
+  .tempo-card .t-sub   { font-size: .78rem; color: var(--txt2); margin-top: .2rem; }
+
+  /* ── INDICADORES DE QUALIDADE ── */
+  .qualidade-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .qual-card {
+    background: var(--card); border: 1px solid var(--borda); border-radius: 12px;
+    padding: 1rem 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .qual-circle {
+    width: 60px; height: 60px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 800; flex-shrink: 0;
+  }
+  .qual-circle.reauncio { background: #fef3c7; color: #d97706; }
+  .qual-circle.encaminha { background: #ede9fe; color: #7c3aed; }
+  .qual-info .q-label { font-size: .75rem; color: var(--txt2); font-weight: 600; text-transform: uppercase; }
+  .qual-info .q-desc  { font-size: .82rem; color: var(--txt2); margin-top: .2rem; }
+
+  /* ── GRAFICOS ── */
+  .charts-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem;
+  }
+  .charts-grid.full { grid-template-columns: 1fr; }
+  .chart-card {
+    background: var(--card); border: 1px solid var(--borda); border-radius: 12px;
+    padding: 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .chart-card h3 { font-size: .9rem; font-weight: 700; color: var(--txt); margin: 0 0 1rem 0; }
+  .chart-card canvas { max-height: 260px; }
+
+  /* ── TABELA REANUNCIOS ── */
+  .table-card {
+    background: var(--card); border: 1px solid var(--borda); border-radius: 12px;
+    padding: 1.2rem; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 1.5rem;
+  }
+  .table-card h3 { font-size: .9rem; font-weight: 700; color: var(--txt); margin: 0 0 1rem 0; }
+  .table-card table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  .table-card th { text-align: left; padding: .5rem .8rem; font-size: .72rem; color: var(--txt2); text-transform: uppercase; border-bottom: 2px solid var(--borda); }
+  .table-card td { padding: .55rem .8rem; border-bottom: 1px solid var(--borda); color: var(--txt); }
+  .table-card tr:last-child td { border-bottom: none; }
+  .badge-tipo { background: var(--azul-lt); color: var(--azul); padding: .15rem .5rem; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+  .badge-count { background: #fef3c7; color: #d97706; padding: .15rem .5rem; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+
+  .vazio { color: var(--txt2); font-size: .85rem; padding: .8rem 0; }
+
+  @media (max-width: 768px) {
+    .charts-grid { grid-template-columns: 1fr; }
+    .qualidade-row { grid-template-columns: 1fr; }
+    .dash-wrapper { padding: 1rem; }
+  }
+</style>
+
+<div class="dash-wrapper">
+
+  <!-- Cabeçalho -->
+  <div class="dash-header">
+    <h1>📊 Dashboard Administrativo</h1>
+    <span class="badge-data">{{ data_hoje|date:"d/m/Y" }} &nbsp;·&nbsp; Últimos 30 dias</span>
+  </div>
+
+  <!-- Cards de visão geral -->
+  <div class="cards-grid">
+    <div class="card azul">
+      <span class="card-label">Pacientes Hoje</span>
+      <span class="card-value">{{ total_pacientes_hoje }}</span>
+      <span class="card-sub">registros gerados</span>
+    </div>
+    <div class="card verde">
+      <span class="card-label">Atendidos Hoje</span>
+      <span class="card-value">{{ total_atendidos_hoje }}</span>
+      <span class="card-sub">taxa {{ taxa_atendimento_hoje }}%</span>
+    </div>
+    <div class="card laranja">
+      <span class="card-label">Aguardando</span>
+      <span class="card-value">{{ total_aguardando }}</span>
+      <span class="card-sub">na fila agora</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Profissionais</span>
+      <span class="card-value">{{ profissionais_ativos }}</span>
+      <span class="card-sub">ativos hoje</span>
+    </div>
+    <div class="card">
+      <span class="card-label">Guichês</span>
+      <span class="card-value">{{ guichistas_ativos }}</span>
+      <span class="card-sub">operadores ativos</span>
+    </div>
+  </div>
+
+  <!-- Tempos médios -->
+  <div class="tempos-grid">
+    <div class="tempo-card">
+      <div class="t-label">⏱ Espera Média (30d)</div>
+      <div><span class="t-value">{{ tempo_medio_espera }}</span> <span class="t-unit">min</span></div>
+      <div class="t-sub">Geração da senha → chamada no guichê</div>
+    </div>
+    <div class="tempo-card">
+      <div class="t-label">⏱ Espera Hoje</div>
+      <div><span class="t-value">{{ tempo_medio_espera_hoje }}</span> <span class="t-unit">min</span></div>
+      <div class="t-sub">Média do dia atual</div>
+    </div>
+    <div class="tempo-card">
+      <div class="t-label">🪟 Atendimento Guichê (30d)</div>
+      <div><span class="t-value">{{ tempo_medio_guiche }}</span> <span class="t-unit">min</span></div>
+      <div class="t-sub">Chamada → confirmação no guichê</div>
+    </div>
+    <div class="tempo-card">
+      <div class="t-label">🩺 Consulta Profissional (30d)</div>
+      <div><span class="t-value">{{ tempo_medio_consulta }}</span> <span class="t-unit">min</span></div>
+      <div class="t-sub">Chamada → confirmação pelo profissional</div>
+    </div>
+  </div>
+
+  <!-- Indicadores de qualidade -->
+  <div class="qualidade-row">
+    <div class="qual-card">
+      <div class="qual-circle reauncio">{{ taxa_reanuncio }}%</div>
+      <div class="qual-info">
+        <div class="q-label">Taxa de Reanúncio</div>
+        <div class="q-desc">Proporção de senhas reanunciadas no guichê nos últimos 30 dias. Valores altos indicam pacientes ausentes ou confusos com o painel.</div>
+      </div>
+    </div>
+    <div class="qual-card">
+      <div class="qual-circle encaminha">{{ taxa_encaminhamento }}%</div>
+      <div class="qual-info">
+        <div class="q-label">Taxa de Encaminhamento</div>
+        <div class="q-desc">Proporção de atendimentos encaminhados para outro profissional. Valores altos podem indicar triagem inadequada ou sobrecarga.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos linha 1: tendência + pico de hora -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>📈 Tendência de Pacientes — Últimos 14 Dias</h3>
+      <canvas id="chartTendencia"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>🕐 Pico de Demanda por Hora (últimos 7 dias)</h3>
+      <canvas id="chartHora"></canvas>
+    </div>
+  </div>
+
+  <!-- Gráficos linha 2: tipo de serviço + por profissional -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>🗂 Volume por Tipo de Serviço — Últimos 30 Dias</h3>
+      <canvas id="chartTipo"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>👨‍⚕️ Atendimentos por Profissional — Últimos 30 Dias</h3>
+      <canvas id="chartProf"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabela reanúncios hoje -->
+  <div class="table-card">
+    <h3>🔔 Pacientes com Mais Reanúncios Hoje</h3>
+    {% if top_reanuncios %}
+    <table>
+      <thead>
+        <tr>
+          <th>Paciente</th>
+          <th>Senha</th>
+          <th>Tipo</th>
+          <th>Reanúncios</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in top_reanuncios %}
+        <tr>
+          <td>{{ r.paciente__nome_completo|default:"—" }}</td>
+          <td><strong>{{ r.paciente__senha|default:"—" }}</strong></td>
+          <td><span class="badge-tipo">{{ r.paciente__tipo_senha|default:"—" }}</span></td>
+          <td><span class="badge-count">{{ r.total }}×</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="vazio">Nenhum reanúncio registrado hoje.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  // Dados vindos do Django
+  const tendenciaLabels   = {{ tendencia_labels|safe }};
+  const tendenciaTotal    = {{ tendencia_total|safe }};
+  const tendenciaAtendidos= {{ tendencia_atendidos|safe }};
+  const horaLabels        = {{ hora_labels|safe }};
+  const horaData          = {{ hora_data|safe }};
+  const tipoLabels        = {{ tipo_labels|safe }};
+  const tipoData          = {{ tipo_data|safe }};
+  const profLabels        = {{ prof_labels|safe }};
+  const profData          = {{ prof_data|safe }};
+
+  // Paleta
+  const AZUL    = 'rgba(26,86,219,.85)';
+  const AZUL_LT = 'rgba(26,86,219,.15)';
+  const VERDE   = 'rgba(14,159,110,.85)';
+  const VERDE_LT= 'rgba(14,159,110,.15)';
+  const CORES_ROSCA = [
+    '#1a56db','#0e9f6e','#ff5a1f','#9061f9','#f59e0b',
+    '#06b6d4','#ec4899','#84cc16','#8b5cf6','#f97316'
+  ];
+
+  Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+  Chart.defaults.font.size = 12;
+
+  // ── Tendência ──────────────────────────────────────────────
+  new Chart(document.getElementById('chartTendencia'), {
+    type: 'line',
+    data: {
+      labels: tendenciaLabels,
+      datasets: [
+        {
+          label: 'Total de Pacientes',
+          data: tendenciaTotal,
+          borderColor: AZUL, backgroundColor: AZUL_LT,
+          fill: true, tension: .4, pointRadius: 4, pointHoverRadius: 6,
+        },
+        {
+          label: 'Atendidos',
+          data: tendenciaAtendidos,
+          borderColor: VERDE, backgroundColor: VERDE_LT,
+          fill: true, tension: .4, pointRadius: 4, pointHoverRadius: 6,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ── Pico por hora ─────────────────────────────────────────
+  new Chart(document.getElementById('chartHora'), {
+    type: 'bar',
+    data: {
+      labels: horaLabels,
+      datasets: [{
+        label: 'Registros',
+        data: horaData,
+        backgroundColor: horaData.map(v => {
+          const max = Math.max(...horaData);
+          return v === max ? '#ff5a1f' : 'rgba(26,86,219,.6)';
+        }),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ── Volume por tipo (rosca) ────────────────────────────────
+  new Chart(document.getElementById('chartTipo'), {
+    type: 'doughnut',
+    data: {
+      labels: tipoLabels,
+      datasets: [{
+        data: tipoData,
+        backgroundColor: CORES_ROSCA,
+        borderWidth: 2, borderColor: '#fff',
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, padding: 16 } }
+      }
+    }
+  });
+
+  // ── Por profissional (barra horizontal) ────────────────────
+  new Chart(document.getElementById('chartProf'), {
+    type: 'bar',
+    data: {
+      labels: profLabels,
+      datasets: [{
+        label: 'Atendimentos confirmados',
+        data: profData,
+        backgroundColor: 'rgba(14,159,110,.75)',
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f0f0f0' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+</script>
+{% endblock %}

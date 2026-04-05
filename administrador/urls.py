@@ -37,4 +37,5 @@ urlpatterns = [
         views.registrar_atividade,
         name="registrar_atividade",
     ),
+    path("dashboard/", views.dashboard, name="dashboard"),
 ]

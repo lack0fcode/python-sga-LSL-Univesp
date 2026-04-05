@@ -11,10 +11,14 @@ from django.contrib.auth.decorators import login_required
 
 from core.decorators import admin_required
 from core.forms import CadastrarFuncionarioForm, EditarFuncionarioForm
-from core.models import CustomUser, RegistroDeAcesso  # Importe o modelo CustomUser
+from core.models import CustomUser, Paciente, Chamada, ChamadaProfissional, RegistroDeAcesso  # Importe o modelo CustomUser
 from django.contrib.auth.forms import SetPasswordForm
 
-
+from django.db.models import Count, Q
+from django.db.models.functions import TruncDate, TruncHour
+from datetime import timedelta
+import json
+ 
 @admin_required
 def cadastrar_funcionario(request):
     if request.method == "POST":
@@ -213,3 +217,181 @@ def editar_dados_funcionario(request, pk):
         "administrador/editar_dados_funcionario.html",
         {"form": form, "funcionario": funcionario},
     )
+
+
+@admin_required
+def dashboard(request):
+    hoje = timezone.now().date()
+    ultimos_7_dias = timezone.now() - timedelta(days=7)
+    ultimos_30_dias = timezone.now() - timedelta(days=30)
+ 
+    # ── BLOCO 1: VISÃO GERAL DO DIA ──────────────────────────────────────────
+    pacientes_hoje = Paciente.objects.filter(horario_geracao_senha__date=hoje)
+    total_pacientes_hoje = pacientes_hoje.count()
+    total_atendidos_hoje = pacientes_hoje.filter(atendido=True).count()
+    total_aguardando = pacientes_hoje.filter(atendido=False).count()
+    taxa_atendimento_hoje = (
+        round((total_atendidos_hoje / total_pacientes_hoje) * 100, 1)
+        if total_pacientes_hoje > 0 else 0
+    )
+ 
+    # ── BLOCO 2: TEMPO MÉDIO DE ESPERA ───────────────────────────────────────
+    # horario_geracao_senha -> primeira chamada no guiche
+    chamadas_recentes = (
+        Chamada.objects
+        .filter(acao="chamada", data_hora__gte=ultimos_30_dias)
+        .select_related("paciente")
+        .order_by("paciente_id", "data_hora")
+    )
+    visto = set()
+    tempos_espera = []
+    tempos_espera_hoje = []
+    for c in chamadas_recentes:
+        if c.paciente_id in visto:
+            continue
+        visto.add(c.paciente_id)
+        if c.paciente.horario_geracao_senha:
+            minutos = (c.data_hora - c.paciente.horario_geracao_senha).total_seconds() / 60
+            if 0 < minutos < 480:
+                tempos_espera.append(minutos)
+                if c.data_hora.date() == hoje:
+                    tempos_espera_hoje.append(minutos)
+ 
+    tempo_medio_espera = round(sum(tempos_espera) / len(tempos_espera), 1) if tempos_espera else 0
+    tempo_medio_espera_hoje = round(sum(tempos_espera_hoje) / len(tempos_espera_hoje), 1) if tempos_espera_hoje else 0
+ 
+    # ── BLOCO 3: TEMPO MÉDIO DE ATENDIMENTO NO GUICHE ────────────────────────
+    # chamada -> confirmado no guiche
+    tempos_guiche = []
+    for conf in Chamada.objects.filter(acao="confirmado", data_hora__gte=ultimos_30_dias).select_related("paciente"):
+        chamada_ini = (
+            Chamada.objects
+            .filter(paciente=conf.paciente, acao="chamada", data_hora__lt=conf.data_hora)
+            .order_by("data_hora").first()
+        )
+        if chamada_ini:
+            minutos = (conf.data_hora - chamada_ini.data_hora).total_seconds() / 60
+            if 0 < minutos < 240:
+                tempos_guiche.append(minutos)
+ 
+    tempo_medio_guiche = round(sum(tempos_guiche) / len(tempos_guiche), 1) if tempos_guiche else 0
+ 
+    # ── BLOCO 4: TEMPO MÉDIO DE CONSULTA COM PROFISSIONAL ────────────────────
+    tempos_consulta = []
+    for conf in ChamadaProfissional.objects.filter(acao="confirmado", data_hora__gte=ultimos_30_dias).select_related("paciente"):
+        chamada_ini = (
+            ChamadaProfissional.objects
+            .filter(paciente=conf.paciente, acao="chamada", data_hora__lt=conf.data_hora)
+            .order_by("data_hora").first()
+        )
+        if chamada_ini:
+            minutos = (conf.data_hora - chamada_ini.data_hora).total_seconds() / 60
+            if 0 < minutos < 480:
+                tempos_consulta.append(minutos)
+ 
+    tempo_medio_consulta = round(sum(tempos_consulta) / len(tempos_consulta), 1) if tempos_consulta else 0
+ 
+    # ── BLOCO 5: VOLUME POR TIPO DE SERVICO ──────────────────────────────────
+    volume_por_tipo = (
+        Paciente.objects.filter(horario_geracao_senha__gte=ultimos_30_dias)
+        .values("tipo_senha").annotate(total=Count("id")).order_by("-total")
+    )
+    tipo_display = dict(Paciente.SENHA_CHOICES)
+    tipo_labels = [tipo_display.get(i["tipo_senha"], i["tipo_senha"] or "Sem tipo") for i in volume_por_tipo]
+    tipo_data = [i["total"] for i in volume_por_tipo]
+ 
+    # ── BLOCO 6: ATENDIMENTOS POR PROFISSIONAL ───────────────────────────────
+    por_prof = (
+        ChamadaProfissional.objects
+        .filter(acao="confirmado", data_hora__gte=ultimos_30_dias)
+        .values("profissional_saude__first_name", "profissional_saude__last_name")
+        .annotate(total=Count("id")).order_by("-total")
+    )
+    prof_labels = [
+        f"{i['profissional_saude__first_name']} {i['profissional_saude__last_name']}".strip()
+        for i in por_prof
+    ]
+    prof_data = [i["total"] for i in por_prof]
+ 
+    # ── BLOCO 7: TENDENCIA 14 DIAS ───────────────────────────────────────────
+    tendencia = (
+        Paciente.objects.filter(horario_geracao_senha__gte=timezone.now() - timedelta(days=14))
+        .annotate(dia=TruncDate("horario_geracao_senha"))
+        .values("dia")
+        .annotate(total=Count("id"), atendidos=Count("id", filter=Q(atendido=True)))
+        .order_by("dia")
+    )
+    tendencia_labels = [i["dia"].strftime("%d/%m") for i in tendencia]
+    tendencia_total = [i["total"] for i in tendencia]
+    tendencia_atendidos = [i["atendidos"] for i in tendencia]
+ 
+    # ── BLOCO 8: PICO DE DEMANDA POR HORA ────────────────────────────────────
+    por_hora_qs = (
+        Paciente.objects.filter(horario_geracao_senha__gte=ultimos_7_dias)
+        .annotate(hora=TruncHour("horario_geracao_senha"))
+        .values("hora").annotate(total=Count("id"))
+    )
+    hora_data_raw = {}
+    for item in por_hora_qs:
+        h = timezone.localtime(item["hora"]).strftime("%Hh")
+        hora_data_raw[h] = hora_data_raw.get(h, 0) + item["total"]
+ 
+    hora_labels = [f"{h:02d}h" for h in range(6, 21)]
+    hora_data = [hora_data_raw.get(k, 0) for k in hora_labels]
+ 
+    # ── BLOCO 9: INDICADORES DE QUALIDADE ────────────────────────────────────
+    total_chamadas = Chamada.objects.filter(data_hora__gte=ultimos_30_dias).count()
+    total_reanuncios = Chamada.objects.filter(acao="reanuncio", data_hora__gte=ultimos_30_dias).count()
+    taxa_reanuncio = round((total_reanuncios / total_chamadas) * 100, 1) if total_chamadas > 0 else 0
+ 
+    total_encaminhamentos = ChamadaProfissional.objects.filter(acao="encaminha", data_hora__gte=ultimos_30_dias).count()
+    total_conf_prof = ChamadaProfissional.objects.filter(acao="confirmado", data_hora__gte=ultimos_30_dias).count()
+    base_enc = total_conf_prof + total_encaminhamentos
+    taxa_encaminhamento = round((total_encaminhamentos / base_enc) * 100, 1) if base_enc > 0 else 0
+ 
+    # ── BLOCO 10: EQUIPE ATIVA HOJE ──────────────────────────────────────────
+    profissionais_ativos = (
+        RegistroDeAcesso.objects
+        .filter(data_hora__date=hoje, tipo_de_acesso="login", usuario__funcao="profissional_saude")
+        .values("usuario_id").distinct().count()
+    )
+    guichistas_ativos = (
+        RegistroDeAcesso.objects
+        .filter(data_hora__date=hoje, tipo_de_acesso="login", usuario__funcao="guiche")
+        .values("usuario_id").distinct().count()
+    )
+ 
+    # ── BLOCO 11: TOP 5 REANUNCIOS HOJE ──────────────────────────────────────
+    top_reanuncios = (
+        Chamada.objects.filter(acao="reanuncio", data_hora__date=hoje)
+        .values("paciente__nome_completo", "paciente__senha", "paciente__tipo_senha")
+        .annotate(total=Count("id")).order_by("-total")[:5]
+    )
+ 
+    context = {
+        "total_pacientes_hoje": total_pacientes_hoje,
+        "total_atendidos_hoje": total_atendidos_hoje,
+        "total_aguardando": total_aguardando,
+        "taxa_atendimento_hoje": taxa_atendimento_hoje,
+        "profissionais_ativos": profissionais_ativos,
+        "guichistas_ativos": guichistas_ativos,
+        "tempo_medio_espera": tempo_medio_espera,
+        "tempo_medio_espera_hoje": tempo_medio_espera_hoje,
+        "tempo_medio_guiche": tempo_medio_guiche,
+        "tempo_medio_consulta": tempo_medio_consulta,
+        "taxa_reanuncio": taxa_reanuncio,
+        "taxa_encaminhamento": taxa_encaminhamento,
+        "tipo_labels": json.dumps(tipo_labels, ensure_ascii=False),
+        "tipo_data": json.dumps(tipo_data),
+        "prof_labels": json.dumps(prof_labels, ensure_ascii=False),
+        "prof_data": json.dumps(prof_data),
+        "tendencia_labels": json.dumps(tendencia_labels),
+        "tendencia_total": json.dumps(tendencia_total),
+        "tendencia_atendidos": json.dumps(tendencia_atendidos),
+        "hora_labels": json.dumps(hora_labels),
+        "hora_data": json.dumps(hora_data),
+        "top_reanuncios": top_reanuncios,
+        "data_hoje": hoje,
+    }
+ 
+    return render(request, "administrador/dashboard.html", context)
