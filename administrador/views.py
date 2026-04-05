@@ -25,6 +25,7 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncDate, TruncHour
 from datetime import timedelta, datetime
 import json
+from typing import Dict
 
 
 @admin_required
@@ -450,7 +451,7 @@ def dashboard(request):
         .values("hora")
         .annotate(total=Count("id"))
     )
-    hora_data_raw = {}
+    hora_data_raw: Dict[str, int] = {}
     for item in por_hora_qs:
         h = timezone.localtime(item["hora"]).strftime("%Hh")
         hora_data_raw[h] = hora_data_raw.get(h, 0) + item["total"]

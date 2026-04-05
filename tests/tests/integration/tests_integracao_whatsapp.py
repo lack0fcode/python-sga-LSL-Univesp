@@ -167,6 +167,6 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
             pacientes_com_mesmo_cartao.count(), 2
         )  # Deve ter 2 pacientes com mesmo cartão
 
-        # Verifica que ambos têm observações com hora de entrada
+        # Verifica que ambos têm observações com horário do atendimento
         for paciente in pacientes_com_mesmo_cartao:
-            self.assertIn("Hora de entrada:", paciente.observacoes)
+            self.assertIn("Horário do atendimento:", paciente.observacoes)
