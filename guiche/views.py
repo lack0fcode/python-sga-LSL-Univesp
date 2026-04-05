@@ -123,6 +123,15 @@ def painel_guiche(request):
         # Buscar histórico
         historico_chamadas = Chamada.objects.all().order_by("-data_hora")[:10]
 
+        # Determinar número do guichê selecionado (exibir número, não PK)
+        gid = request.session.get("guiche_id")
+        selected_guiche_num = None
+        if gid:
+            try:
+                selected_guiche_num = Guiche.objects.get(id=gid).numero
+            except Guiche.DoesNotExist:
+                selected_guiche_num = None
+
         return render(
             request,
             "guiche/painel_guiche.html",
@@ -130,6 +139,7 @@ def painel_guiche(request):
                 "form": form,
                 "senhas": senhas,
                 "historico_chamadas": historico_chamadas,
+                "selected_guiche_num": selected_guiche_num,
             },
         )
 

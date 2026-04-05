@@ -9,8 +9,8 @@
             <div class="mb-4 sm:mb-0">
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">
                     Painel do Guichê
-                    {% if request.session.guiche_id %}
-                        <span class="text-lg font-normal text-gray-600">— Guichê selecionado: {{ request.session.guiche_id }}</span>
+                    {% if selected_guiche_num %}
+                        <span class="text-lg font-normal text-gray-600">— Guichê selecionado: {{ selected_guiche_num }}</span>
                     {% endif %}
                 </h1>
                 <p class="text-gray-600">Gerencie as senhas e atendimentos do seu guichê</p>

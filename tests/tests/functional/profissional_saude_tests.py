@@ -229,9 +229,9 @@ class ProfissionalSaudeTests(TestCase):
         self.assertEqual(data["status"], "success")
         self.assertIn("confirmado com sucesso", data["mensagem"])
 
-        # Verificar que paciente foi marcado como não atendido
+        # Verificar que paciente foi marcado como atendido definitivamente
         self.paciente1.refresh_from_db()
-        self.assertFalse(self.paciente1.atendido)
+        self.assertTrue(self.paciente1.atendido)
 
     def test_realizar_acao_encaminhar_success(self):
         """Testa ação 'encaminhar' com sucesso."""

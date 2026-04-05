@@ -130,18 +130,27 @@
   <!-- Cabeçalho -->
   <div class="dash-header">
     <h1>📊 Dashboard Administrativo</h1>
-    <span class="badge-data">{{ data_hoje|date:"d/m/Y" }} &nbsp;·&nbsp; Últimos 30 dias</span>
+    <form method="get" style="display:flex;align-items:center;gap:.6rem;">
+      <span class="badge-data">{{ data_hoje|date:"d/m/Y" }}</span>
+      <label for="period" style="font-size:.82rem; color:var(--txt2);">·</label>
+      <select id="period" name="period" onchange="this.form.submit()" style="padding:.25rem .5rem; border:1px solid var(--borda); border-radius:6px; background:#fff;">
+        <option value="1" {% if selected_period == 1 %}selected{% endif %}>Hoje</option>
+        <option value="7" {% if selected_period == 7 %}selected{% endif %}>Últimos 7 dias</option>
+        <option value="14" {% if selected_period == 14 %}selected{% endif %}>Últimos 14 dias</option>
+        <option value="30" {% if selected_period == 30 %}selected{% endif %}>Últimos 30 dias</option>
+      </select>
+    </form>
   </div>
 
   <!-- Cards de visão geral -->
-  <div class="cards-grid">
+    <div class="cards-grid">
     <div class="card azul">
-      <span class="card-label">Pacientes Hoje</span>
+      <span class="card-label">Pacientes ({{ selected_period_label }})</span>
       <span class="card-value">{{ total_pacientes_hoje }}</span>
       <span class="card-sub">registros gerados</span>
     </div>
     <div class="card verde">
-      <span class="card-label">Atendidos Hoje</span>
+      <span class="card-label">Atendidos ({{ selected_period_label }})</span>
       <span class="card-value">{{ total_atendidos_hoje }}</span>
       <span class="card-sub">taxa {{ taxa_atendimento_hoje }}%</span>
     </div>
@@ -153,19 +162,19 @@
     <div class="card">
       <span class="card-label">Profissionais</span>
       <span class="card-value">{{ profissionais_ativos }}</span>
-      <span class="card-sub">ativos hoje</span>
+      <span class="card-sub">ativos ({{ selected_period_label }})</span>
     </div>
     <div class="card">
       <span class="card-label">Guichês</span>
       <span class="card-value">{{ guichistas_ativos }}</span>
-      <span class="card-sub">operadores ativos</span>
+      <span class="card-sub">operadores ({{ selected_period_label }})</span>
     </div>
   </div>
 
   <!-- Tempos médios -->
   <div class="tempos-grid">
     <div class="tempo-card">
-      <div class="t-label">⏱ Espera Média (30d)</div>
+      <div class="t-label">⏱ Espera Média ({{ selected_period_label }})</div>
       <div><span class="t-value">{{ tempo_medio_espera }}</span> <span class="t-unit">min</span></div>
       <div class="t-sub">Geração da senha → chamada no guichê</div>
     </div>
@@ -175,12 +184,12 @@
       <div class="t-sub">Média do dia atual</div>
     </div>
     <div class="tempo-card">
-      <div class="t-label">🪟 Atendimento Guichê (30d)</div>
+      <div class="t-label">🪟 Atendimento Guichê ({{ selected_period_label }})</div>
       <div><span class="t-value">{{ tempo_medio_guiche }}</span> <span class="t-unit">min</span></div>
       <div class="t-sub">Chamada → confirmação no guichê</div>
     </div>
     <div class="tempo-card">
-      <div class="t-label">🩺 Consulta Profissional (30d)</div>
+      <div class="t-label">🩺 Consulta Profissional ({{ selected_period_label }})</div>
       <div><span class="t-value">{{ tempo_medio_consulta }}</span> <span class="t-unit">min</span></div>
       <div class="t-sub">Chamada → confirmação pelo profissional</div>
     </div>
@@ -192,14 +201,14 @@
       <div class="qual-circle reauncio">{{ taxa_reanuncio }}%</div>
       <div class="qual-info">
         <div class="q-label">Taxa de Reanúncio</div>
-        <div class="q-desc">Proporção de senhas reanunciadas no guichê nos últimos 30 dias. Valores altos indicam pacientes ausentes ou confusos com o painel.</div>
+        <div class="q-desc">Proporção de senhas reanunciadas no guichê no {{ selected_period_label }}. Valores altos indicam pacientes ausentes ou confusos com o painel.</div>
       </div>
     </div>
     <div class="qual-card">
       <div class="qual-circle encaminha">{{ taxa_encaminhamento }}%</div>
       <div class="qual-info">
         <div class="q-label">Taxa de Encaminhamento</div>
-        <div class="q-desc">Proporção de atendimentos encaminhados para outro profissional. Valores altos podem indicar triagem inadequada ou sobrecarga.</div>
+        <div class="q-desc">Proporção de atendimentos encaminhados para outro profissional no {{ selected_period_label }}. Valores altos podem indicar triagem inadequada ou sobrecarga.</div>
       </div>
     </div>
   </div>
@@ -207,11 +216,11 @@
   <!-- Gráficos linha 1: tendência + pico de hora -->
   <div class="charts-grid">
     <div class="chart-card">
-      <h3>📈 Tendência de Pacientes — Últimos 14 Dias</h3>
+      <h3>📈 Tendência de Pacientes — {{ selected_period_label }}</h3>
       <canvas id="chartTendencia"></canvas>
     </div>
     <div class="chart-card">
-      <h3>🕐 Pico de Demanda por Hora (últimos 7 dias)</h3>
+      <h3>🕐 Pico de Demanda por Hora — {{ selected_period_label }}</h3>
       <canvas id="chartHora"></canvas>
     </div>
   </div>
@@ -219,18 +228,29 @@
   <!-- Gráficos linha 2: tipo de serviço + por profissional -->
   <div class="charts-grid">
     <div class="chart-card">
-      <h3>🗂 Volume por Tipo de Serviço — Últimos 30 Dias</h3>
+      <h3>🗂 Volume por Tipo de Serviço — {{ selected_period_label }}</h3>
       <canvas id="chartTipo"></canvas>
     </div>
     <div class="chart-card">
-      <h3>👨‍⚕️ Atendimentos por Profissional — Últimos 30 Dias</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;gap:1rem;">
+        <h3 style="margin:0;">👨‍⚕️ Atendimentos por Profissional — {{ selected_period_label }}</h3>
+          <form method="get" style="margin:0;">
+            <input type="hidden" name="period" value="{{ selected_period }}">
+            <label for="prof_filter" style="font-size:.82rem; color:var(--txt2); margin-right:.5rem;">Filtrar por:</label>
+            <select id="prof_filter" name="prof_filter" onchange="this.form.submit()" style="padding:.25rem .5rem; border:1px solid var(--borda); border-radius:6px;">
+            <option value="profissional_saude" {% if request.GET.prof_filter|default:'profissional_saude' == 'profissional_saude' %}selected{% endif %}>Profissionais de Saúde</option>
+            <option value="guiche" {% if request.GET.prof_filter == 'guiche' %}selected{% endif %}>Guichês</option>
+            <option value="recepcionista" {% if request.GET.prof_filter == 'recepcionista' %}selected{% endif %}>Recepcionistas</option>
+          </select>
+        </form>
+      </div>
       <canvas id="chartProf"></canvas>
     </div>
   </div>
 
-  <!-- Tabela reanúncios hoje -->
+  <!-- Tabela reanúncios -->
   <div class="table-card">
-    <h3>🔔 Pacientes com Mais Reanúncios Hoje</h3>
+    <h3>🔔 Pacientes com Mais Reanúncios — {{ selected_period_label }}</h3>
     {% if top_reanuncios %}
     <table>
       <thead>
@@ -253,7 +273,7 @@
       </tbody>
     </table>
     {% else %}
-    <p class="vazio">Nenhum reanúncio registrado hoje.</p>
+    <p class="vazio">{% if selected_period == 1 %}Nenhum reanúncio registrado hoje.{% else %}Nenhum reanúncio registrado no {{ selected_period_label }}.{% endif %}</p>
     {% endif %}
   </div>
 
