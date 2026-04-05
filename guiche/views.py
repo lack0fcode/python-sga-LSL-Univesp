@@ -207,6 +207,37 @@ def confirmar_atendimento(request, paciente_id):
     return JsonResponse({"status": "ok"})
 
 
+@require_POST
+@login_required
+@guiche_required
+def desistir_atendimento(request, paciente_id):
+    """Marca o paciente como desistente e registra a chamada de desistência.
+
+    Nota: o modelo `Chamada.ACOES` atualmente não possui um valor específico
+    para "desistência"; por compatibilidade, registramos a ação como
+    "confirmado" e marcamos o paciente como atendido para removê-lo da fila.
+    Se preferir, podemos adicionar um novo valor em `Chamada.ACOES` e gerar
+    migrações para suportar isso corretamente.
+    """
+    guiche = get_guiche_do_usuario(request.user, request=request)
+    paciente = Paciente.objects.get(id=paciente_id)
+
+    # Registra a desistência como uma chamada com acao='desistencia'
+    Chamada.objects.create(paciente=paciente, guiche=guiche, acao="desistencia")
+
+    # Marca o paciente como 'atendido' para removê-lo da lista ativa
+    paciente.atendido = True
+    paciente.save()
+
+    # Limpa o guichê se estivesse em atendimento
+    if guiche.senha_atendida and guiche.senha_atendida.id == paciente.id:
+        guiche.senha_atendida = None
+        guiche.em_atendimento = False
+        guiche.save()
+
+    return JsonResponse({"status": "ok"})
+
+
 def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
     guiche_obj = Guiche.objects.get(numero=guiche_numero)
     paciente = Paciente.objects.get(id=paciente_id)

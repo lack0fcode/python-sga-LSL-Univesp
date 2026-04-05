@@ -468,6 +468,16 @@ def dashboard(request):
         round((total_reanuncios / total_chamadas) * 100, 1) if total_chamadas > 0 else 0
     )
 
+    # Desistências
+    total_desistencias = Chamada.objects.filter(
+        acao="desistencia", data_hora__gte=start_dt
+    ).count()
+    taxa_desistencia = (
+        round((total_desistencias / total_chamadas) * 100, 1)
+        if total_chamadas > 0
+        else 0
+    )
+
     total_encaminhamentos = ChamadaProfissional.objects.filter(
         acao="encaminha", data_hora__gte=start_dt
     ).count()
@@ -519,6 +529,8 @@ def dashboard(request):
         "tempo_medio_guiche": tempo_medio_guiche,
         "tempo_medio_consulta": tempo_medio_consulta,
         "taxa_reanuncio": taxa_reanuncio,
+        "total_desistencias": total_desistencias,
+        "taxa_desistencia": taxa_desistencia,
         "taxa_encaminhamento": taxa_encaminhamento,
         "tipo_labels": json.dumps(tipo_labels, ensure_ascii=False),
         "tipo_data": json.dumps(tipo_data),

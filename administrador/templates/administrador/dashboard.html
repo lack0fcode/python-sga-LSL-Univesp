@@ -169,6 +169,11 @@
       <span class="card-value">{{ guichistas_ativos }}</span>
       <span class="card-sub">operadores ({{ selected_period_label }})</span>
     </div>
+    <div class="card">
+      <span class="card-label">Desistências</span>
+      <span class="card-value">{{ total_desistencias|default:0 }}</span>
+      <span class="card-sub">taxa {{ taxa_desistencia|default:0 }}%</span>
+    </div>
   </div>
 
   <!-- Tempos médios -->

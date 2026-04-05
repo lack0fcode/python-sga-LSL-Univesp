@@ -84,6 +84,9 @@
                                 <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="confirmar({{ senha.id }})">
                                     <i class="bi bi-check-circle mr-1"></i>Confirmar
                                 </button>
+                                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="desistir({{ senha.id }})">
+                                    <i class="bi bi-x-circle mr-1"></i>Desistência
+                                </button>
                             </div>
                         </div>
                         {% if senha.observacoes %}
@@ -222,6 +225,29 @@ function confirmar(pacienteId) {
     .catch(error => {
         console.error('Erro:', error);
         alert('Erro ao confirmar o atendimento.');
+    });
+}
+
+function desistir(pacienteId) {
+    fetch(`/guiche/desistir/${pacienteId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            console.log('Desistência registrada com sucesso');
+            location.reload();
+        } else {
+            alert('Erro ao registrar desistência.');
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao registrar desistência.');
     });
 }
 
