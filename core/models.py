@@ -207,6 +207,7 @@ class Chamada(models.Model):
         ("chamada", "Chamada"),
         ("reanuncio", "Reanúncio"),
         ("confirmado", "Confirmado"),
+        ("desistencia", "Desistência"),
     )
     paciente = models.ForeignKey(
         Paciente, on_delete=models.CASCADE, verbose_name="Paciente"

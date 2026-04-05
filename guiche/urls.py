@@ -16,6 +16,11 @@ urlpatterns = [
         views.confirmar_atendimento,
         name="confirmar_atendimento",
     ),
+    path(
+        "desistir/<int:paciente_id>/",
+        views.desistir_atendimento,
+        name="desistir_atendimento",
+    ),
     path("tv1/", views.tv1_view, name="tv1"),
     path("tv1/api/", views.tv1_api_view, name="tv1_api"),
     path("tv1/historico/api/", views.tv1_historico_api_view, name="tv1_historico_api"),
