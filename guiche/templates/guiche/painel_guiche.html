@@ -21,6 +21,14 @@
                     <i class="bi bi-gear mr-2"></i>
                     Selecionar/Trocar Guichê
                 </a>
+                <form method="get" id="period-form" class="inline-flex items-center px-2">
+                    <label for="period" class="text-sm text-gray-600 mr-2">Período:</label>
+                    <select name="period" id="period" onchange="this.form.submit()" class="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white">
+                        <option value="all" {% if selected_period == 'all' or not selected_period %}selected{% endif %}>Todos</option>
+                        <option value="manha" {% if selected_period == 'manha' %}selected{% endif %}>Manhã (07:00-11:59)</option>
+                        <option value="tarde" {% if selected_period == 'tarde' %}selected{% endif %}>Tarde (12:00-18:00)</option>
+                    </select>
+                </form>
             </div>
         </div>
     </div>
@@ -70,9 +78,14 @@
                 {% for senha in senhas %}
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                         <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center">
-                                <span class="text-lg font-bold text-primary mr-3">{{ senha.senha }}</span>
-                                <span class="text-gray-900">{{ senha.nome_completo }}</span>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-3xl font-extrabold text-primary">{{ senha.senha }}</span>
+                                <div>
+                                    <div class="text-lg font-semibold text-gray-900">{{ senha.nome_completo|default:"—" }}</div>
+                                    {% if senha.tipo_senha %}
+                                    <div class="text-sm text-gray-500">Tipo: {{ senha.tipo_senha }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="flex space-x-2">
                                 <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium transition duration-200" onclick="chamar({{ senha.id }})">
@@ -118,7 +131,12 @@
             <div class="space-y-2">
                 {% for chamada in historico_chamadas %}
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <span class="text-gray-700">{{ chamada }}</span>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-semibold text-gray-700">{{ chamada.get_acao_display }} — <span class="font-bold">{{ chamada.paciente.senha }}</span> — {{ chamada.paciente.nome_completo|default:"—" }}</div>
+                                <div class="text-xs text-gray-500">Guichê {{ chamada.guiche.numero }} • {{ chamada.data_hora|date:"H:i d/m" }}</div>
+                            </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -254,5 +272,28 @@ function desistir(pacienteId) {
 function atualizarTelaTv(senha, nome, guiche) {
     console.log("Atualizando tela da tv...", senha, nome, guiche);
 }
+</script>
+<script>
+    // Auto-refresh every 60 seconds (60000 ms)
+    (function autoRefresh() {
+        try {
+            setInterval(function() {
+                // Only reload when the document is fully loaded to avoid
+                // racing with other onload handlers (e.g. Inputmask).
+                if (document.readyState === 'complete') {
+                    // Small timeout to allow other load handlers to finish.
+                    setTimeout(function() {
+                        try {
+                            window.location.reload();
+                        } catch (e) {
+                            console.error('Reload failed:', e);
+                        }
+                    }, 500);
+                }
+            }, 60000);
+        } catch (e) {
+            console.error('Auto-refresh failed:', e);
+        }
+    })();
 </script>
 {% endblock %}
