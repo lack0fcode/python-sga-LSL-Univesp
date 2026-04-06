@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
+from django.db.models import Q
 from django.views.decorators.http import require_POST
 from gtts import gTTS
 
@@ -30,6 +31,11 @@ logger = logging.getLogger(__name__)
 @login_required
 def painel_guiche(request):
     senhas = []
+    # Persistir seleção de período na sessão para sobreviver a POST/redirect
+    period_from_get = request.GET.get("period")
+    if period_from_get is not None:
+        request.session["guiche_period"] = period_from_get
+
     if request.method == "POST":
         form = GuicheForm(request.POST)
         if form.is_valid():
@@ -69,6 +75,12 @@ def painel_guiche(request):
     else:  # GET
         form = GuicheForm()
 
+        # Period filter: 'all' | 'manha' | 'tarde'
+        # Prefer GET param, fallback to session, default to 'all'
+        period_raw = request.GET.get("period") or request.session.get(
+            "guiche_period", "all"
+        )
+
         # Recuperar seleções da sessão
         filtros_guiche = request.session.get("filtros_guiche")
         if filtros_guiche:
@@ -83,6 +95,26 @@ def painel_guiche(request):
                 tipo_senha__in=tipos_selecionados,
                 atendido=False,
             ).order_by("horario_geracao_senha")
+
+            # Apply period filter if provided via GET
+            period_raw = request.GET.get("period", "all")
+            if period_raw in ("manha", "tarde"):
+                if period_raw == "manha":
+                    start_h, end_h = 7, 11
+                else:
+                    start_h, end_h = 12, 18
+
+                pacientes = pacientes.filter(
+                    Q(
+                        horario_agendamento__hour__gte=start_h,
+                        horario_agendamento__hour__lte=end_h,
+                    )
+                    | Q(
+                        horario_agendamento__isnull=True,
+                        horario_geracao_senha__hour__gte=start_h,
+                        horario_geracao_senha__hour__lte=end_h,
+                    )
+                )
 
             # Agrupa por tipo
             grupos: defaultdict[str, deque] = defaultdict(deque)
@@ -120,6 +152,26 @@ def painel_guiche(request):
                 atendido=False,
             ).order_by("horario_geracao_senha")
 
+            # Apply period filter for the no-session case
+            period_raw = request.GET.get("period", "all")
+            if period_raw in ("manha", "tarde"):
+                if period_raw == "manha":
+                    start_h, end_h = 7, 11
+                else:
+                    start_h, end_h = 12, 18
+
+                senhas = senhas.filter(
+                    Q(
+                        horario_agendamento__hour__gte=start_h,
+                        horario_agendamento__hour__lte=end_h,
+                    )
+                    | Q(
+                        horario_agendamento__isnull=True,
+                        horario_geracao_senha__hour__gte=start_h,
+                        horario_geracao_senha__hour__lte=end_h,
+                    )
+                )
+
         # Buscar histórico
         historico_chamadas = Chamada.objects.all().order_by("-data_hora")[:10]
 
@@ -140,6 +192,7 @@ def painel_guiche(request):
                 "senhas": senhas,
                 "historico_chamadas": historico_chamadas,
                 "selected_guiche_num": selected_guiche_num,
+                "selected_period": period_raw,
             },
         )
 
