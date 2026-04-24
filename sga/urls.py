@@ -1,7 +1,14 @@
 from django.contrib import admin
+from django.shortcuts import render
 from django.urls import include, path
 
+
+def tv_selecao_view(request):
+    return render(request, "tv.html")
+
+
 urlpatterns = [
+    path("tv/", tv_selecao_view, name="tv_selecao"),
     path("admin/", admin.site.urls),
     path("", include("core.urls")),
     path("administrador/", include("administrador.urls")),

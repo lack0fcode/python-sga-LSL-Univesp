@@ -1,0 +1,20 @@
+{% extends "tv_base.html" %}
+
+{% block title %}Painel de Chamadas - Seleção{% endblock %}
+
+{% block main %}
+    <!-- ===== TELA DE SELEÇÃO ===== -->
+    <div class="tela-selecao">
+        <h2>Selecione o Painel</h2>
+        <div class="selecao-botoes">
+            <a href="{% url 'guiche:tv1' %}">
+                TV1
+                <span class="subtitulo">Chamadas de Guichê</span>
+            </a>
+            <a href="{% url 'profissional_saude:tv2' %}">
+                TV2
+                <span class="subtitulo">Chamadas de Consultório</span>
+            </a>
+        </div>
+    </div>
+{% endblock %}

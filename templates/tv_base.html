@@ -1,0 +1,372 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Painel de Chamadas{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* ===== BASE ===== */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 80px;
+            padding-bottom: 60px;
+            margin: 0;
+        }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #ffffff;
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            z-index: 1000;
+            height: 70px;
+        }
+
+        .top-bar .logo {
+            height: 50px;
+        }
+
+        .top-bar .horario {
+            font-size: 1.5em;
+            color: #555;
+        }
+
+        /* ===== MENSAGEM BOAS-VINDAS ===== */
+        .mensagem-boas-vindas {
+            color: #007bff;
+            font-size: 1.2em;
+            white-space: nowrap;
+            overflow: hidden;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%);
+        }
+
+        /* ===== CONTEÚDO PRINCIPAL ===== */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 40px;
+        }
+
+        .painel-chamada {
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        /* ===== SENHA CHAMADA ===== */
+        .senha-chamada {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+        }
+
+        .senha-chamada h3 {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #dc3545;
+            animation: blinkBackground 1s steps(5, start) infinite;
+            padding: 20px 30px;
+            border: 3px solid #dc3545;
+            border-radius: 12px;
+            display: inline-block;
+            line-height: 1.2;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .senha-chamada .instrucao {
+            font-size: 2.5rem;
+            color: #333;
+            margin-top: 15px;
+        }
+
+        .senha-chamada .sem-chamada {
+            font-size: 2.5rem;
+            color: #6c757d;
+            animation: none;
+            border: none;
+        }
+
+        @keyframes blinkBackground {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(220,53,69,0.4); }
+            100% { background-color: transparent; }
+        }
+
+        /* ===== HISTÓRICO ===== */
+        .historico-senhas {
+            margin-top: 20px;
+            max-height: 55vh;
+            overflow-y: auto;
+            border: 2px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+
+        .historico-senhas h4 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .historico-senhas ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .historico-senhas li {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 2rem;
+            color: #333;
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .historico-senhas li:last-child {
+            border-bottom: none;
+        }
+
+        .historico-senhas li .text-success {
+            color: #28a745 !important;
+            font-weight: 600;
+        }
+
+        /* ===== TELA DE SELEÇÃO ===== */
+        .tela-selecao {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 140px);
+            padding: 40px;
+        }
+
+        .tela-selecao h2 {
+            font-size: 3rem;
+            color: #333;
+            margin-bottom: 50px;
+            font-weight: bold;
+        }
+
+        .selecao-botoes {
+            display: flex;
+            gap: 60px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .selecao-botoes a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 350px;
+            height: 250px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: #fff;
+            border-radius: 16px;
+            text-decoration: none;
+            font-size: 2.5rem;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .selecao-botoes a:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            text-decoration: none;
+            color: #fff;
+        }
+
+        .selecao-botoes a .subtitulo {
+            font-size: 1.3rem;
+            font-weight: normal;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #000;
+            padding: 10px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        footer img {
+            height: 40px;
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+    <!-- Top Bar com Logo e Horário (compartilhado por TV1, TV2 e Seleção) -->
+    <div class="top-bar">
+        <img src="{% static 'img/logo.png' %}" alt="Logo Sistema" class="logo">
+        <marquee class="mensagem-boas-vindas" behavior="scroll" direction="left">
+            Bem-vindos ao Instituto Lauro de Souza Lima!
+        </marquee>
+        <span class="horario" id="horario"></span>
+    </div>
+
+    <!-- Conteúdo específico de cada TV / Seleção -->
+    {% block main %}{% endblock %}
+
+    <!-- Rodapé (compartilhado) -->
+    <footer>
+        <img src="{% static 'img/logo-rodape-governo-do-estado-sp.png' %}" alt="Governo SP">
+    </footer>
+
+    <!-- Libs compartilhadas -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- JS compartilhado: relógio e helper de voz -->
+    <script>
+        (function () {
+            // ===== RELÓGIO =====
+            function displayTime() {
+                var now = new Date();
+                var hh = String(now.getHours()).padStart(2, '0');
+                var mm = String(now.getMinutes()).padStart(2, '0');
+                var ss = String(now.getSeconds()).padStart(2, '0');
+                var el = document.getElementById('horario');
+                if (el) el.innerText = hh + ':' + mm + ':' + ss;
+            }
+            setInterval(displayTime, 1000);
+            displayTime();
+
+            // ===== VOZ (pt-BR) =====
+            // Motor de TTS do navegador (Web Speech API). Pode ser null em navegadores muito antigos.
+            window.tvSynth = window.speechSynthesis || null;
+
+            // Vozes preferidas em ordem: nomes de vozes NEURAIS/Online pt-BR modernas
+            // (Edge/Chrome no Windows 10/11 costumam expor "Francisca" ou "Antonio" Natural/Online).
+            var VOZES_NEURAIS_PTBR = [
+                'francisca', 'antonio', 'brenda', 'elza', 'fabio', 'giovanna',
+                'humberto', 'julio', 'leila', 'leticia', 'manuela', 'nicolau',
+                'thalita', 'valerio', 'yara'
+            ];
+
+            // Ranking: quanto maior, melhor. Escolhe a voz de melhor qualidade disponível.
+            function _scoreVoz(v) {
+                if (!v) return -1;
+                var nome = (v.name || '').toLowerCase();
+                var lang = (v.lang || '').toLowerCase();
+                if (lang !== 'pt-br' && lang !== 'pt_br' && !lang.startsWith('pt-br')) {
+                    // voz em PT-PT ainda é melhor do que nada, mas muito atrás
+                    return lang.startsWith('pt') ? 10 : -1;
+                }
+                var score = 50; // base para qualquer pt-BR
+                if (nome.indexOf('natural') !== -1) score += 40;        // Microsoft ... Natural
+                if (nome.indexOf('online') !== -1) score += 30;         // Microsoft ... Online
+                if (nome.indexOf('neural') !== -1) score += 40;
+                if (nome.indexOf('google') !== -1) score += 20;         // Google pt-BR (boa)
+                for (var i = 0; i < VOZES_NEURAIS_PTBR.length; i++) {
+                    if (nome.indexOf(VOZES_NEURAIS_PTBR[i]) !== -1) { score += 25; break; }
+                }
+                if (nome.indexOf('maria') !== -1) score -= 10;          // Microsoft Maria antiga (SAPI5)
+                if (nome.indexOf('female') !== -1) score += 5;
+                return score;
+            }
+
+            var _vozEscolhida = null;
+            function _escolherMelhorVoz() {
+                if (!window.tvSynth) return null;
+                var voices = window.tvSynth.getVoices();
+                if (!voices || !voices.length) return null;
+                var melhor = null, melhorScore = -1;
+                for (var i = 0; i < voices.length; i++) {
+                    var s = _scoreVoz(voices[i]);
+                    if (s > melhorScore) { melhorScore = s; melhor = voices[i]; }
+                }
+                if (melhor && window.console) {
+                    console.log('[TV TTS] Voz escolhida:', melhor.name, '(' + melhor.lang + ')', 'score=' + melhorScore);
+                }
+                return melhor;
+            }
+
+            function _carregarVozes() {
+                _vozEscolhida = _escolherMelhorVoz();
+            }
+            _carregarVozes();
+            if (window.tvSynth && typeof window.tvSynth.onvoiceschanged !== 'undefined') {
+                // Chrome popula vozes de forma assíncrona: precisa esperar este evento.
+                window.tvSynth.onvoiceschanged = _carregarVozes;
+            }
+
+            // Retrocompat: quem chama tvGetFemaleVoice() continua funcionando.
+            window.tvGetFemaleVoice = function () {
+                return _vozEscolhida || _escolherMelhorVoz();
+            };
+
+            // ===== FALA (com repetição serial via onend) =====
+            // Uso: window.tvFalar("Paciente Maria, dirija-se ao guichê 1.", { repetir: 3 });
+            window.tvFalar = function (texto, opcoes) {
+                if (!window.tvSynth || !texto) return;
+                opcoes = opcoes || {};
+                var repetir = typeof opcoes.repetir === 'number' ? opcoes.repetir : 1;
+                var pausaMs = typeof opcoes.pausaMs === 'number' ? opcoes.pausaMs : 400;
+                var rate = typeof opcoes.rate === 'number' ? opcoes.rate : 0.92;   // levemente mais lento p/ clareza
+                var pitch = typeof opcoes.pitch === 'number' ? opcoes.pitch : 1.0;
+                var volume = typeof opcoes.volume === 'number' ? opcoes.volume : 1.0;
+
+                // Cancela qualquer fala anterior para não empilhar na fila do sintetizador.
+                try { window.tvSynth.cancel(); } catch (e) { /* noop */ }
+
+                var voz = window.tvGetFemaleVoice();
+                var idx = 0;
+
+                function falarUmaVez() {
+                    var utter = new SpeechSynthesisUtterance(texto);
+                    utter.lang = 'pt-BR';
+                    utter.rate = rate;
+                    utter.pitch = pitch;
+                    utter.volume = volume;
+                    if (voz) utter.voice = voz;
+                    utter.onend = function () {
+                        idx++;
+                        if (idx < repetir) {
+                            setTimeout(falarUmaVez, pausaMs);
+                        }
+                    };
+                    utter.onerror = function (e) {
+                        console.error('[TV TTS] Erro ao falar:', e.error);
+                    };
+                    window.tvSynth.speak(utter);
+                }
+                falarUmaVez();
+            };
+        })();
+    </script>
+
+    <!-- JS específico de cada TV -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

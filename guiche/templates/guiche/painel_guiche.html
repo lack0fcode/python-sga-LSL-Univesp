@@ -82,9 +82,20 @@
                                 <span class="text-3xl font-extrabold text-primary">{{ senha.senha }}</span>
                                 <div>
                                     <div class="text-lg font-semibold text-gray-900">{{ senha.nome_completo|default:"—" }}</div>
-                                    {% if senha.tipo_senha %}
-                                    <div class="text-sm text-gray-500">Tipo: {{ senha.tipo_senha }}</div>
-                                    {% endif %}
+                                    <div class="text-sm text-gray-500 flex flex-wrap items-center gap-x-2">
+                                        {% if senha.tipo_senha %}
+                                            <span>Tipo: {{ senha.tipo_senha }}</span>
+                                        {% endif %}
+                                        {% if senha.tipo_senha and senha.profissional_saude %}
+                                            <span class="text-gray-300">·</span>
+                                        {% endif %}
+                                        {% if senha.profissional_saude %}
+                                            <span class="inline-flex items-center">
+                                                <i class="bi bi-person-badge text-green-600 mr-1"></i>
+                                                Médico: {{ senha.profissional_saude.first_name }} {{ senha.profissional_saude.last_name }}{% if senha.profissional_saude.sala %} — Sala {{ senha.profissional_saude.sala }}{% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex space-x-2">
