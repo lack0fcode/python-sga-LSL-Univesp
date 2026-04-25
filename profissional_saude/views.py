@@ -66,10 +66,15 @@ def realizar_acao_profissional(request, paciente_id, acao):
         # Tenta enviar mensagem via WhatsApp
         numero_celular_paciente = paciente.telefone_e164()
         if numero_celular_paciente:
+            sala_display = (
+                f"Sala {profissional_saude.sala}"
+                if str(profissional_saude.sala).isdigit()
+                else str(profissional_saude.sala).capitalize()
+            )
             mensagem = (
                 f"Olá {paciente.nome_completo.split()[0]}! "
                 f"O(a) Dr(a). {profissional_saude.first_name}, lhe aguarda. "
-                f"Por favor, dirija-se à Sala {profissional_saude.sala}."
+                f"Por favor, dirija-se à {sala_display}."
             )
             twilio_response = enviar_whatsapp(numero_celular_paciente, mensagem)
         else:
@@ -94,10 +99,15 @@ def realizar_acao_profissional(request, paciente_id, acao):
         # Reenviar o WhatsApp no reanuncio
         numero_celular_paciente = paciente.telefone_e164()
         if numero_celular_paciente:
+            sala_display = (
+                f"Sala {profissional_saude.sala}"
+                if str(profissional_saude.sala).isdigit()
+                else str(profissional_saude.sala).capitalize()
+            )
             mensagem = (
                 f"Olá {paciente.nome_completo.split()[0]}! "
                 f"O(A) Dr(a). {profissional_saude.first_name} está chamando novamente. "
-                f"Por favor, dirija-se à Sala {profissional_saude.sala}."
+                f"Por favor, dirija-se à {sala_display}."
             )
             twilio_response = enviar_whatsapp(numero_celular_paciente, mensagem)
         else:
@@ -271,7 +281,7 @@ def selecionar_sala(request):
     if request.method == "POST":
         form = SelecionarSalaForm(request.POST)
         if form.is_valid():
-            sala_numero = int(form.cleaned_data["sala"])
+            sala_numero = form.cleaned_data["sala"]
 
             # Verificar se outro profissional já está usando esta sala
             outro_profissional = (

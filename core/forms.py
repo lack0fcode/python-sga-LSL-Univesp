@@ -282,6 +282,6 @@ class EditarFuncionarioForm(forms.ModelForm):
         )
         widgets = {
             "data_admissao": forms.DateInput(attrs={"type": "date"}),
-            "sala": forms.NumberInput(),
+            "sala": forms.TextInput(),
             "email": forms.EmailInput(),
         }

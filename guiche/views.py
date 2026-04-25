@@ -415,7 +415,7 @@ def tv1_historico_api_view(request) -> JsonResponse:
         historico_chamadas = (
             Chamada.objects.filter(acao="confirmado")
             .select_related("paciente", "guiche")
-            .order_by("-data_hora")[:8]
+            .order_by("-data_hora")[:5]
         )
 
         historico_data: List[Dict[str, Any]] = []
