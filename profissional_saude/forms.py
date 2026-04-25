@@ -75,7 +75,7 @@ class SelecionarSalaForm(forms.Form):
 
     sala = forms.ChoiceField(
         choices=[(str(i), f"Sala {i}") for i in range(1, 21)]
-        + [("enfermaria", "Enfermaria")],  # Salas 1 a 20 + Enfermaria
+        + [("enfermagem", "Enfermagem")],  # Salas 1 a 20 + Enfermagem
         label="Sala do dia",
         widget=forms.Select(
             attrs={
