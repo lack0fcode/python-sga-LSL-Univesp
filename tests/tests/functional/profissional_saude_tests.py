@@ -346,7 +346,9 @@ class ProfissionalSaudeTests(TestCase):
         self.assertEqual(
             response.context["nome_completo"], self.paciente2.nome_completo
         )
-        self.assertEqual(response.context["sala_profissional"], str(self.profissional1.sala))
+        self.assertEqual(
+            response.context["sala_profissional"], str(self.profissional1.sala)
+        )
         self.assertEqual(
             len(response.context["historico_senhas"]), 1
         )  # Uma chamada anterior
