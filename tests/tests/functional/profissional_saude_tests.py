@@ -346,7 +346,9 @@ class ProfissionalSaudeTests(TestCase):
         self.assertEqual(
             response.context["nome_completo"], self.paciente2.nome_completo
         )
-        self.assertEqual(response.context["sala_profissional"], self.profissional1.sala)
+        self.assertEqual(
+            response.context["sala_profissional"], str(self.profissional1.sala)
+        )
         self.assertEqual(
             len(response.context["historico_senhas"]), 1
         )  # Uma chamada anterior
@@ -378,7 +380,7 @@ class ProfissionalSaudeTests(TestCase):
 
         self.assertEqual(data["senha"], self.paciente1.senha)
         self.assertEqual(data["nome_completo"], self.paciente1.nome_completo)
-        self.assertEqual(data["sala_profissional"], self.profissional1.sala)
+        self.assertEqual(data["sala_profissional"], str(self.profissional1.sala))
         self.assertEqual(data["id"], chamada.id)
 
     def test_tv2_api_view_no_calls(self):

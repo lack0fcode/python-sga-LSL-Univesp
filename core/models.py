@@ -32,9 +32,9 @@ class CustomUser(AbstractUser):
         default="recepcionista",
         verbose_name="Função",
     )  # coloquei agora
-    sala = models.IntegerField(
-        null=True, blank=True, verbose_name="Sala do Profissional"
-    )  # coloquei agora
+    sala = models.CharField(
+        max_length=50, null=True, blank=True, verbose_name="Sala do Profissional"
+    )  # trocado para permitir nomes como 'enfermaria'
 
     failed_login_attempts = models.IntegerField(
         default=0, verbose_name="Tentativas de login falhadas"
