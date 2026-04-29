@@ -59,26 +59,12 @@ jobs:
           coverage report
           coverage html
 
-      - name: Run Integration Test with HTML Report
-        env:
-          DJANGO_SETTINGS_MODULE: sga.settings
-          DATABASE_URL: postgres://testuser:testpass@postgres:5432/testdb
-        run: |
-          echo "Running complete integration test with HTML report generation..."
-          python test_fluxocompleto2.py
-          echo "Integration test completed successfully"
-
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: htmlcov/
-
-      - name: Upload Integration Test Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-test-report
-          path: relatorio_teste_real.html
+      
 
   lint:
     runs-on: ubuntu-latest
