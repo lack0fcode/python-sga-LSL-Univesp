@@ -35,9 +35,7 @@ def painel_profissional(request):
 
     historico_chamadas = ChamadaProfissional.objects.filter(
         profissional_saude=request.user, acao__in=["chamada", "reanuncio"]
-    ).order_by("-data_hora")[
-        :10
-    ]  # Últimas 10 chamadas
+    ).order_by("-data_hora")[:10]  # Últimas 10 chamadas
 
     context = {
         "pacientes": pacientes,

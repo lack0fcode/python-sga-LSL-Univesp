@@ -172,8 +172,12 @@ def painel_guiche(request):
                     )
                 )
 
-        # Buscar histórico
-        historico_chamadas = Chamada.objects.all().order_by("-data_hora")[:10]
+        # Buscar histórico: mostrar as últimas 10 chamadas (sem deduplicação),
+        # igual ao comportamento do painel do profissional.
+        historico_chamadas = (
+            Chamada.objects.select_related("paciente", "guiche")
+            .order_by("-data_hora")[:10]
+        )
 
         # Determinar número do guichê selecionado (exibir número, não PK)
         gid = request.session.get("guiche_id")

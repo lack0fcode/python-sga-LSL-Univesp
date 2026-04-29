@@ -1,5 +1,7 @@
 name: Django CI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 on:
   push:
     branches: [ "staging", "lack0fdev", "danidev" ]

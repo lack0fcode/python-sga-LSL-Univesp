@@ -80,6 +80,8 @@ def cadastrar_paciente(request):
 
                     existente.senha = None
                     existente.horario_geracao_senha = _tz.now()
+                    # Garantir que paciente reapareça na fila ao recadastrar
+                    existente.atendido = False
                     existente.save()
                     paciente_usado = existente
 
@@ -113,6 +115,8 @@ def cadastrar_paciente(request):
 
                         existente.senha = None
                         existente.horario_geracao_senha = _tz.now()
+                        # Garantir que paciente reapareça na fila ao recadastrar
+                        existente.atendido = False
                         existente.save()
                         paciente_usado = existente
 
