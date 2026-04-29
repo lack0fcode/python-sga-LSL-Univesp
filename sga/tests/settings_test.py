@@ -7,7 +7,9 @@ from ..settings import *
 # Otherwise, if Postgres connection env vars are present, prefer Postgres.
 # Fall back to SQLite in-memory.
 ci_use_sqlite = os.environ.get("CI_USE_SQLITE")
-postgres_host = os.environ.get("POSTGRES_HOST") or os.environ.get("POSTGRES_SERVICE_HOST")
+postgres_host = os.environ.get("POSTGRES_HOST") or os.environ.get(
+    "POSTGRES_SERVICE_HOST"
+)
 
 if ci_use_sqlite and ci_use_sqlite.lower() == "true":
     DATABASES = {
