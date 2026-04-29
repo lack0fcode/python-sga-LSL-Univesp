@@ -13,6 +13,7 @@ jobs:
     env:
       DJANGO_SETTINGS_MODULE: sga.tests.settings_test
       DATABASE_URL: 'sqlite:///:memory:'
+      GITHUB_ACTIONS: 'false'
     steps:
       - uses: actions/checkout@v4
 
