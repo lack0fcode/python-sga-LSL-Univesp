@@ -41,8 +41,18 @@ jobs:
           python test_fluxocompleto2.py || true
           echo "Full integration script finished"
 
+      - name: Check integration report exists
+        id: report_check
+        run: |
+          if [ -f relatorio_teste_real.html ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload Integration Test Report (if present)
-        uses: ./.github/actions/upload-artifact
+        if: steps.report_check.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: integration-test-report
           path: relatorio_teste_real.html
