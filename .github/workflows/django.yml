@@ -29,7 +29,7 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: sga.settings
           # Ensure DATABASE_URL exists for settings import; use SQLite in-memory for speed.
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: 'sqlite:///:memory:'
         run: |
           coverage run --source=. --omit="bandit_Rodar.py,bandit_analisar.py,test_fluxocompleto2.py" manage.py test tests/tests/unit --settings=sga.tests.settings_test
           coverage report
