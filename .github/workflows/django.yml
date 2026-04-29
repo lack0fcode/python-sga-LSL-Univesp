@@ -29,6 +29,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Restore pip cache
+        uses: ./.github/actions/pip-cache
+        with:
+          requirements: 'requirements.txt'
+
       - name: Setup Python and install dependencies
         uses: ./.github/actions/python-setup
         with:
@@ -57,7 +62,7 @@ jobs:
           coverage html
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
+        uses: ./.github/actions/upload-artifact
         with:
           name: coverage-report
           path: htmlcov/

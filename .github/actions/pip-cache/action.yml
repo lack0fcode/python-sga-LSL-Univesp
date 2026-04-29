@@ -1,0 +1,18 @@
+name: 'Pip cache'
+description: 'Restore and save pip cache based on requirements file hash.'
+inputs:
+  requirements:
+    description: 'Path to requirements file to hash for cache key'
+    required: false
+    default: 'requirements.txt'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles(inputs.requirements) }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
