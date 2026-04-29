@@ -172,4 +172,6 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
         self.assertEqual(paciente.nome_completo, "Paciente Retorno")
         self.assertEqual(paciente.tipo_senha, "P")
         self.assertIn("Horário do atendimento:", paciente.observacoes)
-        self.assertIsNotNone(paciente.senha)  # Senha deve ter sido regenerada/atualizada
+        self.assertIsNotNone(
+            paciente.senha
+        )  # Senha deve ter sido regenerada/atualizada
