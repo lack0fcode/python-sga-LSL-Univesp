@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Unit Tests with Coverage
         env:
-          DJANGO_SETTINGS_MODULE: sga.settings
+          DJANGO_SETTINGS_MODULE: sga.tests.settings_test
           # Ensure DATABASE_URL exists for settings import; use SQLite in-memory for speed.
           DATABASE_URL: 'sqlite:///:memory:'
         run: |
