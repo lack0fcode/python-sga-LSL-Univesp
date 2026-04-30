@@ -179,3 +179,93 @@ class PacienteModelTest(TestCase):
         data.pop("profissional_saude")
         paciente = Paciente.objects.create(**data)
         self.assertIsNone(paciente.profissional_saude)
+
+    def test_recadastro_com_mesmo_cartao_sus_reutiliza_registro(self):
+        """Cadastra um paciente com cartao_sus e cadastra novamente; não deve criar duplicata."""
+        from django.urls import reverse
+
+        # Criar usuário recepcionista e autenticar
+        recep = CustomUser.objects.create_user(
+            cpf="22233344455",
+            username="22233344455",
+            password="testpass",
+            funcao="recepcionista",
+            first_name="Recep",
+            last_name="Usuario",
+        )
+        self.client.force_login(recep)
+
+        url = reverse("recepcionista:cadastrar_paciente")
+
+        post_data = {
+            "nome_completo": "Paciente Repetido",
+            "tipo_senha": "G",
+            "cartao_sus": "999888777666555",
+            "telefone_celular": "(11) 99999-9999",
+            "observacoes": "Primeiro cadastro",
+        }
+
+        # Primeiro cadastro cria o registro
+        resp1 = self.client.post(url, post_data, follow=True)
+        self.assertEqual(
+            Paciente.objects.filter(cartao_sus="999888777666555").count(), 1
+        )
+        primeiro = Paciente.objects.get(cartao_sus="999888777666555")
+
+        # Modifica o nome e cadastra novamente com mesmo cartao_sus
+        post_data2 = post_data.copy()
+        post_data2["nome_completo"] = "Paciente Repetido Atualizado"
+        post_data2["observacoes"] = "Segundo cadastro - retorno"
+
+        resp2 = self.client.post(url, post_data2, follow=True)
+
+        # Deve continuar existindo apenas um registro com o mesmo cartao_sus
+        self.assertEqual(
+            Paciente.objects.filter(cartao_sus="999888777666555").count(), 1
+        )
+        atualizado = Paciente.objects.get(cartao_sus="999888777666555")
+
+        # Verifica que o mesmo id foi atualizado
+        self.assertEqual(primeiro.id, atualizado.id)
+        self.assertIn("retorno", (atualizado.observacoes or "").lower())
+
+    def test_recadastro_gera_nova_senha_quando_reutiliza_registro(self):
+        """Ao recadastrar com mesmo cartao_sus, deve ser gerada nova senha (diferente da anterior)."""
+        from django.urls import reverse
+
+        recep = CustomUser.objects.create_user(
+            cpf="33344455566",
+            username="33344455566",
+            password="testpass",
+            funcao="recepcionista",
+            first_name="Recep2",
+            last_name="Usuario",
+        )
+        self.client.force_login(recep)
+
+        url = reverse("recepcionista:cadastrar_paciente")
+
+        post_data = {
+            "nome_completo": "Paciente Senha1",
+            "tipo_senha": "G",
+            "cartao_sus": "555666777888999",
+            "telefone_celular": "(11) 99999-9999",
+            "observacoes": "Primeiro cadastro",
+        }
+
+        resp1 = self.client.post(url, post_data, follow=True)
+        p1 = Paciente.objects.get(cartao_sus="555666777888999")
+        senha1 = p1.senha
+        self.assertIsNotNone(senha1)
+
+        # Recadastrar com outro tipo de senha
+        post_data2 = post_data.copy()
+        post_data2["tipo_senha"] = "E"
+        resp2 = self.client.post(url, post_data2, follow=True)
+        p2 = Paciente.objects.get(cartao_sus="555666777888999")
+        senha2 = p2.senha
+
+        self.assertIsNotNone(senha2)
+        self.assertNotEqual(senha1, senha2)
+        # E a nova senha deve começar com o novo tipo solicitado
+        self.assertTrue(senha2.startswith("E"))

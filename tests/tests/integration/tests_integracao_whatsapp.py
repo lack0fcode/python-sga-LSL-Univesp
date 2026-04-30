@@ -158,15 +158,20 @@ class WhatsAppIntegracaoTest(TransactionTestCase):
             reverse("recepcionista:cadastrar_paciente"), data=paciente_data_retorno
         )
 
-        # Verifica se ambos os pacientes foram criados (permite reutilização do cartão)
+        # Verifica comportamento atual: o sistema reutiliza o registro existente
+        # (atualiza os campos do paciente em vez de criar um duplicado).
         self.assertEqual(response2.status_code, 302)  # Redirect após sucesso
         pacientes_com_mesmo_cartao = Paciente.objects.filter(
             cartao_sus="888888888888888"
         )
-        self.assertEqual(
-            pacientes_com_mesmo_cartao.count(), 2
-        )  # Deve ter 2 pacientes com mesmo cartão
+        # Atual comportamento: apenas 1 registro é mantido e é atualizado
+        self.assertEqual(pacientes_com_mesmo_cartao.count(), 1)
 
-        # Verifica que ambos têm observações com horário do atendimento
-        for paciente in pacientes_com_mesmo_cartao:
-            self.assertIn("Horário do atendimento:", paciente.observacoes)
+        paciente = pacientes_com_mesmo_cartao.first()
+        # Verifica que o registro foi atualizado para os dados do retorno
+        self.assertEqual(paciente.nome_completo, "Paciente Retorno")
+        self.assertEqual(paciente.tipo_senha, "P")
+        self.assertIn("Horário do atendimento:", paciente.observacoes)
+        self.assertIsNotNone(
+            paciente.senha
+        )  # Senha deve ter sido regenerada/atualizada

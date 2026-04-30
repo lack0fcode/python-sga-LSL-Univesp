@@ -1,0 +1,63 @@
+name: Full Flow Integration (manual / lack0fdev)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_run:
+        description: 'Type YES to confirm running the full-flow that may send real messages.'
+        required: false
+        default: 'NO'
+  push:
+    branches: [ "lack0fdev" ]
+
+jobs:
+  full-flow:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.11-slim-bookworm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore pip cache
+        uses: ./.github/actions/pip-cache
+        with:
+          requirements: 'requirements.txt'
+
+      - name: Setup Python and install dependencies
+        uses: ./.github/actions/python-setup
+        with:
+          python-version: '3.11'
+          requirements: 'requirements.txt'
+
+      - name: Run Full Integration Script
+        env:
+          # Use the test settings so the script runs with SQLite in-memory locally
+          DJANGO_SETTINGS_MODULE: sga.tests.settings_test
+          # Ensure DATABASE_URL exists and points to a local SQLite file so base settings import succeeds
+          DATABASE_URL: sqlite:///./test_db.sqlite3
+          # Safety guard: clear Twilio secrets by default to avoid accidental real SMS sends.
+          TWILIO_ACCOUNT_SID: ""
+          TWILIO_AUTH_TOKEN: ""
+        run: |
+          echo "Running full integration script (test_fluxocompleto2.py)..."
+          # Do not swallow errors so logs clearly show failures and the report generation status
+          python test_fluxocompleto2.py
+          echo "Full integration script finished"
+
+      - name: Check integration report exists
+        id: report_check
+        run: |
+          if [ -f relatorio_teste_real.html ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload Integration Test Report (if present)
+        if: steps.report_check.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-report
+          path: relatorio_teste_real.html

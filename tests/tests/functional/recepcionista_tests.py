@@ -119,7 +119,10 @@ class RecepcionistaViewsTest(TestCase):
         for i in range(3):
             data = self.valid_data.copy()
             data["nome_completo"] = f"Paciente {i}"
-            data["cartao_sus"] = self.get_unique_cartao_sus()
+            # Garantir valores únicos e determinísticos para o cartão SUS durante o teste
+            data["cartao_sus"] = self.get_unique_cartao_sus(base=f"123456789012{i}")
+            # Garantir telefones únicos para evitar reuso por telefone
+            data["telefone_celular"] = f"(11) 9{10000000 + i}"
             resp = self.client.post(url, data, follow=True)
             self.assertEqual(resp.status_code, 200)
             paciente = Paciente.objects.filter(nome_completo=f"Paciente {i}")
