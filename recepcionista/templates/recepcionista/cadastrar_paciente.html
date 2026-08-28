@@ -68,6 +68,26 @@
                     {% endif %}
                 </div>
 
+                <!-- Prioridade -->
+                <div class="md:col-span-2">
+                    <span class="block text-sm font-medium text-gray-700 mb-2">
+                        Prioridade do paciente
+                    </span>
+                    <div class="flex flex-wrap gap-4">
+                        {% for radio in form.prioridade %}
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                {{ radio.tag }}
+                                <span class="{% if radio.data.value == 'super_prioritario' %}text-red-600{% elif radio.data.value == 'prioritario' %}text-yellow-600{% else %}text-gray-700{% endif %}">
+                                    {{ radio.choice_label }}{% if radio.data.value == 'super_prioritario' %} (acima de 80 anos){% endif %}
+                                </span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.prioridade.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.prioridade.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- Telefone Celular -->
                 <div class="md:col-span-2">
                     <label for="{{ form.telefone_celular.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">

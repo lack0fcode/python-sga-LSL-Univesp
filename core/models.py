@@ -53,6 +53,11 @@ class CustomUser(AbstractUser):
 
 
 class Paciente(models.Model):
+    PRIORIDADE_CHOICES = [
+        ("normal", "Normal"),
+        ("prioritario", "Prioritário"),
+        ("super_prioritario", "Super prioritário"),
+    ]
     SENHA_CHOICES = [
         ("E", "Exames"),
         ("C", "Curativos"),
@@ -130,6 +135,12 @@ class Paciente(models.Model):
         max_length=255, blank=True, null=True, verbose_name="Observações"
     )
     atendido = models.BooleanField(default=False, verbose_name="Atendido")
+    prioridade = models.CharField(
+        max_length=20,
+        choices=PRIORIDADE_CHOICES,
+        default="normal",
+        verbose_name="Prioridade",
+    )
 
     def __str__(self):
         return f"{self.nome_completo} (Senha: {self.senha}, Agendamento: {self.horario_agendamento})"
@@ -211,6 +222,21 @@ class Chamada(models.Model):
     )
     paciente = models.ForeignKey(
         Paciente, on_delete=models.CASCADE, verbose_name="Paciente"
+    )
+    profissional_saude = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Profissional de Saúde",
+        related_name="chamadas_no_guiche",
+    )
+    prioridade = models.CharField(
+        max_length=20,
+        choices=Paciente.PRIORIDADE_CHOICES,
+        null=True,
+        blank=True,
+        verbose_name="Prioridade no momento da chamada",
     )
     guiche = models.ForeignKey(Guiche, on_delete=models.CASCADE, verbose_name="Guichê")
     acao = models.CharField(max_length=15, choices=ACOES)

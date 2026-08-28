@@ -42,6 +42,16 @@ class CadastrarPacienteForm(forms.ModelForm):
         required=True,
         widget=forms.Select(attrs={"class": "form-control"}),
     )
+    prioridade = forms.ChoiceField(
+        choices=Paciente.PRIORIDADE_CHOICES,
+        label="Prioridade",
+        required=False,
+        initial="normal",
+        widget=forms.RadioSelect(),
+    )
+
+    def clean_prioridade(self):
+        return self.cleaned_data.get("prioridade") or "normal"
 
     def clean_telefone_celular(self):
         val = self.cleaned_data.get("telefone_celular", "") or ""
@@ -77,6 +87,7 @@ class CadastrarPacienteForm(forms.ModelForm):
             "observacoes",
             "tipo_senha",
             "telefone_celular",
+            "prioridade",
         ]
 
         help_texts: Dict[str, Optional[str]] = {
