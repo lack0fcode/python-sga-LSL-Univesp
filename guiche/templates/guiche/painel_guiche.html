@@ -89,6 +89,17 @@
                                         {% if senha.tipo_senha and senha.profissional_saude %}
                                             <span class="text-gray-300">·</span>
                                         {% endif %}
+                                        {% if senha.prioridade == "super_prioritario" %}
+                                            <span class="inline-flex items-center font-semibold text-red-600">
+                                                <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+                                                SUPER PRIORITÁRIO
+                                            </span>
+                                        {% elif senha.prioridade == "prioritario" %}
+                                            <span class="inline-flex items-center font-semibold text-yellow-600">
+                                                <i class="bi bi-exclamation-circle-fill mr-1"></i>
+                                                PRIORITÁRIO
+                                            </span>
+                                        {% endif %}
                                         {% if senha.profissional_saude %}
                                             <span class="inline-flex items-center">
                                                 <i class="bi bi-person-badge text-green-600 mr-1"></i>
@@ -137,26 +148,100 @@
 
     <!-- Histórico de Chamadas -->
     <div class="bg-white shadow-lg rounded-lg p-8 fade-in">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Histórico de Chamadas</h2>
-        {% if historico_chamadas %}
-            <div class="space-y-2">
-                {% for chamada in historico_chamadas %}
-                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <div class="flex items-center justify-between">
+    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+        Histórico de Chamadas
+    </h2>
+
+    {% if historico_chamadas %}
+        <div class="space-y-3">
+            {% for chamada in historico_chamadas %}
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-3xl font-extrabold text-primary">
+                                {{ chamada.paciente.senha }}
+                            </span>
                             <div>
-                                <div class="text-sm font-semibold text-gray-700">{{ chamada.get_acao_display }} — <span class="font-bold">{{ chamada.paciente.senha }}</span> — {{ chamada.paciente.nome_completo|default:"—" }}</div>
-                                <div class="text-xs text-gray-500">Guichê {{ chamada.guiche.numero }} • {{ chamada.data_hora|date:"H:i d/m" }}</div>
+                                <div class="text-lg font-semibold text-gray-900">
+                                    {{ chamada.paciente.nome_completo|default:"—" }}
+                                </div>
+                                <div class="text-sm text-gray-500 flex flex-wrap items-center gap-x-2">
+                                    {% if chamada.paciente.tipo_senha %}
+                                        <span>Tipo: {{ chamada.paciente.tipo_senha }}</span>
+                                    {% endif %}
+                                    {% if chamada.prioridade == "super_prioritario" or chamada.paciente.prioridade == "super_prioritario" %}
+                                        <span class="text-gray-300">·</span>
+                                        <span class="inline-flex items-center font-semibold text-red-600">
+                                            <i class="bi bi-exclamation-triangle-fill mr-1"></i>
+                                            SUPER PRIORITÁRIO
+                                        </span>
+                                    {% elif chamada.prioridade == "prioritario" or chamada.paciente.prioridade == "prioritario" %}
+                                        <span class="text-gray-300">·</span>
+                                        <span class="inline-flex items-center font-semibold text-yellow-600">
+                                            <i class="bi bi-exclamation-circle-fill mr-1"></i>
+                                            PRIORITÁRIO
+                                        </span>
+                                    {% endif %}
+                                    {% if chamada.profissional_saude or chamada.paciente.profissional_saude %}
+                                        <span class="text-gray-300">·</span>
+                                        <span class="inline-flex items-center">
+                                            <i class="bi bi-person-badge text-green-600 mr-1"></i>
+                                            Médico:
+                                            {% if chamada.profissional_saude %}
+                                                {{ chamada.profissional_saude.first_name }} {{ chamada.profissional_saude.last_name }}
+                                                {% if chamada.profissional_saude.sala %}
+                                                    — Sala {{ chamada.profissional_saude.sala }}
+                                                {% endif %}
+                                            {% else %}
+                                                {{ chamada.paciente.profissional_saude.first_name }} {{ chamada.paciente.profissional_saude.last_name }}
+                                                {% if chamada.paciente.profissional_saude.sala %}
+                                                    — Sala {{ chamada.paciente.profissional_saude.sala }}
+                                                {% endif %}
+                                            {% endif %}
+                                        </span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="text-center py-8">
-                <i class="bi bi-clock-history text-gray-400 text-4xl mb-4"></i>
-                <p class="text-gray-500">Nenhuma chamada registrada.</p>
-            </div>
-        {% endif %}
+
+                    <div class="text-xs text-gray-500 border-t border-gray-300 pt-2">
+                        {% if chamada.acao == "chamada" %}
+                            <span class="font-semibold text-green-600">{{ chamada.get_acao_display }}</span>
+                        {% elif chamada.acao == "reanuncio" %}
+                            <span class="font-semibold text-yellow-600">{{ chamada.get_acao_display }}</span>
+                        {% elif chamada.acao == "confirmado" %}
+                            <span class="font-semibold text-blue-600">{{ chamada.get_acao_display }}</span>
+                        {% elif chamada.acao == "desistencia" %}
+                            <span class="font-semibold text-red-600">{{ chamada.get_acao_display }}</span>
+                        {% else %}
+                            <span class="font-semibold">{{ chamada.get_acao_display }}</span>
+                        {% endif %}
+                        •
+                        Guichê {{ chamada.guiche.numero }} •
+                        {{ chamada.data_hora|date:"H:i d/m" }}
+                    </div>
+
+                    {% if chamada.paciente.observacoes %}
+                        <div class="mt-2 pt-2 border-t border-gray-300">
+                            <div class="flex items-start">
+                                <i class="bi bi-info-circle text-blue-600 mr-2 mt-0.5"></i>
+                                <div>
+                                    <span class="text-xs font-semibold text-gray-600 uppercase">Observações:</span>
+                                    <p class="text-sm text-gray-700 mt-1">{{ chamada.paciente.observacoes }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-8">
+            <i class="bi bi-clock-history text-gray-400 text-4xl mb-4"></i>
+            <p class="text-gray-500">Nenhuma chamada registrada.</p>
+        </div>
+    {% endif %}
     </div>
 </div>
 

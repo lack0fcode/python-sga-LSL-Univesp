@@ -26,6 +26,12 @@ from .forms import GuicheForm
 
 logger = logging.getLogger(__name__)
 
+PRIORIDADE_ORDEM = {
+    "super_prioritario": 0,
+    "prioritario": 1,
+    "normal": 2,
+}
+
 
 @guiche_required
 @login_required
@@ -116,6 +122,15 @@ def painel_guiche(request):
                     )
                 )
 
+            # Prioridade organiza a fila dentro de cada tipo de senha.
+            pacientes = sorted(
+                pacientes,
+                key=lambda paciente: (
+                    PRIORIDADE_ORDEM.get(paciente.prioridade, 2),
+                    paciente.horario_geracao_senha,
+                ),
+            )
+
             # Agrupa por tipo
             grupos: defaultdict[str, deque] = defaultdict(deque)
             for paciente in pacientes:
@@ -172,10 +187,21 @@ def painel_guiche(request):
                     )
                 )
 
+            senhas = sorted(
+                senhas,
+                key=lambda paciente: (
+                    PRIORIDADE_ORDEM.get(paciente.prioridade, 2),
+                    paciente.horario_geracao_senha,
+                ),
+            )
+
         # Buscar histórico: mostrar as últimas 10 chamadas (sem deduplicação),
         # igual ao comportamento do painel do profissional.
         historico_chamadas = Chamada.objects.select_related(
-            "paciente", "guiche"
+            "paciente",
+            "paciente__profissional_saude",
+            "profissional_saude",
+            "guiche",
         ).order_by("-data_hora")[:10]
 
         # Determinar número do guichê selecionado (exibir número, não PK)
@@ -249,7 +275,13 @@ def confirmar_atendimento(request, paciente_id):
     guiche = get_guiche_do_usuario(request.user, request=request)
     paciente = Paciente.objects.get(id=paciente_id)
 
-    Chamada.objects.create(paciente=paciente, guiche=guiche, acao="confirmado")
+    Chamada.objects.create(
+        paciente=paciente,
+        profissional_saude=paciente.profissional_saude,
+        prioridade=paciente.prioridade,
+        guiche=guiche,
+        acao="confirmado",
+    )
 
     # Limpar o guichê (senha_atendida, em_atendimento)
     guiche.senha_atendida = None
@@ -279,7 +311,13 @@ def desistir_atendimento(request, paciente_id):
     paciente = Paciente.objects.get(id=paciente_id)
 
     # Registra a desistência como uma chamada com acao='desistencia'
-    Chamada.objects.create(paciente=paciente, guiche=guiche, acao="desistencia")
+    Chamada.objects.create(
+        paciente=paciente,
+        profissional_saude=paciente.profissional_saude,
+        prioridade=paciente.prioridade,
+        guiche=guiche,
+        acao="desistencia",
+    )
 
     # Marca o paciente como 'atendido' para removê-lo da lista ativa
     paciente.atendido = True
@@ -298,7 +336,13 @@ def realizar_acao_senha(request, senha, guiche_numero, nome, paciente_id, acao):
     guiche_obj = Guiche.objects.get(numero=guiche_numero)
     paciente = Paciente.objects.get(id=paciente_id)
 
-    Chamada.objects.create(paciente=paciente, guiche=guiche_obj, acao=acao)
+    Chamada.objects.create(
+        paciente=paciente,
+        profissional_saude=paciente.profissional_saude,
+        prioridade=paciente.prioridade,
+        guiche=guiche_obj,
+        acao=acao,
+    )
 
     # Preparar dados para a TV
     data_for_tv = {"senha": senha, "nome_completo": nome, "guiche": guiche_numero}

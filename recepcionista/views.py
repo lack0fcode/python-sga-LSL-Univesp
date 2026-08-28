@@ -60,6 +60,7 @@ def cadastrar_paciente(request):
                     if paciente.nome_completo:
                         existente.nome_completo = paciente.nome_completo
                     existente.tipo_senha = paciente.tipo_senha or existente.tipo_senha
+                    existente.prioridade = paciente.prioridade
                     existente.profissional_saude = (
                         paciente.profissional_saude or existente.profissional_saude
                     )
@@ -98,6 +99,7 @@ def cadastrar_paciente(request):
                         existente.tipo_senha = (
                             paciente.tipo_senha or existente.tipo_senha
                         )
+                        existente.prioridade = paciente.prioridade
                         existente.profissional_saude = (
                             paciente.profissional_saude or existente.profissional_saude
                         )

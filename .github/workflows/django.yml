@@ -4,9 +4,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 on:
   push:
-    branches: [ "staging", "lack0fdev", "danidev" ]
+    branches: [ "staging", "lack0fdev", "danidev", "dev" ]
   pull_request:
-    branches: [ "staging", "lack0fdev", "danidev" ]
+    branches: [ "staging", "lack0fdev", "danidev", "dev" ]
 
 jobs:
   unit-tests:
